@@ -1,0 +1,34 @@
+<form [formGroup]="detailEmployeForm" class="main-container">
+  <h2>Fiche employe</h2>
+  <mat-form-field>
+    <input type="text" matInput formControlName="name" placeholder="Nom" required>
+    <mat-error *ngIf="name.invalid">Veuillez renseigner le nom.</mat-error>
+    <!--mat-icon matSuffix>sentiment_very_satisfied</mat-icon>
+    <mat-hint>Requis</mat-hint-->
+  </mat-form-field>
+  <mat-form-field>
+    <input type="text" matInput formControlName="address" placeholder="Adresse">
+  </mat-form-field>
+  <mat-form-field>
+    <input type="number" matInput formControlName="zipcode" placeholder="Code postal">
+  </mat-form-field>
+  <mat-form-field>
+    <input type="text" matInput formControlName="town" placeholder="Ville">
+  </mat-form-field>
+  <mat-form-field>
+    <input type="tel" matInput formControlName="phone" placeholder="Téléphone" required>
+  </mat-form-field>
+  <mat-form-field>
+    <input type="tel" matInput formControlName="cellPhone" placeholder="Téléphone portable">
+  </mat-form-field>
+  <mat-form-field>
+    <input type="email" matInput formControlName="email" placeholder="Email" required>
+    <mat-error *ngIf="email.invalid">{{getEmailErrorMessage()}}</mat-error>
+  </mat-form-field>
+
+</form>
+<div class="button-container">
+  <button mat-raised-button color="primary" type="button" (click)="updateEmploye()" [disabled]="!detailEmployeForm.valid">Enregistrer</button>
+  <button mat-raised-button color="warn" type="button" (click)="wantDeleteEmploye()">Supprimer</button>
+  <a routerLink="/list-employes" mat-raised-button>Annuler</a>
+</div>

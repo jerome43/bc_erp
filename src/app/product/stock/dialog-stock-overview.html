@@ -1,0 +1,20 @@
+<div mat-dialog-content>
+  <h4>Immobilisations du produit {{data.detailStock.name}} du {{data.displayedDateFrom}} au {{data.displayedDateTo}}</h4>
+  <table class="tableViewDetailStock" *ngIf="data.detailStock!=null">
+    <tr>
+      <th>dates</th>
+      <th>quantités</th>
+      <th>commande</th>
+    </tr>
+    <tr *ngFor="let immoDates of data.detailStock.immoDates">
+      <td class="tableViewDetailStock-date" *ngIf="(immoDates.immoDateTo.seconds>=data.dateFrom && immoDates.immoDateTo.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds>=data.dateFrom && immoDates.immoDateFrom.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds<=data.dateFrom && immoDates.immoDateTo.seconds>=data.dateTo)">{{immoDates.immoDateFrom.toDate().toLocaleDateString()}} au {{immoDates.immoDateTo.toDate().toLocaleDateString()}}</td>
+      <td class="tableViewDetailStock-quantity" *ngIf="(immoDates.immoDateTo.seconds>=data.dateFrom && immoDates.immoDateTo.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds>=data.dateFrom && immoDates.immoDateFrom.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds<=data.dateFrom && immoDates.immoDateTo.seconds>=data.dateTo)">{{immoDates.quantity}}</td>
+      <td class="tableViewDetailStock-orderId" *ngIf="(immoDates.immoDateTo.seconds>=data.dateFrom && immoDates.immoDateTo.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds>=data.dateFrom && immoDates.immoDateFrom.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds<=data.dateFrom && immoDates.immoDateTo.seconds>=data.dateTo)">{{immoDates.orderId}}</td>
+    </tr>
+  </table>
+  <p>{{data.message}}</p>
+</div>
+<div mat-dialog-actions>
+  <button mat-button (click)="onNoClick()" *ngIf="data.displayNoButton">Non</button>
+  <button mat-button [mat-dialog-close]="'yes'" cdkFocusInitial>Ok</button>
+</div>

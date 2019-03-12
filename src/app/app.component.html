@@ -1,0 +1,23 @@
+<mat-sidenav-container *ngIf="authorized; else showLogin">
+<!-- mobile sidenav menu-->
+  <mat-sidenav #sidenav role="navigation">
+    <app-mobile-menu (sidenavClose)="sidenav.close()"></app-mobile-menu>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <!-- header + desktop menu-->
+    <app-header (sidenavToggle)="sidenav.toggle()" [user]="user" (authorizedEventEmitter)="authorizedEventEmitter()"></app-header>
+    <main>
+      <router-outlet></router-outlet>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>
+<ng-template #showLogin >
+  <div class="login">
+    <div>
+      <p>Veuillez vous connecter !</p>
+      <button mat-raised-button color="primary" type="button" (click)="login()">CONNEXION</button>
+      <p>{{message}}</p>
+    </div>
+
+  </div>
+</ng-template>

@@ -1,0 +1,89 @@
+<header>
+  <div class="connexion">
+    <span>Hello {{ user.displayName}} !</span>
+    <a href="#" title="déconnexion" (click)="logout()"><mat-icon>exit_to_app</mat-icon></a>
+  </div>
+  <mat-toolbar color="primary">
+    <div fxHide.gt-xs>
+      <button mat-icon-button (click)="onToggleSidenav()">
+        <mat-icon>menu</mat-icon>
+      </button>
+    </div>
+    <h1 fxHide.xs>{{ title }}</h1>
+    <div fxFlex fxLayout fxLayoutAlign="end" fxHide.xs>
+      <button mat-button [matMenuTriggerFor]="quotationMenu"><mat-icon>web_asset</mat-icon><span class="top-menu-item">Devis</span></button>
+      <mat-menu #quotationMenu="matMenu">
+        <a mat-menu-item routerLink="/create-quotation" routerLinkActive="active">
+          <mat-icon>add</mat-icon>
+          <span>Nouveau devis</span>
+        </a>
+        <a mat-menu-item routerLink="/list-quotations" routerLinkActive="active">
+          <mat-icon>sort</mat-icon>
+          <span>Devis en cours</span>
+        </a>
+        <a mat-menu-item [routerLink]="['/list-quotations', {archived: 'true'}]" routerLinkActive="active">
+          <mat-icon>folder</mat-icon>
+          <span>Devis archivés</span>
+        </a>
+      </mat-menu>
+      <button mat-button [matMenuTriggerFor]="orderMenu"><mat-icon>event</mat-icon><span class="top-menu-item">Commandes</span></button>
+      <mat-menu #orderMenu="matMenu">
+        <!--a mat-menu-item routerLink="/create-order" routerLinkActive="active">
+          <mat-icon>add</mat-icon>
+          <span>Nouvelle commande</span>
+        </a-->
+        <a mat-menu-item routerLink="/list-orders" routerLinkActive="active">
+          <mat-icon>sort</mat-icon>
+          <span>Commandes en cours</span>
+        </a>
+        <a mat-menu-item [routerLink]="['/list-orders', {archived: 'true'}]" routerLinkActive="active">
+          <mat-icon>folder</mat-icon>
+          <span>Commandes archivées</span>
+        </a>
+        <a mat-menu-item routerLink="/export-orders" routerLinkActive="active">
+          <mat-icon>save_alt</mat-icon>
+          <span>Export commandes</span>
+        </a>
+      </mat-menu>
+      <button mat-button [matMenuTriggerFor]="clientMenu"><mat-icon>people_outline</mat-icon><span class="top-menu-item">Clients</span></button>
+      <mat-menu #clientMenu="matMenu">
+          <a mat-menu-item routerLink="/create-client" routerLinkActive="active">
+            <mat-icon>add</mat-icon>
+            <span>Nouveau client</span>
+          </a>
+          <a mat-menu-item routerLink="/list-clients" routerLinkActive="active">
+            <mat-icon>sort</mat-icon>
+            <span>Liste clients</span>
+          </a>
+      </mat-menu>
+
+      <button mat-button [matMenuTriggerFor]="productMenu"><mat-icon>laptop</mat-icon><span class="top-menu-item">Produits</span></button>
+      <mat-menu #productMenu="matMenu">
+          <a mat-menu-item routerLink="/create-product" routerLinkActive="active">
+            <mat-icon>add</mat-icon>
+            <span>Nouveau produit</span>
+          </a>
+          <a mat-menu-item routerLink="/list-products" routerLinkActive="active">
+            <mat-icon>sort</mat-icon>
+            <span>Liste produits</span>
+          </a>
+        <a mat-menu-item routerLink="/stock" routerLinkActive="active">
+          <mat-icon>compare_arrows</mat-icon>
+          <span>Stocks</span>
+        </a>
+      </mat-menu>
+      <button mat-button [matMenuTriggerFor]="parametersMenu"><mat-icon>build</mat-icon><span class="top-menu-item">Paramètres</span></button>
+      <mat-menu #parametersMenu="matMenu">
+        <a mat-menu-item routerLink="/create-employe" routerLinkActive="active">
+          <mat-icon>add</mat-icon><mat-icon>face</mat-icon>
+          <span>Nouvel employé</span>
+        </a>
+        <a mat-menu-item routerLink="/list-employes" routerLinkActive="active">
+          <mat-icon>sort</mat-icon><mat-icon>face</mat-icon>
+          <span>Liste employé</span>
+        </a>
+      </mat-menu>
+    </div>
+  </mat-toolbar>
+</header>
+

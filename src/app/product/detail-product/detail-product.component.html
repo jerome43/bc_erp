@@ -1,0 +1,72 @@
+<form [formGroup]="detailProductForm" class="main-container">
+  <h2>Fiche produit</h2>
+  <mat-form-field>
+    <input type="text" matInput formControlName="name" placeholder="Nom" required>
+    <mat-error *ngIf="name.invalid">Veuillez renseigner le nom.</mat-error>
+  </mat-form-field>
+  <mat-form-field>
+    <input type="text" matInput formControlName="description" placeholder="Description">
+  </mat-form-field>
+  <!--mat-form-field>
+    <input type="text" matInput formControlName="serial_number" placeholder="Numéro de série">
+  </mat-form-field-->
+  <mat-form-field>
+    <input type="text" matInput formControlName="internal_number" placeholder="Numéro interne" required>
+    <mat-error *ngIf="internal_number.invalid">Veuillez renseigner le numéro interne.</mat-error>
+  </mat-form-field>
+  <!--mat-form-field>
+    <input type="text" matInput formControlName="barcode" placeholder="Code barre">
+  </mat-form-field-->
+  <mat-form-field class="margin-bottom-1">
+    <input type="text" matInput formControlName="comment" placeholder="Commentaires">
+  </mat-form-field>
+  <div class="margin-bottom-1">
+    <label>Type de prestation : </label>
+    <mat-radio-group formControlName="type">
+      <mat-radio-button value="rental" checked>location de matériel</mat-radio-button>
+      <mat-radio-button value="sale">vente de matériel</mat-radio-button>
+      <mat-radio-button value="service">prestation de service</mat-radio-button>
+    </mat-radio-group>
+  </div>
+  <div class="margin-bottom-1" *ngIf="isSellable==false">
+    <label>Appliquer prix dégressifs : </label>
+    <mat-radio-group formControlName="apply_degressivity">
+      <mat-radio-button value="true">Oui</mat-radio-button>
+      <mat-radio-button value="false">Non</mat-radio-button>
+    </mat-radio-group>
+  </div>
+  <mat-form-field *ngIf="isSellable==true">
+    <input type="number" matInput formControlName="sell_price" placeholder="Prix de vente / prestation de service" required>
+  </mat-form-field>
+  <mat-form-field *ngIf="isSellable==false">
+    <input type="number" matInput formControlName="rent_price" placeholder="Prix de location" required>
+  </mat-form-field>
+  <mat-form-field *ngIf="isSellable==false && apply_degressivity==true">
+    <input type="number" matInput formControlName="stock" placeholder="Stock" required>
+    <mat-error *ngIf="stock.invalid">Veuillez renseigner le stock</mat-error>
+  </mat-form-field>
+  <div>
+    <h5>Photo</h5>
+    <div *ngIf="downloadPhotoURL==undefined">
+      <input type="file" placeholder="Photo" (change)="updateFile($event)" #inputPhoto accept="image/*">
+      <button mat-button>
+        <mat-icon color="warn" (click)="deleteInputPhoto(inputPhoto)" *ngIf="photoFile!=undefined">delete</mat-icon>
+      </button>
+      <div>upload {{ uploadPhotoPercent | async }} %</div>
+    </div>
+    <div *ngIf="downloadPhotoURL!=undefined">
+      <a [href]="downloadPhotoURL | async" target="_blank"> <img [src]="downloadPhotoURL | async" class="photo-img"/></a>
+      <button mat-button>
+        <mat-icon color="warn" (click)="wantDeletePhotoOnFirestorage()" >delete</mat-icon>
+      </button>
+    </div>
+  </div>
+  <!--p>
+    Form Status: {{ detailProductForm.status }}
+  </p-->
+</form>
+<div class="button-container">
+  <button mat-raised-button color="primary" type="button" (click)="updateProduct()" [disabled]="!detailProductForm.valid">Enregistrer</button>
+  <button mat-raised-button color="warn" type="button" (click)="wantDeleteProduct()">Supprimer</button>
+  <a routerLink="/list-products" mat-raised-button>Annuler</a>
+</div>

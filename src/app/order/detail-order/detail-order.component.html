@@ -1,0 +1,244 @@
+<form [formGroup]="detailOrderForm" class="main-container">
+  <h2>{{orderTypeParams.templateTitle}} {{orderId}}</h2>
+  <mat-form-field >
+    <input type="text" placeholder="Client" aria-label="Client" matInput formControlName="client" [matAutocomplete]="autoCompleteClient" required>
+    <mat-autocomplete #autoCompleteClient="matAutocomplete" [displayWith]="displayClientFn">
+      <mat-option *ngFor="let clientOption of clientFilteredOptions | async" [value]="clientOption">
+        {{clientOption.name}}
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-select placeholder="Contact client" formControlName="contact" [compareWith]="compareContactOptionFn">
+      <mat-option *ngFor="let contactOption of contactOptions | async" [value]="contactOption">
+        {{contactOption.contactName}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-select placeholder="Commercial Borne-Concept" formControlName="employe" [compareWith]="compareEmployeOptionFn">
+      <mat-option *ngFor="let employe of fbEmployes | async" [value]="employe">
+        {{employe.name}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <h4>Produits simples</h4>
+  <div>
+    <div formArrayName="singleProduct">
+      <div *ngFor="let product of singleProduct.controls; let i=index" class="form-array-container">
+        <!-- The repeated alias template -->
+        <mat-form-field class="width70 margin-right">
+          <input type="text" placeholder="Produit Simple" aria-label="Produit simple" [formControlName]="i" matInput [matAutocomplete]="autoCompleteSingleProduct" (click)="filterProducts(i, $event)" (keyup)="filterProducts(i, $event)">
+          <mat-autocomplete #autoCompleteSingleProduct="matAutocomplete" [displayWith]="displayProductFn">
+            <mat-option *ngFor="let productOption of productFormOptionsFiltered | async" [value]="productOption">
+              {{productOption.name}}
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+        <mat-form-field class="width15 margin-right">
+          <input type="number" matInput placeholder="Quantité produit simple" #inputSingleProductAmount (click)="setSingleProductAmount(i, inputSingleProductAmount.value)" (keyup)="setSingleProductAmount(i, inputSingleProductAmount.value)" [value]="this.detailOrderForm.value.singleProductAmount[i]">
+        </mat-form-field>
+        <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmSingleProduct(i)" class="suppr-button margin-right">Supprimer</button>
+      </div>
+      <button mat-raised-button color="accent" type="button" *ngIf="detailOrderForm.value.singleProduct[detailOrderForm.value.singleProduct.length-1]!=''" (click)="addSingleProduct()" class="margin-bottom-1">Ajouter produit simple</button>
+    </div>
+    <div class="display-inline-block">
+    </div>
+  </div>
+
+
+  <h4 class="margin-bottom-0-5">Produits composés</h4>
+  <p class="info">Le premier élément de la liste est celui dont le nom et la photo apparaîtront dans les devis et factures.</p>
+  <div>
+    <div formArrayName="compositeProduct">
+      <div *ngFor="let product of compositeProduct.controls; let i=index" class="form-array-container">
+        <!-- The repeated alias template -->
+        <mat-form-field class="width70 margin-right">
+          <input type="text" placeholder="Elément de produit composé" aria-label="Elément de produit composé" [formControlName]="i" matInput [matAutocomplete]="autoCompleteCompositeProduct" (click)="filterProducts(i, $event)" (keyup)="filterProducts(i, $event)">
+          <mat-autocomplete #autoCompleteCompositeProduct="matAutocomplete" [displayWith]="displayProductFn">
+            <mat-option *ngFor="let productOption of productFormOptionsFiltered | async" [value]="productOption">
+              {{productOption.name}}
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+        <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmCompositeProduct(i)" class="suppr-button">Supprimer</button>
+      </div>
+      <button mat-raised-button color="accent" type="button" *ngIf="detailOrderForm.value.compositeProduct[detailOrderForm.value.compositeProduct.length-1]!=''" (click)="addCompositeProduct()" class="margin-bottom-1">Ajouter élément composé</button>
+    </div>
+
+    <div class="display-inline-block">
+      <mat-form-field class="width100 margin-auto">
+        <input type="number" matInput formControlName="compositeProductAmount" placeholder="Quantité produit composé">
+      </mat-form-field>
+    </div>
+  </div>
+
+  <h4 class="margin-bottom-0-5">Prestation particulière</h4>
+  <div>
+    <mat-form-field class="width60 margin-right">
+      <input type="text" matInput formControlName="specialProductName" placeholder="Intitulé prestation (frais kilométriques...)">
+    </mat-form-field>
+    <mat-form-field class="width30 margin-auto">
+      <input type="number" matInput formControlName="specialProductPrice" placeholder="Prix prestation particulière">
+    </mat-form-field>
+  </div>
+
+  <h4>Dates</h4>
+  <div>
+    <div class="display-inline-block width25">
+      <mat-form-field class="width80 margin-auto">
+        <input matInput [matDatepicker]="rentDateFrom" formControlName="rentDateFrom" placeholder="Début location">
+        <mat-datepicker-toggle matSuffix [for]="rentDateFrom"></mat-datepicker-toggle>
+        <mat-datepicker #rentDateFrom></mat-datepicker>
+      </mat-form-field>
+    </div>
+    <div class="display-inline-block width25">
+      <mat-form-field class="width80 margin-auto">
+        <input matInput [matDatepicker]="rentDateTo" formControlName="rentDateTo" placeholder="Fin location">
+        <mat-datepicker-toggle matSuffix [for]="rentDateTo"></mat-datepicker-toggle>
+        <mat-datepicker #rentDateTo></mat-datepicker>
+      </mat-form-field>
+    </div>
+    <div class="display-inline-block width25">
+      <mat-form-field class="width80 margin-auto">
+        <input matInput [matDatepicker]="immoDateFrom" formControlName="immoDateFrom" placeholder="Début immobilisation">
+        <mat-datepicker-toggle matSuffix [for]="immoDateFrom"></mat-datepicker-toggle>
+        <mat-datepicker #immoDateFrom></mat-datepicker>
+      </mat-form-field>
+    </div>
+    <div class="display-inline-block width25">
+      <mat-form-field class="width80 margin-auto">
+        <input matInput [matDatepicker]="immoDateTo" formControlName="immoDateTo" placeholder="Fin immobilisation">
+        <mat-datepicker-toggle matSuffix [for]="immoDateTo"></mat-datepicker-toggle>
+        <mat-datepicker #immoDateTo></mat-datepicker>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div>
+    <div class="display-inline-block width25">
+      <mat-form-field class="width80">
+        <input type="text" matInput placeholder="Date devis" disabled [value]="detailOrderForm.value.quotationDate.seconds*1000 | date:'dd/MM/yyyy'">
+      </mat-form-field>
+    </div>
+
+    <div class="display-inline-block width25">
+      <mat-form-field class="width80 margin-auto">
+        <input matInput [matDatepicker]="orderDate" formControlName="orderDate" placeholder="Date commande" required>
+        <mat-datepicker-toggle matSuffix [for]="orderDate"></mat-datepicker-toggle>
+        <mat-datepicker #orderDate></mat-datepicker>
+      </mat-form-field>
+    </div>
+    <div class="display-inline-block width25">
+      <mat-form-field class="width80 margin-auto">
+        <input matInput [matDatepicker]="relaunchClientDate" formControlName="relaunchClientDate" placeholder="Date dernière relance client">
+        <mat-datepicker-toggle matSuffix [for]="relaunchClientDate"></mat-datepicker-toggle>
+        <mat-datepicker #relaunchClientDate></mat-datepicker>
+      </mat-form-field>
+    </div>
+    <div class="display-inline-block width25">
+      <mat-form-field class="width80 margin-auto">
+        <input matInput [matDatepicker]="balanceInvoiceDate" formControlName="balanceInvoiceDate" placeholder="Date facture solde">
+        <mat-datepicker-toggle matSuffix [for]="balanceInvoiceDate"></mat-datepicker-toggle>
+        <mat-datepicker #balanceInvoiceDate></mat-datepicker>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <h4>Dates et lieu d'installation</h4>
+  <div>
+    <div class="display-inline-block width25">
+      <mat-form-field class="width80 margin-auto">
+        <input matInput [matDatepicker]="installationDate" formControlName="installationDate" placeholder="Date d'installation">
+        <mat-datepicker-toggle matSuffix [for]="installationDate"></mat-datepicker-toggle>
+        <mat-datepicker #installationDate></mat-datepicker>
+      </mat-form-field>
+    </div>
+    <div class="display-inline-block width25">
+      <mat-form-field class="width80 margin-auto" >
+        <input type="text" matInput formControlName="installationHours" placeholder="Horaires d'installation">
+      </mat-form-field>
+    </div>
+    <mat-form-field class="width100 margin-auto">
+      <input type="text" matInput formControlName="installationContact" placeholder="Nom et coordonnées du contact sur place">
+    </mat-form-field>
+    <mat-form-field class="width100 margin-auto">
+      <input type="text" matInput formControlName="installationAddress" placeholder="Adresse">
+    </mat-form-field>
+    <mat-form-field class="width30 margin-right">
+      <input type="number" matInput formControlName="installationZipcode" placeholder="Code postal">
+    </mat-form-field>
+    <mat-form-field class="width60 margin-auto">
+      <input type="text" matInput formControlName="installationTown" placeholder="Ville">
+    </mat-form-field>
+  </div>
+
+  <h4>Commentaires</h4>
+  <mat-form-field class="width100 margin-auto">
+    <input type="text" matInput formControlName="quotationComment" placeholder="Commentaires devis (apparaissent sur le devis)">
+  </mat-form-field>
+  <mat-form-field class="width100 margin-auto">
+    <input type="text" matInput formControlName="privateQuotationComment" placeholder="Commentaires privés (n'apparaissent pas sur le devis)">
+  </mat-form-field>
+  <mat-form-field class="width100 margin-auto">
+    <input type="text" matInput formControlName="orderComment" placeholder="Commentaires facture">
+  </mat-form-field>
+  <mat-form-field class="width100 margin-auto">
+    <input type="text" matInput formControlName="deliveryComment" placeholder="Commentaires bon de livraison">
+  </mat-form-field>
+  <h4>Prix HT</h4>
+  <div>
+    <mat-form-field class="width25 margin-right">
+      <input type="number" matInput formControlName="advanceRate" placeholder="Taux facture acompte">
+    </mat-form-field>
+    <mat-form-field class="width50 margin-right">
+      <input type="number" matInput formControlName="credit" placeholder="Acompte TTC versé par le client sur devis (sans facture d'acompte)">
+    </mat-form-field>
+  </div>
+
+</form>
+
+<form [formGroup]="detailOrderPricesForm" class="main-container">
+  <div>
+    <mat-form-field class="width30 margin-right">
+      <input type="number" matInput placeholder="Prix total avant remise" disabled [value]="detailOrderPricesForm.value.price">
+    </mat-form-field>
+    <!--p>{{createQuotationForm.value.price}}</p-->
+    <mat-form-field class="width30 margin-right">
+      <input type="number" matInput placeholder="Remise" disabled [value]="detailOrderPricesForm.value.discount">
+    </mat-form-field>
+    <mat-form-field class="width30">
+      <input type="number" matInput placeholder="Prix total remisé" disabled [value]="detailOrderPricesForm.value.discountPrice">
+    </mat-form-field>
+  </div>
+</form>
+
+<div class="main-container">
+  <h4>Scan devis client signé</h4>
+  <div *ngIf="downloadScanOrderURL==undefined">
+    <input type="file" placeholder="Photo" (change)="updateScanOrder($event)" #inputFile accept="image/*,.pdf">
+    <button mat-button>
+      <mat-icon color="warn" (click)="deleteScanOrder(inputFile)" *ngIf="scanOrderFile!=undefined">delete</mat-icon>
+    </button>
+  </div>
+  <div *ngIf="downloadScanOrderURL!=undefined">
+    <a [href]="downloadScanOrderURL | async" target="_blank"><mat-icon>picture_as_pdf</mat-icon></a>
+    <button mat-button>
+      <mat-icon color="warn" (click)="wantDeleteScanOrderOnFirestorage()" >delete</mat-icon>
+    </button>
+  </div>
+</div>
+
+<div class="button-container">
+  <button mat-raised-button color="primary" type="button" (click)="wantUpdateOrder(false)" [disabled]="!detailOrderForm.valid">Enregistrer</button>
+  <!--button mat-raised-button color="warn" type="button" (click)="wantDeleteOrder()">Supprimer</button-->
+  <a routerLink="/list-orders" mat-raised-button>Annuler</a>
+  <button mat-raised-button color="accent" type="button" (click)="wantGeneratePreparationReceiptPdf()"><mat-icon>picture_as_pdf</mat-icon> Bon préparation</button>
+  <button mat-raised-button color="accent" type="button" (click)="wantGenerateDeliveryReceiptPdf()"><mat-icon>picture_as_pdf</mat-icon> Bon livraison</button>
+  <button mat-raised-button color="accent" type="button" (click)="wantGenerateAdvanceInvoicePdf()"><mat-icon>picture_as_pdf</mat-icon> Fa-acompte</button>
+  <button mat-raised-button color="accent" type="button" (click)="wantGenerateBalanceInvoicePdf()"><mat-icon>picture_as_pdf</mat-icon> Fa-solde</button>
+  <button mat-raised-button color="accent" type="button" (click)="wantArchiveOrder()"><mat-icon *ngIf="orderTypeParams.isArchived=='false'">archive</mat-icon><mat-icon *ngIf="orderTypeParams.isArchived=='true'">unarchive</mat-icon>{{orderTypeParams.templateButton}}</button>
+</div>

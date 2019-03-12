@@ -1,0 +1,60 @@
+<div class="main-container">
+  <h2>{{orderTypeParams.displayInTemplate}}</h2>
+
+  <mat-form-field>
+    <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Rechercher">
+  </mat-form-field>
+
+  <table mat-table [dataSource]="dataSource" matSort matSortActive="orderDate" matSortDirection="desc" matSortDisableClear class="mat-elevation-z8">
+
+    <!-- Id Column -->
+    <ng-container matColumnDef="id">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Id </th>
+      <td mat-cell *matCellDef="let element"> {{element.id}} </td>
+    </ng-container>
+
+    <!-- Client Name Column -->
+    <ng-container matColumnDef="client">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Client </th>
+      <td mat-cell *matCellDef="let element"> {{element.client}} </td>
+    </ng-container>
+
+    <!-- Contact Client Column -->
+    <ng-container matColumnDef="contact">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Contact </th>
+      <td mat-cell *matCellDef="let element"> {{element.contact}} </td>
+    </ng-container>
+
+    <!-- Date Column -->
+    <ng-container matColumnDef="orderDate">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Date commande </th>
+      <td mat-cell *matCellDef="let element"> {{element.orderDate.toDate() | date:'dd/MM/yyyy'}} </td>
+    </ng-container>
+
+    <!-- Edit Column -->
+    <ng-container matColumnDef="edit">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let element" >
+        <button mat-button>
+          <mat-icon color="primary" (click)="editOrder($event.target.id)" [id]="element.id">edit</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <!-- Delete Column -->
+    <!--ng-container matColumnDef="delete">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let element" >
+        <button mat-button>
+          <mat-icon color="warn" (click)="wantDeleteOrder($event.target.id)" [id]="element.id">delete</mat-icon>
+        </button>
+      </td>
+    </ng-container-->
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+
+  <mat-paginator [pageSizeOptions]="[10, 20, 30]" showFirstLastButtons></mat-paginator>
+
+</div>

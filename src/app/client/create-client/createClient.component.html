@@ -1,0 +1,83 @@
+<form [formGroup]="createClientForm" class="main-container">
+  <h2>Nouveau client</h2>
+  <mat-form-field>
+    <input type="text" matInput formControlName="name" placeholder="Nom" required>
+    <mat-error *ngIf="name.invalid">Veuillez renseigner le nom.</mat-error>
+    <!--mat-icon matSuffix>sentiment_very_satisfied</mat-icon>
+    <mat-hint>Requis</mat-hint-->
+  </mat-form-field>
+  <mat-form-field>
+    <input type="text" matInput formControlName="address" placeholder="Adresse">
+  </mat-form-field>
+  <mat-form-field>
+    <input type="number" matInput formControlName="zipcode" placeholder="Code postal">
+  </mat-form-field>
+  <mat-form-field>
+    <input type="text" matInput formControlName="town" placeholder="Ville">
+  </mat-form-field>
+  <mat-form-field>
+    <input type="text" matInput formControlName="country" placeholder="Pays">
+  </mat-form-field>
+  <mat-form-field>
+    <input type="tel" matInput formControlName="phone" placeholder="Téléphone">
+  </mat-form-field>
+  <!--mat-form-field>
+    <input type="email" matInput formControlName="email" placeholder="Email" required>
+    <mat-error *ngIf="email.invalid">{{getEmailErrorMessage()}}</mat-error>
+  </mat-form-field-->
+  <div formArrayName="contacts">
+    <div *ngFor="let contact of contacts.controls; let i=index" class="form-array-container">
+      <!-- The repeated alias template -->
+      <div [formGroupName]="i" >
+        <mat-form-field class="width50 margin-right">
+          <input type="text" matInput formControlName="contactName" placeholder="Nom du contact">
+        </mat-form-field>
+        <mat-form-field class="width30 margin-right">
+          <input type="text" matInput formControlName="contactFunction" placeholder="Fonction du contact">
+        </mat-form-field>
+        <mat-form-field class="width40 margin-right">
+          <input type="email" matInput formControlName="contactEmail" placeholder="Email du contact" required>
+          <!--mat-error *ngIf="email.invalid">{{getEmailErrorMessage()}}</mat-error-->
+        </mat-form-field>
+        <mat-form-field class="width20 margin-right">
+          <input type="text" matInput formControlName="contactPhone" placeholder="Téléphone fixe du contact">
+        </mat-form-field>
+        <mat-form-field class="width20 margin-right">
+          <input type="text" matInput formControlName="contactCellPhone" placeholder="Téléphone portable du contact">
+        </mat-form-field>
+        <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmContacts(i)" class="suppr-button">Supprimer</button>
+      </div>
+    </div>
+    <button mat-raised-button color="accent" type="button" *ngIf="createClientForm.value.contacts[createClientForm.value.contacts.length-1]!=''" (click)="addContacts()" class="margin-bottom-1">Ajouter contact</button>
+  </div>
+  <mat-form-field>
+    <input type="text" matInput formControlName="comment" placeholder="Commentaires">
+  </mat-form-field>
+  <div>
+    <div class="display-inline-block width50">
+      <mat-form-field class="width50 margin-auto">
+        <input type="number" matInput formControlName="discount" placeholder="Remise">
+        <span matSuffix>%</span>
+      </mat-form-field>
+    </div>
+    <div class="display-inline-block width50 margin-auto">
+      <label>Contrat de maintenance : </label>
+      <mat-radio-group formControlName="maintenance">
+        <mat-radio-button value="true">Oui</mat-radio-button>
+        <mat-radio-button value="false">Non</mat-radio-button>
+      </mat-radio-group>
+    </div>
+  </div>
+
+  <!--p>
+    Form Status: {{ createClientForm.status }}
+  </p-->
+</form>
+<div class="button-container">
+  <button mat-raised-button color="primary" type="button" (click)="addClient()" [disabled]="!createClientForm.valid">Enregistrer</button>
+  <a routerLink="/list-clients" mat-raised-button>Annuler</a>
+</div>
+
+
+
+
