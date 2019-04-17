@@ -48,10 +48,7 @@
       </div>
       <button mat-raised-button color="accent" type="button" *ngIf="createQuotationForm.value.singleProduct[createQuotationForm.value.singleProduct.length-1]!=''" (click)="addSingleProduct()" class="margin-bottom-1">Ajouter produit simple</button>
     </div>
-    <div class="display-inline-block">
-    </div>
   </div>
-
 
   <h4 class="margin-bottom-0-5">Produits composés</h4>
   <p class="info">Le premier élément de la liste est celui dont le nom et la photo apparaîtront dans les devis et factures.</p>
@@ -71,23 +68,34 @@
       </div>
       <button mat-raised-button color="accent" type="button" *ngIf="createQuotationForm.value.compositeProduct[createQuotationForm.value.compositeProduct.length-1]!=''" (click)="addCompositeProduct()" class="margin-bottom-1">Ajouter élément composé</button>
     </div>
-
     <div class="display-inline-block">
       <mat-form-field class="width100 margin-auto">
         <input type="number" matInput formControlName="compositeProductAmount" placeholder="Quantité produit composé">
       </mat-form-field>
     </div>
-
   </div>
 
   <h4 class="margin-bottom-0-5">Prestation particulière</h4>
-  <div>
+  <!--div>
     <mat-form-field class="width60 margin-right">
       <input type="text" matInput formControlName="specialProductName" placeholder="Intitulé prestation (frais kilométriques...)">
     </mat-form-field>
     <mat-form-field class="width30 margin-auto">
       <input type="number" matInput formControlName="specialProductPrice" placeholder="Prix prestation particulière">
     </mat-form-field>
+  </div-->
+  <div formArrayName="specialProduct">
+    <div *ngFor="let product of specialProduct.controls; let i=index" class="form-array-container">
+      <!-- The repeated alias template -->
+      <mat-form-field class="width70 margin-right">
+        <input matInput type="text" placeholder="Produit spécial (frais kilométriques...)" aria-label="Produit spécial" [formControlName]="i">
+      </mat-form-field>
+      <mat-form-field class="width15 margin-right">
+        <input type="number" matInput placeholder="Prix produit spécial" #inputSpecialProductPrice (click)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" (keyup)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" [value]="this.createQuotationForm.value.specialProductPrice[i]">
+      </mat-form-field>
+      <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmSpecialProduct(i)" class="suppr-button margin-right">Supprimer</button>
+    </div>
+    <button mat-raised-button color="accent" type="button" *ngIf="createQuotationForm.value.specialProduct[createQuotationForm.value.specialProduct.length-1]!=''" (click)="addSpecialProduct()" class="margin-bottom-1">Ajouter produit spécial</button>
   </div>
 
   <h4>Dates</h4>
@@ -153,8 +161,11 @@
 
   <h4>Lieu d'installation</h4>
   <div>
-    <mat-form-field class="width100 margin-auto">
-      <input type="text" matInput formControlName="installationContact" placeholder="Nom et coordonnées du contact sur place">
+    <mat-form-field class="width60 margin-right">
+      <input type="text" matInput formControlName="installationContactName" placeholder="Nom du contact sur place">
+    </mat-form-field>
+    <mat-form-field class="width30 margin-auto">
+      <input type="text" matInput formControlName="installationContactPhone" placeholder="Téléphone du contact sur place">
     </mat-form-field>
     <mat-form-field class="width100 margin-auto">
       <input type="text" matInput formControlName="installationAddress" placeholder="Adresse">
@@ -181,14 +192,14 @@
   <h4>Prix HT</h4>
   <div>
     <mat-form-field class="width30 margin-right">
-      <input type="number" matInput placeholder="Prix total avant remise" disabled [value]="createQuotationPricesForm.value.price">
+      <input type="number" matInput placeholder="Prix total HT avant remise" disabled [value]="createQuotationPricesForm.value.price">
     </mat-form-field>
     <!--p>{{createQuotationForm.value.price}}</p-->
     <mat-form-field class="width30 margin-right">
-      <input type="number" matInput placeholder="Remise" disabled [value]="createQuotationPricesForm.value.discount">
+      <input type="number" matInput placeholder="Remise sur locations en %" disabled [value]="createQuotationPricesForm.value.discount">
     </mat-form-field>
     <mat-form-field class="width30">
-      <input type="number" matInput placeholder="Prix total remisé" disabled [value]="createQuotationPricesForm.value.discountPrice">
+      <input type="number" matInput placeholder="Prix total HT remisé" disabled [value]="createQuotationPricesForm.value.discountPrice">
     </mat-form-field>
   </div>
 </form>

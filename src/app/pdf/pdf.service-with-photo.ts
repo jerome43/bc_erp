@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import {Order} from "../order/Order"
+//import {Order} from "../order/order"
 //import html2canvas from 'html2canvas';
 //import * as jsPDF from 'jspdf';
 //import html2pdf from 'html2pdf.js';

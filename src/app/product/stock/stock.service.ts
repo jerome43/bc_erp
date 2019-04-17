@@ -102,7 +102,7 @@ export class StockService {
             })
           }
           else { // cas où le produit n'est pas dans la liste des stocks
-            stockProductsData = { productId: product.id, productName: product.name, immoDates : [{orderId: orderId, immoDateFrom : immoDateFrom, immoDateTo : immoDateTo, quantity : productsAmount[idx]}]};
+            stockProductsData = { productId: product.id, productName: product.name, productStock: product.stock, immoDates : [{orderId: orderId, immoDateFrom : immoDateFrom, immoDateTo : immoDateTo, quantity : productsAmount[idx]}]};
             this.db.doc<StockProducts>('stockProducts/' + product.id).set(stockProductsData).then(()=> {
               console.log('stock mis à jour.');
             })

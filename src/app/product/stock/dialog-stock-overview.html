@@ -2,15 +2,21 @@
   <h4>Immobilisations du produit {{data.detailStock.name}} du {{data.displayedDateFrom}} au {{data.displayedDateTo}}</h4>
   <table class="tableViewDetailStock" *ngIf="data.detailStock!=null">
     <tr>
-      <th>dates</th>
-      <th>quantités</th>
-      <th>commande</th>
+      <th>dates d'immobilisation</th>
+      <th>stock total</th>
+      <th>stock immobilisé</th>
+      <th>commande concernée</th>
     </tr>
-    <tr *ngFor="let immoDates of data.detailStock.immoDates">
-      <td class="tableViewDetailStock-date" *ngIf="(immoDates.immoDateTo.seconds>=data.dateFrom && immoDates.immoDateTo.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds>=data.dateFrom && immoDates.immoDateFrom.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds<=data.dateFrom && immoDates.immoDateTo.seconds>=data.dateTo)">{{immoDates.immoDateFrom.toDate().toLocaleDateString()}} au {{immoDates.immoDateTo.toDate().toLocaleDateString()}}</td>
-      <td class="tableViewDetailStock-quantity" *ngIf="(immoDates.immoDateTo.seconds>=data.dateFrom && immoDates.immoDateTo.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds>=data.dateFrom && immoDates.immoDateFrom.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds<=data.dateFrom && immoDates.immoDateTo.seconds>=data.dateTo)">{{immoDates.quantity}}</td>
-      <td class="tableViewDetailStock-orderId" *ngIf="(immoDates.immoDateTo.seconds>=data.dateFrom && immoDates.immoDateTo.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds>=data.dateFrom && immoDates.immoDateFrom.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds<=data.dateFrom && immoDates.immoDateTo.seconds>=data.dateTo)">{{immoDates.orderId}}</td>
-    </tr>
+    <ng-container *ngFor="let immoDates of data.detailStock.immoDates">
+      <ng-container *ngIf="(immoDates.immoDateTo.seconds>=data.dateFrom && immoDates.immoDateTo.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds>=data.dateFrom && immoDates.immoDateFrom.seconds<=data.dateTo) || (immoDates.immoDateFrom.seconds<=data.dateFrom && immoDates.immoDateTo.seconds>=data.dateTo)">
+        <tr>
+          <td class="tableViewDetailStock-first">{{immoDates.immoDateFrom.toDate().toLocaleDateString()}} au {{immoDates.immoDateTo.toDate().toLocaleDateString()}}</td>
+          <td class="tableViewDetailStock-next">{{data.detailStock.productStock}}</td>
+          <td class="tableViewDetailStock-next">{{immoDates.quantity}}</td>
+          <td class="tableViewDetailStock-next">{{immoDates.orderId}}</td>
+        </tr>
+      </ng-container>
+    </ng-container>
   </table>
   <p>{{data.message}}</p>
 </div>

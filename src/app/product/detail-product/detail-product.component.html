@@ -28,20 +28,20 @@
       <mat-radio-button value="service">prestation de service</mat-radio-button>
     </mat-radio-group>
   </div>
-  <div class="margin-bottom-1" *ngIf="isSellable==false">
+  <div class="margin-bottom-1" *ngIf="detailProductForm.value.type=='rental'">
     <label>Appliquer prix dégressifs : </label>
     <mat-radio-group formControlName="apply_degressivity">
       <mat-radio-button value="true">Oui</mat-radio-button>
       <mat-radio-button value="false">Non</mat-radio-button>
     </mat-radio-group>
   </div>
-  <mat-form-field *ngIf="isSellable==true">
+  <mat-form-field *ngIf="detailProductForm.value.type=='sale' || detailProductForm.value.type=='service'">
     <input type="number" matInput formControlName="sell_price" placeholder="Prix de vente / prestation de service" required>
   </mat-form-field>
-  <mat-form-field *ngIf="isSellable==false">
+  <mat-form-field *ngIf="detailProductForm.value.type=='rental'">
     <input type="number" matInput formControlName="rent_price" placeholder="Prix de location" required>
   </mat-form-field>
-  <mat-form-field *ngIf="isSellable==false && apply_degressivity==true">
+  <mat-form-field *ngIf="detailProductForm.value.type=='rental'">
     <input type="number" matInput formControlName="stock" placeholder="Stock" required>
     <mat-error *ngIf="stock.invalid">Veuillez renseigner le stock</mat-error>
   </mat-form-field>

@@ -92,7 +92,8 @@ export class StockComponent implements OnInit {
         const immosFromDateToDate = this.immosFromDateToDate(stockProduct);
         const id = stockProduct.productId;
         const name = stockProduct.productName;
-        this.stockProductsData.push({id, name, immosFromDateToDate, immoDates})}
+        const productStock = stockProduct.productStock;
+        this.stockProductsData.push({id, name, productStock, immosFromDateToDate, immoDates})}
       );
       this.dataSource = new MatTableDataSource<StockId>(this.stockProductsData);
       this.dataSource.paginator = this.paginator; // pagination du tableau

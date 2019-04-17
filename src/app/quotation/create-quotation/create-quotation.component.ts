@@ -258,6 +258,23 @@ export class CreateQuotationComponent implements OnInit {
     this.compositeProduct.removeAt(Number(i));
   }
 
+  get specialProduct() {
+    return this.createQuotationForm.get('specialProduct') as FormArray;
+  }
+
+  addSpecialProduct() {
+    this.specialProduct.push(this.fb.control(''));
+  }
+
+  rmSpecialProduct(i) {
+    this.specialProduct.removeAt(Number(i));
+  }
+  private setSpecialProductPrice(index: number, value: number) {
+    console.log("createQuotationForm.specialProductPrice:", this.createQuotationForm.value);
+    this.createQuotationForm.value.specialProductPrice[index] = Number(value);
+    this.setPrice(this.computePriceService.computePrices(this.createQuotationForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
+  }
+
 
   initForm() {
      this.createQuotationForm = this.fb.group({
@@ -287,8 +304,10 @@ export class CreateQuotationComponent implements OnInit {
          this.fb.control('')
        ]),
        compositeProductAmount: [1],
-       specialProductName: [''],
-       specialProductPrice: [0],
+       specialProduct: this.fb.array([
+         this.fb.control('')
+       ]),
+       specialProductPrice: [[0]],
        rentDateFrom: [''],
        rentDateTo: [''],
        immoDateFrom: [''],
@@ -302,7 +321,8 @@ export class CreateQuotationComponent implements OnInit {
        installationTown: [''],
        installationDate: [''],
        installationHours: [''],
-       installationContact: [''],
+       installationContactName: [''],
+       installationContactPhone: [''],
     });
     this.createQuotationForm.valueChanges.subscribe(data => {
       console.log('Form quotation changes', data);
@@ -369,7 +389,7 @@ export class CreateQuotationComponent implements OnInit {
   setPrice(prices) {
     this.createQuotationPricesForm.value.price = prices.price;
     this.createQuotationPricesForm.value.discount= prices.discount;
-    this.createQuotationPricesForm.value.discountPrice = prices.price - prices.price*prices.discount/100;
+    this.createQuotationPricesForm.value.discountPrice = prices.discountPrice;
   }
 
   updateNumeroQuotation():string { // pour incrémenter le numéro du devis en fonction de l'année et du mois de création du devis

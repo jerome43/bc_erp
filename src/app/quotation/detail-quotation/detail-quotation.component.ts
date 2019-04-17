@@ -173,15 +173,17 @@ export class DetailQuotationComponent implements OnInit {
     console.log("testLackStock : ", products, ' / ', productsAmount);
 
     products.forEach((product, idx)=>{
-      var productImmo = productsImmo.filter(immo => immo.product.id===product.id && immo.isImmo===true && immo.orderId!=this.quotationId);
-      var quantityProductImmo=productsAmount[idx];
-      console.log("productsAmount[idx]", productsAmount[idx], " productImmo ", productImmo);
-      for (var i=0; i<productImmo.length; i++) {
-        quantityProductImmo+=productImmo[i].quantity;
-        console.log("quantityProductImmo : ", quantityProductImmo);
-      }
-      if (quantityProductImmo>product.stock) {
-        this.openDialogMessage("Attention les stocks du produit " + product.name + " sont insuffisants. Commandes en conflit : " + productImmo.map(e => ["commande "+ e.orderId + ' du '+ e.immoDateFrom.toDate().toLocaleDateString()+ ' au '+ e.immoDateTo.toDate().toLocaleDateString()+ ', quantité '+ e.quantity]).join("  /  "));
+      if (product.type==="rental") {
+        var productImmo = productsImmo.filter(immo => immo.product.id === product.id && immo.isImmo === true && immo.orderId != this.quotationId);
+        var quantityProductImmo = productsAmount[idx];
+        console.log("productsAmount[idx]", productsAmount[idx], " productImmo ", productImmo);
+        for (var i = 0; i < productImmo.length; i++) {
+          quantityProductImmo += productImmo[i].quantity;
+          console.log("quantityProductImmo : ", quantityProductImmo);
+        }
+        if (quantityProductImmo > product.stock) {
+          this.openDialogMessage("Attention les stocks du produit " + product.name + " sont insuffisants. Commandes en conflit : " + productImmo.map(e => ["commande " + e.orderId + ' du ' + e.immoDateFrom.toDate().toLocaleDateString() + ' au ' + e.immoDateTo.toDate().toLocaleDateString() + ', quantité ' + e.quantity]).join("  /  "));
+        }
       }
     });
   }
@@ -229,6 +231,7 @@ export class DetailQuotationComponent implements OnInit {
           console.log("observe quotation :", quotation);
           this.setSingleProducts(quotation.singleProduct.length);
           this.setCompositeProducts(quotation.compositeProduct.length);
+          this.setSpecialProducts(quotation.specialProduct.length);
           console.log("quotation.quotationDate (TimeStamp) : ", quotation.quotationDate);
           this.detailQuotationForm.patchValue(quotation);
           // convert from TimeStamp (saved in firebase) to Date (used by angular DatePicker)
@@ -374,6 +377,33 @@ export class DetailQuotationComponent implements OnInit {
     this.compositeProduct.removeAt(Number(i));
   }
 
+  get specialProduct() {
+    return this.detailQuotationForm.get('specialProduct') as FormArray;
+  }
+
+  addSpecialProduct() {
+    this.specialProduct.push(this.fb.control(''));
+  }
+
+  rmSpecialProduct(i) {
+    this.specialProduct.removeAt(Number(i));
+  }
+  private setSpecialProductPrice(index: number, value: number) {
+    console.log("detailQuotationForm.specialProductPrice:", this.detailQuotationForm.value);
+    this.detailQuotationForm.value.specialProductPrice[index] = Number(value);
+    this.setPrice(this.computePriceService.computePrices(this.detailQuotationForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
+  }
+
+  setSpecialProducts(l) {
+    while (this.specialProduct.length !== 1) {
+      this.specialProduct.removeAt(1)
+    }
+    this.detailQuotationForm.value.specialProductPrice = [0];
+    for (var i=0; i<l-1; i++) {
+      this.addSpecialProduct();
+    }
+  }
+
 
   initForm() {
     this.detailQuotationForm = this.fb.group({
@@ -403,8 +433,10 @@ export class DetailQuotationComponent implements OnInit {
         this.fb.control('')
       ]),
       compositeProductAmount: [1],
-      specialProductName: [''],
-      specialProductPrice: [0],
+      specialProduct: this.fb.array([
+        this.fb.control('')
+      ]),
+      specialProductPrice: [[0]],
       rentDateFrom: [''],
       rentDateTo: [''],
       immoDateFrom: [''],
@@ -418,7 +450,8 @@ export class DetailQuotationComponent implements OnInit {
       installationTown: [''],
       installationDate: [''],
       installationHours: [''],
-      installationContact: [''],
+      installationContactName: [''],
+      installationContactPhone: [''],
     });
     this.detailQuotationForm.valueChanges.subscribe(data => {
       console.log('Form quotation changes', data);
@@ -594,7 +627,8 @@ export class DetailQuotationComponent implements OnInit {
   setPrice(prices) {
     this.detailQuotationPricesForm.value.price = prices.price;
     this.detailQuotationPricesForm.value.discount= prices.discount;
-    this.detailQuotationPricesForm.value.discountPrice = prices.price - prices.price*prices.discount/100;
+    //this.detailQuotationPricesForm.value.discountPrice = prices.price - prices.price*prices.discount/100;
+    this.detailQuotationPricesForm.value.discountPrice = prices.discountPrice;
   }
 
   wantGenerateQuotationPdf() {

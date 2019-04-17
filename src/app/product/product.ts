@@ -6,7 +6,6 @@ export class Product {
   internal_number: string;
  // barcode: string;
   stock: number; // nombre de produits en stock
-  //sellable: string; // "true" pour produit destiné à la vente, "false" pour produit destiné à la location ou prestation de service
   type: string; // "sale" pour produit destiné à la vente, "rental" pour produit destiné à la location, "service" pour prestation de service
   sell_price: number;
   rent_price : number;

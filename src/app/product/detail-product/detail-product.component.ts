@@ -26,8 +26,6 @@ export class DetailProductComponent implements OnInit, OnDestroy {
   private productId: String; // id du produit récupéré en paramètre de l'url
   private productSubscription : Subscription; // nécessaire pour pouvoir arrêter l'obervation du produit lorsqu'on quitte le composant (conf ngOnDestry())
   private detailProductForm; // le formulaire de mise à jour du produit utilisé par le template
-  private isSellable: boolean; // utilisé pour indiquer si le produit est en vente (true) ou en location (false)
-  private apply_degressivity:boolean;// utilisé pour indiquer si c'est un produit en location de type degressif (true) ou de type prestation de service (false)
   private uploadPhotoPercent: Observable<number>; // pour mettre à jour dans le template le pourcentage de téléchargement de la photo
   private downloadPhotoURL: Observable<string>; // l'url de la photo sur firestorage (! ce n'est pas la référence)
   private photoFile:File; //le fichier de la photo du produit à uploader
@@ -120,8 +118,6 @@ export class DetailProductComponent implements OnInit, OnDestroy {
   get stock() { return this.detailProductForm.get('stock'); }
 
   initForm() {
-    this.isSellable=false;
-    this.apply_degressivity=true;
     this.detailProductForm = this.fb.group({
       name: ['', Validators.required],
       description: [''],
@@ -142,16 +138,9 @@ export class DetailProductComponent implements OnInit, OnDestroy {
       console.log ("photoFile : "+this.photoFile);
       if (this.bug==true) {this.detailProductForm.value.photo='';}
       if (data.type=='sale' || data.type=="service") {
-        this.isSellable=true;
         if (data.apply_degressivity==="true") {this.detailProductForm.controls['apply_degressivity'].patchValue('false');}
         //this.detailProductForm.value.apply_degressivity="false";
       }
-      else {this.isSellable=false}
-
-      if (data.apply_degressivity=='true') {
-        this.apply_degressivity=true;
-      }
-      else {this.apply_degressivity=false}
     });
   }
 

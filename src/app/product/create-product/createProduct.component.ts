@@ -1,4 +1,5 @@
 import { Component, OnInit, Inject, ViewChild, ElementRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { Product } from '../product';
 import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
@@ -19,8 +20,6 @@ export interface DialogCreateProductData {
 
 export class CreateProductComponent implements OnInit {
 
-  private isSellable:boolean;// utilisé pour indiquer si le produit est en vente ou prestation de service (true) ou en location (false)
-  private apply_degressivity:boolean;// utilisé pour indiquer si c'est un produit en location de type degressif (true) ou de type prestation de service (false)
   private createProductForm;
   private productsCollection: AngularFirestoreCollection<Product>;
   //private uploadPercent: Observable<number>;
@@ -28,8 +27,7 @@ export class CreateProductComponent implements OnInit {
   private photoFile:File;
   @ViewChild('inputPhoto') inputPhoto: ElementRef;
 
-
-  constructor(db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog, private storage: AngularFireStorage) {
+  constructor(private router: Router, db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog, private storage: AngularFireStorage) {
     this.productsCollection = db.collection('products');
   }
 
@@ -107,7 +105,7 @@ export class CreateProductComponent implements OnInit {
     if (this.photoFile!=undefined) {this.createProductForm.value.photo='products/'+this.photoFile.name;}
     this.productsCollection.add(this.createProductForm.value).then(data => {
       console.log("Document written with ID: ", data.id);
-      this.openDialogProductAdded('Le produit a bien été enregistré sous le numéro ' + data.id)});
+      this.openDialogProductAdded('Le produit a bien été enregistré sous le numéro ' + data.id, data.id)});
   }
 
   get name() { return this.createProductForm.get('name'); }
@@ -115,7 +113,7 @@ export class CreateProductComponent implements OnInit {
   get stock() { return this.createProductForm.get('stock'); }
 
 
-  openDialogProductAdded(message): void {
+  openDialogProductAdded(message, id): void {
     const dialogRef = this.dialog.open(DialogCreateProductOverview, {
       width: '450px',
       data: {message: message}
@@ -123,7 +121,8 @@ export class CreateProductComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       console.log('The dialog was closed');
-      this.initForm();
+     // this.initForm();
+      this.router.navigate(['detail-product/'+id]);
     });
   }
 
@@ -139,8 +138,6 @@ export class CreateProductComponent implements OnInit {
   }
 
   initForm() {
-    this.isSellable=false;
-    this.apply_degressivity=true;
     this.photoFile=undefined;
     this.inputPhoto.nativeElement.value='';
      this.createProductForm = this.fb.group({
@@ -161,15 +158,8 @@ export class CreateProductComponent implements OnInit {
     this.createProductForm.valueChanges.subscribe(data => {
       console.log('Form changes', data);
       if (data.type=='sale' || data.type=='service') {
-        this.isSellable=true;
         if (data.apply_degressivity==="true") {this.createProductForm.controls['apply_degressivity'].patchValue('false');}
       }
-      else {this.isSellable=false}
-
-      if (data.apply_degressivity=='true') {
-        this.apply_degressivity=true;
-      }
-      else {this.apply_degressivity=false}
     });
   }
 }

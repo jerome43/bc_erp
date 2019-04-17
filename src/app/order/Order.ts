@@ -12,8 +12,8 @@ export class Order {
   singleProduct: Product[];
   compositeProduct: Product[];
   compositeProductAmount: number;
-  specialProductName : string;
-  specialProductPrice : number;
+  specialProduct: string[];
+  specialProductPrice: number[];
   rentDateFrom: Timestamp;
   rentDateTo: Timestamp;
   immoDateFrom: Timestamp;
@@ -26,7 +26,8 @@ export class Order {
   installationTown: string;
   installationDate: Timestamp;
   installationHours: string;
-  installationContact: string;
+  installationContactName: string;
+  installationContactPhone: string;
   orderDate: Timestamp;
   scanOrder: string;
   balanceInvoiceDate:Timestamp;

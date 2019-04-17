@@ -188,15 +188,17 @@ export class DetailOrderComponent implements OnInit {
     console.log("testLackStock : ", products, ' / ', productsAmount);
 
     products.forEach((product, idx)=>{
-      var productImmo = productsImmo.filter(immo => immo.product.id===product.id && immo.isImmo===true && immo.orderId!=this.orderId);
-      var quantityProductImmo=productsAmount[idx];
-      console.log("productsAmount[idx]", productsAmount[idx], " productImmo ", productImmo);
-      for (var i=0; i<productImmo.length; i++) {
-        quantityProductImmo+=productImmo[i].quantity;
-        console.log("quantityProductImmo : ", quantityProductImmo);
-      }
-      if (quantityProductImmo>product.stock) {
-        this.openDialogMessage("Attention les stocks du produit " + product.name + " sont insuffisants. Commandes en conflit : " + productImmo.map(e => ["commande "+ e.orderId + ' du '+ e.immoDateFrom.toDate().toLocaleDateString()+ ' au '+ e.immoDateTo.toDate().toLocaleDateString()+ ', quantité '+ e.quantity]).join("  /  "));
+      if (product.type==="rental") {
+        var productImmo = productsImmo.filter(immo => immo.product.id===product.id && immo.isImmo===true && immo.orderId!=this.orderId);
+        var quantityProductImmo=productsAmount[idx];
+        console.log("productsAmount[idx]", productsAmount[idx], " productImmo ", productImmo);
+        for (var i=0; i<productImmo.length; i++) {
+          quantityProductImmo+=productImmo[i].quantity;
+          console.log("quantityProductImmo : ", quantityProductImmo);
+        }
+        if (quantityProductImmo>product.stock) {
+          this.openDialogMessage("Attention les stocks du produit " + product.name + " sont insuffisants. Commandes en conflit : " + productImmo.map(e => ["commande "+ e.orderId + ' du '+ e.immoDateFrom.toDate().toLocaleDateString()+ ' au '+ e.immoDateTo.toDate().toLocaleDateString()+ ', quantité '+ e.quantity]).join("  /  "));
+        }
       }
     });
   }
@@ -235,6 +237,7 @@ export class DetailOrderComponent implements OnInit {
           console.log("observe order :", order);
           this.setSingleProducts(order.singleProduct.length);
           this.setCompositeProducts(order.compositeProduct.length);
+          this.setSpecialProducts(order.specialProduct.length);
           console.log("order.orderDate (TimeStamp) : ", order.orderDate);
           this.detailOrderForm.patchValue(order);
           // convert from TimeStamp (saved in firebase) to Date (used by angular DatePicker)
@@ -383,6 +386,35 @@ export class DetailOrderComponent implements OnInit {
     this.compositeProduct.removeAt(Number(i));
   }
 
+  get specialProduct() {
+    return this.detailOrderForm.get('specialProduct') as FormArray;
+  }
+
+  addSpecialProduct() {
+    this.specialProduct.push(this.fb.control(''));
+  }
+
+  rmSpecialProduct(i) {
+    this.specialProduct.removeAt(Number(i));
+  }
+
+  private setSpecialProductPrice(index: number, value: number) {
+    console.log("detailOrderForm.specialProductPrice:", this.detailOrderForm.value);
+    this.detailOrderForm.value.specialProductPrice[index] = Number(value);
+    this.setPrice(this.computePriceService.computePrices(this.detailOrderForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
+  }
+
+  setSpecialProducts(l) {
+    while (this.specialProduct.length !== 1) {
+      this.specialProduct.removeAt(1)
+    }
+    this.detailOrderForm.value.specialProductPrice = [0];
+    for (var i=0; i<l-1; i++) {
+      this.addSpecialProduct();
+    }
+  }
+
+
   initForm() {
     this.detailOrderForm = this.fb.group({
       client: ['', Validators.required],
@@ -411,8 +443,10 @@ export class DetailOrderComponent implements OnInit {
         this.fb.control('')
       ]),
       compositeProductAmount: [1],
-      specialProductName: [''],
-      specialProductPrice: [0],
+      specialProduct: this.fb.array([
+        this.fb.control('')
+      ]),
+      specialProductPrice: [[0]],
       rentDateFrom: [''],
       rentDateTo: [''],
       immoDateFrom: [''],
@@ -426,7 +460,8 @@ export class DetailOrderComponent implements OnInit {
       installationTown: [''],
       installationDate: [''],
       installationHours: [''],
-      installationContact: [''],
+      installationContactName: [''],
+      installationContactPhone: [''],
       orderDate: ['', Validators.required],
       scanOrder: [''],
       balanceInvoiceDate: [''],
@@ -575,7 +610,8 @@ export class DetailOrderComponent implements OnInit {
   setPrice(prices) {
     this.detailOrderPricesForm.value.price = prices.price;
     this.detailOrderPricesForm.value.discount= prices.discount;
-    this.detailOrderPricesForm.value.discountPrice = prices.price - prices.price*prices.discount/100;
+    //this.detailOrderPricesForm.value.discountPrice = prices.price - prices.price*prices.discount/100;
+    this.detailOrderPricesForm.value.discountPrice = prices.discountPrice;
   }
 
 

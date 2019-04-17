@@ -77,13 +77,26 @@
   </div>
 
   <h4 class="margin-bottom-0-5">Prestation particulière</h4>
-  <div>
+  <!--div>
     <mat-form-field class="width60 margin-right">
       <input type="text" matInput formControlName="specialProductName" placeholder="Intitulé prestation (frais kilométriques...)">
     </mat-form-field>
     <mat-form-field class="width30 margin-auto">
       <input type="number" matInput formControlName="specialProductPrice" placeholder="Prix prestation particulière">
     </mat-form-field>
+  </div-->
+  <div formArrayName="specialProduct">
+    <div *ngFor="let product of specialProduct.controls; let i=index" class="form-array-container">
+      <!-- The repeated alias template -->
+      <mat-form-field class="width70 margin-right">
+        <input matInput type="text" placeholder="Produit spécial (frais kilométriques...)" aria-label="Produit spécial" [formControlName]="i">
+      </mat-form-field>
+      <mat-form-field class="width15 margin-right">
+        <input type="number" matInput placeholder="Prix produit spécial" #inputSpecialProductPrice (click)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" (keyup)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" [value]="this.detailOrderForm.value.specialProductPrice[i]">
+      </mat-form-field>
+      <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmSpecialProduct(i)" class="suppr-button margin-right">Supprimer</button>
+    </div>
+    <button mat-raised-button color="accent" type="button" *ngIf="detailOrderForm.value.specialProduct[detailOrderForm.value.specialProduct.length-1]!=''" (click)="addSpecialProduct()" class="margin-bottom-1">Ajouter produit spécial</button>
   </div>
 
   <h4>Dates</h4>
@@ -162,8 +175,11 @@
         <input type="text" matInput formControlName="installationHours" placeholder="Horaires d'installation">
       </mat-form-field>
     </div>
-    <mat-form-field class="width100 margin-auto">
-      <input type="text" matInput formControlName="installationContact" placeholder="Nom et coordonnées du contact sur place">
+    <mat-form-field class="width60 margin-right">
+      <input type="text" matInput formControlName="installationContactName" placeholder="Nom du contact sur place">
+    </mat-form-field>
+    <mat-form-field class="width30 margin-auto">
+      <input type="text" matInput formControlName="installationContactPhone" placeholder="Téléphone du contact sur place">
     </mat-form-field>
     <mat-form-field class="width100 margin-auto">
       <input type="text" matInput formControlName="installationAddress" placeholder="Adresse">
@@ -181,21 +197,21 @@
     <input type="text" matInput formControlName="quotationComment" placeholder="Commentaires devis (apparaissent sur le devis)">
   </mat-form-field>
   <mat-form-field class="width100 margin-auto">
-    <input type="text" matInput formControlName="privateQuotationComment" placeholder="Commentaires privés (n'apparaissent pas sur le devis)">
+    <input type="text" matInput formControlName="privateQuotationComment" placeholder="Commentaires privés (apparaissent sur le bon de préparation)">
   </mat-form-field>
   <mat-form-field class="width100 margin-auto">
-    <input type="text" matInput formControlName="orderComment" placeholder="Commentaires facture">
+    <input type="text" matInput formControlName="orderComment" placeholder="Commentaires facture (apparaissent sur les factures)">
   </mat-form-field>
   <mat-form-field class="width100 margin-auto">
-    <input type="text" matInput formControlName="deliveryComment" placeholder="Commentaires bon de livraison">
+    <input type="text" matInput formControlName="deliveryComment" placeholder="Commentaires bon de livraison (apparaissent sur le bon de livraison)">
   </mat-form-field>
   <h4>Prix HT</h4>
   <div>
     <mat-form-field class="width25 margin-right">
-      <input type="number" matInput formControlName="advanceRate" placeholder="Taux facture acompte">
+      <input type="number" matInput formControlName="advanceRate" placeholder="Taux facture acompte en %">
     </mat-form-field>
     <mat-form-field class="width50 margin-right">
-      <input type="number" matInput formControlName="credit" placeholder="Acompte TTC versé par le client sur devis (sans facture d'acompte)">
+      <input type="number" matInput formControlName="credit" placeholder="Acompte en € TTC versé par le client sur devis (sans facture d'acompte)">
     </mat-form-field>
   </div>
 
@@ -204,14 +220,14 @@
 <form [formGroup]="detailOrderPricesForm" class="main-container">
   <div>
     <mat-form-field class="width30 margin-right">
-      <input type="number" matInput placeholder="Prix total avant remise" disabled [value]="detailOrderPricesForm.value.price">
+      <input type="number" matInput placeholder="Prix total HT avant remise" disabled [value]="detailOrderPricesForm.value.price">
     </mat-form-field>
     <!--p>{{createQuotationForm.value.price}}</p-->
     <mat-form-field class="width30 margin-right">
-      <input type="number" matInput placeholder="Remise" disabled [value]="detailOrderPricesForm.value.discount">
+      <input type="number" matInput placeholder="Remise sur locations en %" disabled [value]="detailOrderPricesForm.value.discount">
     </mat-form-field>
     <mat-form-field class="width30">
-      <input type="number" matInput placeholder="Prix total remisé" disabled [value]="detailOrderPricesForm.value.discountPrice">
+      <input type="number" matInput placeholder="Prix total HT remisé" disabled [value]="detailOrderPricesForm.value.discountPrice">
     </mat-form-field>
   </div>
 </form>
