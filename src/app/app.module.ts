@@ -55,6 +55,7 @@ import {ListEmployeComponent} from "./employe/list-employe/list-employe.componen
 import {DialogCreateEmployeOverview} from "./employe/create-employe/createEmploye.component";
 import {DialogDetailEmployeOverview} from "./employe/detail-employe/detail-employe.component";
 import {DialogListEmployeOverview} from "./employe/list-employe/list-employe.component";
+import { MaintenanceComponent } from './maintenance/maintenance.component';
 
 
 @NgModule({
@@ -95,6 +96,7 @@ import {DialogListEmployeOverview} from "./employe/list-employe/list-employe.com
     DialogCreateEmployeOverview,
     DialogDetailEmployeOverview,
     DialogListEmployeOverview,
+    MaintenanceComponent,
   ],
   imports: [
     BrowserModule,

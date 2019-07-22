@@ -37,10 +37,10 @@ export class DetailQuotationComponent implements OnInit {
   private fbClients: Observable<ClientId[]>; // clients on Firebase
   private fbClientsSubscription : Subscription; // then we can unsubscribe after having subscribe
   private clientFormOptions =[]; // used by autocomplete client form
-  private clientFilteredOptions: Observable<ClientId[]>; // used by autocomplete client form
+  clientFilteredOptions: Observable<ClientId[]>; // used by autocomplete client form
 
   // for contact
-  private contactOptions:Observable<[Contact]>;// used by select contact form
+  contactOptions:Observable<[Contact]>;// used by select contact form
 
   // for product
   private fbProducts: Observable<ProductId[]>; // clients on Firebase
@@ -49,17 +49,17 @@ export class DetailQuotationComponent implements OnInit {
   private productFormOptionsFiltered: Observable<ProductId[]>; // used by autocomplete product form
 
   // for employe
-  private fbEmployes: Observable<EmployeId[]>; // employes on firebase
+  fbEmployes: Observable<EmployeId[]>; // employes on firebase
   private fbEmployesSubscription : Subscription; // // then we can unsubscribe after having subscribe
 
   // the global form that will be store on firestore as quotation
-  private detailQuotationForm;
-  private detailQuotationPricesForm;
-  private quotationId: string;
+  detailQuotationForm;
+  detailQuotationPricesForm;
+  quotationId: string;
   private quotationDoc: AngularFirestoreDocument<Quotation>;
   private quotation: Observable<Quotation>;
   private quotationSubscription : Subscription;
-  private quotationTypeParams={path:"quotations", isArchived:'false', templateTitle:"Editer devis en cours n° ", templateButton:"  archiver"}; // les paramètres liés au type de devis (archivés ou courant)
+  quotationTypeParams={path:"quotations", isArchived:'false', templateTitle:"Editer devis en cours n° ", templateButton:"  archiver"}; // les paramètres liés au type de devis (archivés ou courant)
   private numeroOrder:number;
 
   // stock gestion
@@ -83,12 +83,12 @@ export class DetailQuotationComponent implements OnInit {
         //const email = data.email;
         const contacts = data.contacts;
         const comment = data.comment;
-        const discount = data.discount;
+        const rentalDiscount = data.rentalDiscount;
+        const saleDiscount = data.saleDiscount;
         const maintenance = data.maintenance;
         const date = data.date;
         const id = a.payload.doc.id;
-        //this.clientFormOptions.push({id, name, address, zipcode, town, country, phone, email, contacts, comment, discount, maintenance, date});
-        this.clientFormOptions.push({id, name, address, zipcode, town, country, phone, contacts, comment, discount, maintenance, date});
+        this.clientFormOptions.push({id, name, address, zipcode, town, country, phone, contacts, comment, rentalDiscount, saleDiscount, maintenance, date});
         return {id, ...data };
       })));
 
@@ -142,8 +142,7 @@ export class DetailQuotationComponent implements OnInit {
     this.fbProductsSubscription = this.fbProducts.subscribe({ // subscribe to product change
       next(products) { console.log('Current products: ', products);},
       error(msg) { console.log('Error Getting products ', msg);},
-      complete() {console.log('complete');
-      }
+      complete() {console.log('complete'); }
     });
 
     this.productsImmoSubscription = this.stockService.getProductsImmo().subscribe(productsImmo => {
@@ -166,11 +165,21 @@ export class DetailQuotationComponent implements OnInit {
   }
 
   testLackStock(productsImmo) { // teste si le total des stocks sont suffisants
+    //console.log("testLackStock");
+    var products = this.detailQuotationForm.value.singleProduct.slice(); // make a copy of the array
+    //console.log("testLackStock products ", products);
+    for (var idxPdt = 0; idxPdt < this.detailQuotationForm.value.compositeProducts.length; idxPdt++) {
+      products = products.concat(this.detailQuotationForm.value.compositeProducts[idxPdt].compositeProductElements);
+    }
+    //console.log("testLackStock products ", products);
 
-    var products = this.detailQuotationForm.value.singleProduct.concat(this.detailQuotationForm.value.compositeProduct);
-    var productsAmount = this.detailQuotationForm.value.singleProductAmount.concat(this.detailQuotationForm.value.compositeProductAmount);
-    for (var i = 2; i<=this.detailQuotationForm.value.compositeProduct.length; i++) {productsAmount.push(this.detailQuotationForm.value.compositeProductAmount)}
-    console.log("testLackStock : ", products, ' / ', productsAmount);
+    var productsAmount = this.detailQuotationForm.value.singleProductAmount.slice();
+    for (var idxPdt = 0; idxPdt < this.detailQuotationForm.value.compositeProducts.length; idxPdt++) {
+      for (var i= 0; i< this.detailQuotationForm.value.compositeProducts[idxPdt].compositeProductElements.length; i++) {
+        productsAmount.push(this.detailQuotationForm.value.compositeProductAmount[idxPdt])
+      }
+    }
+    console.log("testLackStock products ", products, "testLackStock productsAmount ", productsAmount);
 
     products.forEach((product, idx)=>{
       if (product.type==="rental") {
@@ -225,13 +234,22 @@ export class DetailQuotationComponent implements OnInit {
 
   observeQuotation(quotationId: string) {
     console.log("observeQuotation : "+quotationId);
-    this.quotation = this.db.doc<Quotation>(this.quotationTypeParams.path+'/'+quotationId).valueChanges().pipe(
+    //this.quotation = this.db.doc<Quotation>(this.quotationTypeParams.path+'/'+quotationId).valueChanges().pipe(
+    this.quotation = this.db.doc<any>(this.quotationTypeParams.path+'/'+quotationId).valueChanges().pipe(
       tap(quotation => {
         if (quotation != undefined) {
           console.log("observe quotation :", quotation);
+
+          // pour assurer la compatibilité avec les anciens devis fait avant les multiples  produits composés
+          if (quotation.compositeProducts==undefined) {
+            quotation.compositeProductAmount = [quotation.compositeProductAmount];
+            quotation.compositeProducts=[{compositeProductElements: quotation.compositeProduct}];
+          }
+
           this.setSingleProducts(quotation.singleProduct.length);
-          this.setCompositeProducts(quotation.compositeProduct.length);
+          this.setCompositeProducts(quotation.compositeProducts);
           this.setSpecialProducts(quotation.specialProduct.length);
+          if (quotation.optionalProduct!=undefined && quotation.optionalProduct.length>0) {this.setOptionalProducts(quotation.optionalProduct.length);}
           console.log("quotation.quotationDate (TimeStamp) : ", quotation.quotationDate);
           this.detailQuotationForm.patchValue(quotation);
           // convert from TimeStamp (saved in firebase) to Date (used by angular DatePicker)
@@ -242,12 +260,12 @@ export class DetailQuotationComponent implements OnInit {
           if (quotation.quotationDate instanceof Timestamp) {this.detailQuotationForm.controls['quotationDate'].patchValue(quotation.quotationDate.toDate())}
           if (quotation.relaunchClientDate instanceof Timestamp) {this.detailQuotationForm.controls['relaunchClientDate'].patchValue(quotation.relaunchClientDate.toDate())}
           if (quotation.installationDate instanceof Timestamp) {this.detailQuotationForm.controls['installationDate'].patchValue(quotation.installationDate.toDate())}
-          //this.computePrices();
-          this.setPrice(this.computePriceService.computePrices(this.detailQuotationForm.value));
           // alternative solution
           //const timestamp = quotation.quotationDate.seconds*1000;
           //quotation.quotationDate = new Date(timestamp);
-          this.stockService.verifyStock(this.detailQuotationForm.value.singleProduct.concat(this.detailQuotationForm.value.compositeProduct), this.detailQuotationForm.value.immoDateFrom, this.detailQuotationForm.value.immoDateTo, this.quotationId);
+
+          this.setPrice(this.computePriceService.computePrices(this.detailQuotationForm.value));
+          this.stockService.verifyStock(this.detailQuotationForm.value.singleProduct, this.detailQuotationForm.value.compositeProducts, this.detailQuotationForm.value.immoDateFrom, this.detailQuotationForm.value.immoDateTo, this.quotationId);
           console.log("observe quotation detailQuotationForm after patchValue  ", this.detailQuotationForm.value)
         }
       })
@@ -308,6 +326,18 @@ export class DetailQuotationComponent implements OnInit {
     return product ? product.name : undefined;
   }
 
+  filterProducts(i, event: KeyboardEvent) {
+    console.log("filterProduct", i, " / ", (<HTMLInputElement>event.target).value);
+    console.log(this._filterProducts((<HTMLInputElement>event.target).value));
+    this.productFormOptionsFiltered = fromArray([this._filterProducts((<HTMLInputElement>event.target).value)]);
+  }
+
+  private _filterProducts(value: string): ProductId[] {
+    console.log("value", value);
+    const filterValue = value.toLowerCase();
+    return this.productFormOptions.filter(productOption => productOption.name.toLowerCase().indexOf(filterValue) === 0);
+  }
+
   /* used for add or remove single product*/
 
   setSingleProducts(l) {
@@ -335,47 +365,15 @@ export class DetailQuotationComponent implements OnInit {
     this.detailQuotationForm.value.singleProductAmount.splice(Number(i),1);
   }
 
-  filterProducts(i, event: KeyboardEvent) {
-    console.log("filterProduct", i, " / ", (<HTMLInputElement>event.target).value);
-    console.log(this._filterProducts((<HTMLInputElement>event.target).value));
-    this.productFormOptionsFiltered = fromArray([this._filterProducts((<HTMLInputElement>event.target).value)]);
-  }
-
-  private _filterProducts(value: string): ProductId[] {
-    console.log("value", value);
-    const filterValue = value.toLowerCase();
-    return this.productFormOptions.filter(productOption => productOption.name.toLowerCase().indexOf(filterValue) === 0);
-  }
-
   private setSingleProductAmount(index: number, value: number) {
     console.log("detailQuotationForm.singleProductAmount :", this.detailQuotationForm.value);
     this.detailQuotationForm.value.singleProductAmount[index] = Number(value);
-    //this.computePrices(); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
     this.setPrice(this.computePriceService.computePrices(this.detailQuotationForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
-    this.stockService.verifyStock(this.detailQuotationForm.value.singleProduct.concat(this.detailQuotationForm.value.compositeProduct), this.detailQuotationForm.value.immoDateFrom, this.detailQuotationForm.value.immoDateTo, this.quotationId);// vérification des stocks (devrait être fait automatiquement par le subscribe du form : bug ?
+    this.stockService.verifyStock(this.detailQuotationForm.value.singleProduct, this.detailQuotationForm.value.compositeProduct, this.detailQuotationForm.value.immoDateFrom, this.detailQuotationForm.value.immoDateTo, this.quotationId);// vérification des stocks (devrait être fait automatiquement par le subscribe du form : bug ?
   }
 
-  setCompositeProducts(l) {
-    while (this.compositeProduct.length !== 1) {
-      this.compositeProduct.removeAt(1)
-    }
-    for (var i=0; i<l-1; i++) {
-      this.addCompositeProduct();
-    }
-  }
 
-  get compositeProduct() {
-    return this.detailQuotationForm.get('compositeProduct') as FormArray;
-  }
-
-  addCompositeProduct() {
-    this.compositeProduct.push(this.fb.control(''));
-  }
-
-  rmCompositeProduct(i) {
-    //console.log("rmContact : "+i);
-    this.compositeProduct.removeAt(Number(i));
-  }
+  /* used for add or remove special product*/
 
   get specialProduct() {
     return this.detailQuotationForm.get('specialProduct') as FormArray;
@@ -404,6 +402,92 @@ export class DetailQuotationComponent implements OnInit {
     }
   }
 
+  /* used for add or remove optionnal product*/
+
+  setOptionalProducts(l) {
+    while (this.optionalProduct.length !== 1) {
+      this.optionalProduct.removeAt(1);
+    }
+    this.detailQuotationForm.value.optionalProductAmount = [1];
+    for (var i=0; i<l-1; i++) {
+      this.addOptionalProduct();
+    }
+  }
+
+  get optionalProduct() {
+    return this.detailQuotationForm.get('optionalProduct') as FormArray;
+  }
+
+  addOptionalProduct() {
+    this.optionalProduct.push(this.fb.control(''));
+    this.detailQuotationForm.value.optionalProductAmount.push(1);
+  }
+
+  rmOptionalProduct(i) {
+    //console.log("rmOptionalProduct : "+i);
+    this.optionalProduct.removeAt(Number(i));
+    this.detailQuotationForm.value.optionalProductAmount.splice(Number(i),1);
+  }
+
+  private setOptionalProductAmount(index: number, value: number) {
+    //console.log("detailQuotationForm.optionalProductAmount :", this.detailQuotationForm.value);
+    this.detailQuotationForm.value.optionalProductAmount[index] = Number(value);
+  }
+
+  /* used for add or remove composite product*/
+
+  setCompositeProducts(cpdt) {
+    //console.log("setCompositeProducts ", cpdt);
+    while (this.compositeProducts.length !== 0) {
+      this.compositeProducts.removeAt(0)
+    }
+    for (var idxPdt=0; idxPdt<cpdt.length; idxPdt++) {
+      this.addCompositeProduct();
+      for (var i=0; i<cpdt[idxPdt].compositeProductElements.length-1; i++) {
+        this.addCompositeProductElement(idxPdt);
+      }
+    }
+  }
+
+  get compositeProducts() {
+    return this.detailQuotationForm.get('compositeProducts') as FormArray;
+  }
+
+  addCompositeProduct() {
+    let element = this.fb.group({compositeProductElements: this.fb.array([this.fb.control('')])});
+    this.compositeProducts.push(element);
+    this.detailQuotationForm.value.compositeProductAmount.push(1);
+  }
+
+
+  rmCompositeProduct(i) {
+    console.log("rmCompositeProduct : "+i);
+    this.compositeProducts.removeAt(Number(i));
+    this.detailQuotationForm.value.compositeProductAmount.splice(Number(i),1);
+  }
+
+
+  private setCompositeProductAmount(index: number, value: number) {
+    //console.log("detailQuotationForm.compositeProductAmount :", this.detailQuotationForm.value);
+    this.detailQuotationForm.value.compositeProductAmount[index] = Number(value);
+    this.setPrice(this.computePriceService.computePrices(this.detailQuotationForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
+  }
+
+
+  addCompositeProductElement(idxPdt) {
+    console.log('compositeProductElements before ', this.compositeProducts);
+    var compositePdts = this.compositeProducts.controls[idxPdt].get('compositeProductElements') as FormArray;
+    this.compositeProducts.value[idxPdt] = compositePdts.push(this.fb.control(''));
+    console.log('compositeProductElements after ', this.compositeProducts);
+  }
+
+  rmCompositeProductElement(idxPdt,i) {
+    console.log("rmCompositeProductElement : "+i);
+    var compositePdts = this.compositeProducts.controls[idxPdt].get('compositeProductElements') as FormArray;
+    this.compositeProducts.value[idxPdt] = compositePdts.removeAt(Number(i));
+  }
+
+
 
   initForm() {
     this.detailQuotationForm = this.fb.group({
@@ -429,14 +513,16 @@ export class DetailQuotationComponent implements OnInit {
       singleProduct: this.fb.array([
         this.fb.control('')
       ]),
-      compositeProduct: this.fb.array([
-        this.fb.control('')
-      ]),
-      compositeProductAmount: [1],
+      compositeProducts : this.fb.array([this.fb.group({compositeProductElements: this.fb.array([this.fb.control('')])})]),
+      compositeProductAmount: [[1]],
       specialProduct: this.fb.array([
         this.fb.control('')
       ]),
       specialProductPrice: [[0]],
+      optionalProductAmount: [[1]],
+      optionalProduct: this.fb.array([
+        this.fb.control('')
+      ]),
       rentDateFrom: [''],
       rentDateTo: [''],
       immoDateFrom: [''],
@@ -455,19 +541,19 @@ export class DetailQuotationComponent implements OnInit {
     });
     this.detailQuotationForm.valueChanges.subscribe(data => {
       console.log('Form quotation changes', data);
-      //this.computePrices();
       this.setPrice(this.computePriceService.computePrices(data));
       console.log('Form quotation changes', data);
       data.client.name!=undefined ? this.filterClients(data.client.name) : this.filterClients(data.client);
     });
     this.detailQuotationPricesForm = this.fb.group({
       price: [0],
-      discount: [0],
+      rentalDiscount: [0],
+      saleDiscount: [0],
       discountPrice: [0],
     });
   }
 
-  wantUpdateQuotation(isAskedByPdf, pdfType:PdfType) {
+  wantUpdateQuotation(isAskedByPdf, pdfType?:PdfType) {
     console.log("wantUpdateQuotation", this.detailQuotationForm.value);
     this.controlForm(isAskedByPdf, pdfType);
   }
@@ -476,7 +562,12 @@ export class DetailQuotationComponent implements OnInit {
     var errorSource:string;
     if (this.detailQuotationForm.value.client.id==undefined) {errorSource="client"}
     for (var i=0; i<this.detailQuotationForm.value.singleProduct.length; i++) {if (this.detailQuotationForm.value.singleProduct[i]!='' && this.detailQuotationForm.value.singleProduct[i].id==undefined) {errorSource = "produit simple"}}
-    for (var i=0; i<this.detailQuotationForm.value.compositeProduct.length; i++) {if (this.detailQuotationForm.value.compositeProduct[i]!='' && this.detailQuotationForm.value.compositeProduct[i].id==undefined) {errorSource="produit composé";}}
+    for (var idxPdt=0; idxPdt<this.detailQuotationForm.value.compositeProducts.length; idxPdt++) {
+      for (var i=0; i<this.detailQuotationForm.value.compositeProducts[idxPdt].compositeProductElements.length; i++) {
+        if (this.detailQuotationForm.value.compositeProducts[idxPdt].compositeProductElements[i]!='' && this.detailQuotationForm.value.compositeProducts[idxPdt].compositeProductElements[i].id==undefined) {errorSource="produit composé";}
+      }
+    }
+    for (var i=0; i<this.detailQuotationForm.value.optionalProduct.length; i++) {if (this.detailQuotationForm.value.optionalProduct[i]!='' && this.detailQuotationForm.value.optionalProduct[i].id==undefined) {errorSource="produit optionnel";}}
     errorSource!=undefined? this.openFormErrorDialog(errorSource) : this.updateQuotation(isAskedByPdf, pdfType);
   }
 
@@ -594,11 +685,12 @@ export class DetailQuotationComponent implements OnInit {
     this.detailQuotationForm.value.advanceRate=40;
     this.detailQuotationForm.value.numerosInvoice= {advance: null, balance : null};
     this.detailQuotationForm.value.credit=0;
+    this.detailQuotationForm.value.quotationId = this.quotationId;
     const index = this.numeroOrder+1;
 
     this.db.collection('orders').doc(index.toString()).set(this.detailQuotationForm.value).then(()=> {
       console.log("Order written with ID: ", index);
-      this.stockService.updateProductsStock(this.detailQuotationForm.value.singleProduct, this.detailQuotationForm.value.singleProductAmount, this.detailQuotationForm.value.compositeProduct, this.detailQuotationForm.value.compositeProductAmount, this.detailQuotationForm.value.immoDateFrom, this.detailQuotationForm.value.immoDateTo, index.toString());
+      this.stockService.updateProductsStock(this.detailQuotationForm.value.singleProduct, this.detailQuotationForm.value.singleProductAmount, this.detailQuotationForm.value.compositeProducts, this.detailQuotationForm.value.compositeProductAmount, this.detailQuotationForm.value.immoDateFrom, this.detailQuotationForm.value.immoDateTo, index.toString());
       this.db.collection('parameters').doc("numeroOrder").update({index: index});
       this.quotationDoc = this.db.doc<Quotation>(this.quotationTypeParams.path+'/' + this.quotationId );
       this.quotationDoc.delete().then(()=> {
@@ -626,7 +718,8 @@ export class DetailQuotationComponent implements OnInit {
 
   setPrice(prices) {
     this.detailQuotationPricesForm.value.price = prices.price;
-    this.detailQuotationPricesForm.value.discount= prices.discount;
+    this.detailQuotationPricesForm.value.rentalDiscount= prices.rentalDiscount;
+    this.detailQuotationPricesForm.value.saleDiscount= prices.saleDiscount;
     //this.detailQuotationPricesForm.value.discountPrice = prices.price - prices.price*prices.discount/100;
     this.detailQuotationPricesForm.value.discountPrice = prices.discountPrice;
   }

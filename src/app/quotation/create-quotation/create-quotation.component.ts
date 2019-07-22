@@ -31,10 +31,10 @@ export class CreateQuotationComponent implements OnInit {
   private fbClients: Observable<ClientId[]>; // clients on Firebase
   private fbClientsSubscription : Subscription; // then we can unsubscribe after having subscribe
   private clientFormOptions =[]; // used by autoocmplete client form
-  private clientFilteredOptions: Observable<ClientId[]>; // used by autocomplete client form
+  clientFilteredOptions: Observable<ClientId[]>; // used by autocomplete client form
 
   // for contact
-  private contactOptions:Observable<[Contact]>;// used by select contact form
+  contactOptions:Observable<[Contact]>;// used by select contact form
 
   // for product
   private fbProducts: Observable<ProductId[]>; // clients on Firebase
@@ -43,12 +43,12 @@ export class CreateQuotationComponent implements OnInit {
   private productFormOptionsFiltered: Observable<ProductId[]>; // used by autocomplete product form
 
   // for employe
-  private fbEmployes: Observable<EmployeId[]>; // employes on firebase
+  fbEmployes: Observable<EmployeId[]>; // employes on firebase
   private fbEmployesSubscription : Subscription; // // then we can unsubscribe after having subscribe
 
   // the global form that will be store on firestore as quotation
-  private createQuotationForm;
-  private createQuotationPricesForm;
+  createQuotationForm;
+  createQuotationPricesForm;
   private quotationsCollection: AngularFirestoreCollection<Quotation>;
   private numerosQuotation:any;
 
@@ -69,12 +69,12 @@ export class CreateQuotationComponent implements OnInit {
         //const email = data.email;
         const contacts = data.contacts;
         const comment = data.comment;
-        const discount = data.discount;
+        const rentalDiscount = data.rentalDiscount;
+        const saleDiscount = data.saleDiscount;
         const maintenance = data.maintenance;
         const date = data.date;
         const id = a.payload.doc.id;
-        //this.clientFormOptions.push({id, name, address, zipcode, town, country, phone, email, contacts, comment, discount, maintenance, date});
-        this.clientFormOptions.push({id, name, address, zipcode, town, country, phone, contacts, comment, discount, maintenance, date});
+        this.clientFormOptions.push({id, name, address, zipcode, town, country, phone, contacts, comment, rentalDiscount, saleDiscount, maintenance, date});
         return {id, ...data };
       })));
 
@@ -210,22 +210,6 @@ export class CreateQuotationComponent implements OnInit {
     return product ? product.name : undefined;
   }
 
-  /* used for add or remove single product*/
-  get singleProduct() {
-    return this.createQuotationForm.get('singleProduct') as FormArray;
-  }
-
-  addSingleProduct() {
-    this.singleProduct.push(this.fb.control(''));
-    this.createQuotationForm.value.singleProductAmount.push(1);
-  }
-
-  rmSingleProduct(i) {
-    console.log("rmContact : "+i);
-    this.singleProduct.removeAt(Number(i));
-    this.createQuotationForm.value.singleProductAmount.splice(Number(i),1);
-  }
-
   filterProducts(i, event: KeyboardEvent) {
     console.log("filterProduct", i, " / ", (<HTMLInputElement>event.target).value);
     console.log(this._filterProducts((<HTMLInputElement>event.target).value));
@@ -238,25 +222,32 @@ export class CreateQuotationComponent implements OnInit {
     return this.productFormOptions.filter(productOption => productOption.name.toLowerCase().indexOf(filterValue) === 0);
   }
 
+
+  /* used for add or remove single product*/
+
+  get singleProduct() {
+    return this.createQuotationForm.get('singleProduct') as FormArray;
+  }
+
+  addSingleProduct() {
+    this.singleProduct.push(this.fb.control(''));
+    this.createQuotationForm.value.singleProductAmount.push(1);
+  }
+
+  rmSingleProduct(i) {
+    //console.log("rmSingleProduct : "+i);
+    this.singleProduct.removeAt(Number(i));
+    this.createQuotationForm.value.singleProductAmount.splice(Number(i),1);
+  }
+
   private setSingleProductAmount(index: number, value: number) {
-    console.log("createQuotationForm.singleProductAmount :", this.createQuotationForm.value);
+    //console.log("createQuotationForm.singleProductAmount :", this.createQuotationForm.value);
     this.createQuotationForm.value.singleProductAmount[index] = Number(value);
-   // this.computePrices();
     this.setPrice(this.computePriceService.computePrices(this.createQuotationForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
   }
 
-  get compositeProduct() {
-    return this.createQuotationForm.get('compositeProduct') as FormArray;
-  }
 
-  addCompositeProduct() {
-    this.compositeProduct.push(this.fb.control(''));
-  }
-
-  rmCompositeProduct(i) {
-    //console.log("rmContact : "+i);
-    this.compositeProduct.removeAt(Number(i));
-  }
+  /* used for add or remove special product*/
 
   get specialProduct() {
     return this.createQuotationForm.get('specialProduct') as FormArray;
@@ -270,9 +261,82 @@ export class CreateQuotationComponent implements OnInit {
     this.specialProduct.removeAt(Number(i));
   }
   private setSpecialProductPrice(index: number, value: number) {
-    console.log("createQuotationForm.specialProductPrice:", this.createQuotationForm.value);
+    //console.log("createQuotationForm.specialProductPrice:", this.createQuotationForm.value);
     this.createQuotationForm.value.specialProductPrice[index] = Number(value);
     this.setPrice(this.computePriceService.computePrices(this.createQuotationForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
+  }
+
+  /* used for add or remove optionnal product*/
+
+  setOptionalProducts(l) {
+    while (this.optionalProduct.length !== 1) {
+      this.optionalProduct.removeAt(1);
+    }
+    this.createQuotationForm.value.optionalProductAmount = [1];
+    for (var i=0; i<l-1; i++) {
+      this.addOptionalProduct();
+    }
+  }
+
+  get optionalProduct() {
+    return this.createQuotationForm.get('optionalProduct') as FormArray;
+  }
+
+  addOptionalProduct() {
+    this.optionalProduct.push(this.fb.control(''));
+    this.createQuotationForm.value.optionalProductAmount.push(1);
+  }
+
+  rmOptionalProduct(i) {
+    //console.log("rmOptionalProduct : "+i);
+    this.optionalProduct.removeAt(Number(i));
+    this.createQuotationForm.value.optionalProductAmount.splice(Number(i),1);
+  }
+
+  private setOptionalProductAmount(index: number, value: number) {
+    //console.log("createQuotationForm.optionalProductAmount :", this.createQuotationForm.value);
+    this.createQuotationForm.value.optionalProductAmount[index] = Number(value);
+  }
+
+  /* used for add or remove composite product*/
+
+
+  get compositeProducts() {
+    return this.createQuotationForm.get('compositeProducts') as FormArray;
+  }
+
+  addCompositeProduct() {
+    let element = this.fb.group({compositeProductElements: this.fb.array([this.fb.control('')])});
+    this.compositeProducts.push(element);
+    this.createQuotationForm.value.compositeProductAmount.push(1);
+  }
+
+
+  rmCompositeProduct(i) {
+    console.log("rmCompositeProduct : "+i);
+    this.compositeProducts.removeAt(Number(i));
+    this.createQuotationForm.value.compositeProductAmount.splice(Number(i),1);
+  }
+
+
+  private setCompositeProductAmount(index: number, value: number) {
+    //console.log("createQuotationForm.compositeProductAmount :", this.createQuotationForm.value);
+    this.createQuotationForm.value.compositeProductAmount[index] = Number(value);
+    this.setPrice(this.computePriceService.computePrices(this.createQuotationForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
+  }
+
+
+  addCompositeProductElement(idxPdt) {
+    console.log('compositeProductElements before ', this.compositeProducts);
+    var compositePdts = this.compositeProducts.controls[idxPdt].get('compositeProductElements') as FormArray;
+    this.compositeProducts.value[idxPdt] = compositePdts.push(this.fb.control(''));
+    console.log('compositeProductElements after ', this.compositeProducts);
+  }
+
+  rmCompositeProductElement(idxPdt,i) {
+    console.log("rmCompositeProductElement : "+i);
+    var compositePdts = this.compositeProducts.controls[idxPdt].get('compositeProductElements') as FormArray;
+    this.compositeProducts.value[idxPdt] = compositePdts.removeAt(Number(i));
   }
 
 
@@ -300,14 +364,16 @@ export class CreateQuotationComponent implements OnInit {
        singleProduct: this.fb.array([
          this.fb.control('')
        ]),
-       compositeProduct: this.fb.array([
-         this.fb.control('')
-       ]),
-       compositeProductAmount: [1],
+       compositeProducts : this.fb.array([this.fb.group({compositeProductElements: this.fb.array([this.fb.control('')])})]),
+       compositeProductAmount: [[1]],
        specialProduct: this.fb.array([
          this.fb.control('')
        ]),
        specialProductPrice: [[0]],
+       optionalProductAmount: [[1]],
+       optionalProduct: this.fb.array([
+         this.fb.control('')
+       ]),
        rentDateFrom: [''],
        rentDateTo: [''],
        immoDateFrom: [''],
@@ -326,7 +392,6 @@ export class CreateQuotationComponent implements OnInit {
     });
     this.createQuotationForm.valueChanges.subscribe(data => {
       console.log('Form quotation changes', data);
-      //this.computePrices();
       this.setPrice(this.computePriceService.computePrices(data));
       console.log('Form quotation changes', data);
       data.client.name!=undefined ? this.filterClients(data.client.name) : this.filterClients(data.client);
@@ -334,7 +399,8 @@ export class CreateQuotationComponent implements OnInit {
 
     this.createQuotationPricesForm = this.fb.group({
       price: [0],
-      discount: [0],
+      rentalDiscount: [0],
+      saleDiscount: [0],
       discountPrice: [0],
     });
   }
@@ -348,7 +414,12 @@ export class CreateQuotationComponent implements OnInit {
     var errorSource:string;
     if (this.createQuotationForm.value.client.id==undefined) {errorSource="client"}
     for (var i=0; i<this.createQuotationForm.value.singleProduct.length; i++) {if (this.createQuotationForm.value.singleProduct[i]!='' && this.createQuotationForm.value.singleProduct[i].id==undefined) {errorSource = "produit simple"}}
-    for (var i=0; i<this.createQuotationForm.value.compositeProduct.length; i++) {if (this.createQuotationForm.value.compositeProduct[i]!='' && this.createQuotationForm.value.compositeProduct[i].id==undefined) {errorSource="produit composé";}}
+    for (var idxPdt=0; idxPdt<this.createQuotationForm.value.compositeProducts.length; idxPdt++) {
+      for (var i=0; i<this.createQuotationForm.value.compositeProducts[idxPdt].compositeProductElements.length; i++) {
+        if (this.createQuotationForm.value.compositeProducts[idxPdt].compositeProductElements[i]!='' && this.createQuotationForm.value.compositeProducts[idxPdt].compositeProductElements[i].id==undefined) {errorSource="produit composé";}
+      }
+    }
+    for (var i=0; i<this.createQuotationForm.value.optionalProduct.length; i++) {if (this.createQuotationForm.value.optionalProduct[i]!='' && this.createQuotationForm.value.optionalProduct[i].id==undefined) {errorSource="produit optionnel";}}
     errorSource!=undefined? this.openFormErrorDialog(errorSource) : this.addQuotation();
   }
 
@@ -388,7 +459,8 @@ export class CreateQuotationComponent implements OnInit {
 
   setPrice(prices) {
     this.createQuotationPricesForm.value.price = prices.price;
-    this.createQuotationPricesForm.value.discount= prices.discount;
+    this.createQuotationPricesForm.value.rentalDiscount= prices.rentalDiscount;
+    this.createQuotationPricesForm.value.saleDiscount= prices.saleDiscount;
     this.createQuotationPricesForm.value.discountPrice = prices.discountPrice;
   }
 

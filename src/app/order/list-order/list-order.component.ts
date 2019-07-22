@@ -22,10 +22,10 @@ export class ListOrderComponent implements OnInit, OnDestroy {
   private fbOrders: Observable<OrderId[]>; // produtcs on Firebase
   private fbOrdersSubscription : Subscription;
   //private displayedColumns: string[] = ['id', 'client', 'contact', 'orderDate', 'edit', 'delete']; // colones affichées par le tableau
-  private displayedColumns: string[] = ['id', 'client', 'contact', 'orderDate', 'edit']; // colones affichées par le tableau
+  displayedColumns: string[] = ['id', 'quotationId', 'client', 'contact', 'orderDate', 'edit']; // colones affichées par le tableau
   private ordersData : Array<any>; // tableau qui va récupérer les données adéquates de fbOrders pour être ensuite affectées au tableau de sources de données
-  private dataSource : MatTableDataSource<OrderId>; // source de données du tableau
-  private orderTypeParams={path : "orders",isArchived:'false', displayInTemplate:"Commandes en cours"}; // les paramètres liés au type de commande (archivées ou courantes)
+  dataSource : MatTableDataSource<OrderId>; // source de données du tableau
+  orderTypeParams={path : "orders",isArchived:'false', displayInTemplate:"Commandes en cours"}; // les paramètres liés au type de commande (archivées ou courantes)
 
   @ViewChild(MatPaginator) paginator: MatPaginator; // pagination du tableau
   @ViewChild(MatSort) sort: MatSort; // tri sur le tableau
@@ -86,7 +86,9 @@ export class ListOrderComponent implements OnInit, OnDestroy {
         const contact = order.contact.contactName;
         const orderDate = order.orderDate;
         const id = order.id;
-        this.ordersData.push({id, client, contact, orderDate});
+        var quotationId;
+        order.quotationId!=undefined ? quotationId = order.quotationId : quotationId="";
+        this.ordersData.push({id, quotationId, client, contact, orderDate});
       });
       this.dataSource = new MatTableDataSource<OrderId>(this.ordersData);
       this.dataSource.paginator = this.paginator; // pagination du tableau

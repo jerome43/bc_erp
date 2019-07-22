@@ -17,7 +17,7 @@ export interface DialogCreateClientData {
 
 export class CreateClientComponent implements OnInit {
 
-  private createClientForm;
+  createClientForm;
   private clientsCollection: AngularFirestoreCollection<Client>;
 
   constructor(db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog) {
@@ -94,7 +94,8 @@ export class CreateClientComponent implements OnInit {
           contactEmail: ['', [Validators.email]]})
       ]),
       comment: [''],
-      discount: ['0'],
+      rentalDiscount: ['0'],
+      saleDiscount: ['0'],
       maintenance: ['false'],
       date: [new Date()]
     });

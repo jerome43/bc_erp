@@ -10,7 +10,9 @@ export class Client {
   //email: string;
   contacts: [Contact];
   comment: string;
-  discount: number;
+  rentalDiscount: number;
+  saleDiscount: number;
+  discount: number;// pour la compatibilité avec les devis antérieurs à juillet 2019
   maintenance:boolean;
   date: Date;
 }

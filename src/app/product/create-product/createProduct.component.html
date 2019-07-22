@@ -52,7 +52,7 @@
     <h5>Photo</h5>
     <input type="file" placeholder="Photo" (change)="updateFile($event)" #inputPhoto accept="image/*">
     <button mat-button>
-      <mat-icon color="warn" (click)="deletePhoto(inputPhoto)" *ngIf="file!=undefined">delete</mat-icon>
+      <mat-icon color="warn" (click)="deletePhoto(inputPhoto)" *ngIf="photoFile!=undefined">delete</mat-icon>
     </button>
     <!--div>upload {{ uploadPercent | async }} %</div>
     <a [href]="downloadURL | async" target="_blank"> <img [src]="downloadURL | async"/></a-->

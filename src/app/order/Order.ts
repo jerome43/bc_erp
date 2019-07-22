@@ -10,16 +10,21 @@ export class Order {
   employe: Employe;
   singleProductAmount: number[];
   singleProduct: Product[];
-  compositeProduct: Product[];
-  compositeProductAmount: number;
+  compositeProducts: {compositeProductElements:Product[]}[];
+  compositeProduct: Product[];  // only for compatibility devis antérieur à juillet 2019
+  compositeProductAmount: number[];
   specialProduct: string[];
   specialProductPrice: number[];
+  //optionalProductAmount: number[];
+  //optionalProduct: Product[];
   rentDateFrom: Timestamp;
   rentDateTo: Timestamp;
   immoDateFrom: Timestamp;
   immoDateTo: Timestamp;
   quotationComment: string;
   quotationDate: Timestamp;
+  quotationId: String;
+  clientOrderNumber: String;
   relaunchClientDate:Timestamp;
   installationAddress: string;
   installationZipcode: number;

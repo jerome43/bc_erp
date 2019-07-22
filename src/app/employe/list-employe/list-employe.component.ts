@@ -20,9 +20,9 @@ export interface EmployeId extends Employe { id: string; }
 export class ListEmployeComponent implements OnInit, OnDestroy {
   private fbEmployes: Observable<EmployeId[]>; // employes on Firebase
   private fbEmployesSubscription : Subscription;
-  private displayedColumns: string[] = ['name', 'date', 'edit', 'delete', 'id']; // colones affichées par le tableau
+  displayedColumns: string[] = ['name', 'date', 'edit', 'delete', 'id']; // colones affichées par le tableau
   private employesData : Array<any>; // tableau qui va récupérer les données adéquates de fbEmployes pour être ensuite affectées au tableau de sources de données
-  private dataSource : MatTableDataSource<EmployeId>; // source de données du tableau
+  dataSource : MatTableDataSource<EmployeId>; // source de données du tableau
 
   @ViewChild(MatPaginator) paginator: MatPaginator; // pagination du tableau
   @ViewChild(MatSort) sort: MatSort; // tri sur le tableau

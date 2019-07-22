@@ -34,13 +34,13 @@ export interface DialogDetailOrderData { message: string; displayNoButton:boolea
 export class DetailOrderComponent implements OnInit {
 
   // for client
-  private fbClients: Observable<ClientId[]>; // clients on Firebase
+  fbClients: Observable<ClientId[]>; // clients on Firebase
   private fbClientsSubscription : Subscription; // then we can unsubscribe after having subscribe
   private clientFormOptions =[]; // used by autoocmplete client form
-  private clientFilteredOptions: Observable<ClientId[]>; // used by autocomplete client form
+  clientFilteredOptions: Observable<ClientId[]>; // used by autocomplete client form
 
   // for contact
-  private contactOptions:Observable<[Contact]>;// used by select contact form
+  contactOptions:Observable<[Contact]>;// used by select contact form
 
   // for product
   private fbProducts: Observable<ProductId[]>; // clients on Firebase
@@ -49,21 +49,21 @@ export class DetailOrderComponent implements OnInit {
   private productFormOptionsFiltered: Observable<ProductId[]>; // used by autocomplete product form
 
   // for employe
-  private fbEmployes: Observable<EmployeId[]>; // employes on firebase
+  fbEmployes: Observable<EmployeId[]>; // employes on firebase
   private fbEmployesSubscription : Subscription; // // then we can unsubscribe after having subscribe
 
   // for order and global form
-  private detailOrderForm;
-  private detailOrderPricesForm;
-  private orderId: string;
+  detailOrderForm;
+  detailOrderPricesForm;
+  orderId: string;
   private orderDoc: AngularFirestoreDocument<Order>;
   private order: Observable<Order>;
   private orderSubscription : Subscription;
-  private orderTypeParams={path : "orders", isArchived:'false', templateTitle:"Editer commande en cours n° ", templateButton:"  archiver"}; // les paramètres liés au type de commande (archivées ou courantes)
+  orderTypeParams={path : "orders", isArchived:'false', templateTitle:"Editer commande en cours n° ", templateButton:"  archiver"}; // les paramètres liés au type de commande (archivées ou courantes)
   private indexNumeroInvoice:number;
 
   // scanOrder File gestion
-  private downloadScanOrderURL: Observable<string>; // l'url de la photo sur firestorage (! ce n'est pas la référence)
+  downloadScanOrderURL: Observable<string>; // l'url de la photo sur firestorage (! ce n'est pas la référence)
   private scanOrderFile:File; //le fichier de la photo du produit à uploader
   private scanOrderPathToDeleteOnFirestorage:string; // le nom du fichier photo à supprimer sur Firestorage
   private bug:boolean = false;
@@ -88,12 +88,12 @@ export class DetailOrderComponent implements OnInit {
         //const email = data.email;
         const contacts = data.contacts;
         const comment = data.comment;
-        const discount = data.discount;
+        const rentalDiscount = data.rentalDiscount;
+        const saleDiscount = data.saleDiscount;
         const maintenance = data.maintenance;
         const date = data.date;
         const id = a.payload.doc.id;
-        //this.clientFormOptions.push({id, name, address, zipcode, town, country, phone, email, contacts, comment, discount, maintenance, date});
-        this.clientFormOptions.push({id, name, address, zipcode, town, country, phone, contacts, comment, discount, maintenance, date});
+        this.clientFormOptions.push({id, name, address, zipcode, town, country, phone, contacts, comment, rentalDiscount, saleDiscount, maintenance, date});
         return {id, ...data };
       })));
 
@@ -104,7 +104,7 @@ export class DetailOrderComponent implements OnInit {
         const name = data.name;
         const description = data.description;
         //const serial_number = data.serial_number;
-        const internal_number = data.internal_number
+        const internal_number = data.internal_number;
         //const barcode = data.barcode;
         const stock = data.stock;
         const type = data.type;
@@ -115,7 +115,6 @@ export class DetailOrderComponent implements OnInit {
         const comment = data.comment;
         const date = data.date;
         const id = a.payload.doc.id;
-        //this.productFormOptions.push({id, name, description, serial_number, internal_number, barcode, stock, type, sell_price, rent_price, apply_degressivity, photo, comment, date});
         this.productFormOptions.push({id, name, description, internal_number, stock, type, sell_price, rent_price, apply_degressivity, photo, comment, date});
         return {id, ...data };
       })));
@@ -182,10 +181,21 @@ export class DetailOrderComponent implements OnInit {
   testLackStock(productsImmo) { // teste si le total des stocks sont suffisants
 
     // var indices = productsImmo.reduce((r, v, i) => r.concat(v.product.id === '06vaN8oXVyhMxpOai6z0' ? i : []), []); // pour renvoyer juste les indices des occurences recherchées dans un tableau
-    var products = this.detailOrderForm.value.singleProduct.concat(this.detailOrderForm.value.compositeProduct);
-    var productsAmount = this.detailOrderForm.value.singleProductAmount.concat(this.detailOrderForm.value.compositeProductAmount);
-    for (var i = 2; i<=this.detailOrderForm.value.compositeProduct.length; i++) {productsAmount.push(this.detailOrderForm.value.compositeProductAmount)}
-    console.log("testLackStock : ", products, ' / ', productsAmount);
+    //console.log("testLackStock");
+    var products = this.detailOrderForm.value.singleProduct.slice(); // make a copy of the array
+    //console.log("testLackStock products ", products);
+    for (var idxPdt = 0; idxPdt < this.detailOrderForm.value.compositeProducts.length; idxPdt++) {
+      products = products.concat(this.detailOrderForm.value.compositeProducts[idxPdt].compositeProductElements);
+    }
+    //console.log("testLackStock products ", products);
+
+    var productsAmount = this.detailOrderForm.value.singleProductAmount.slice();
+    for (var idxPdt = 0; idxPdt < this.detailOrderForm.value.compositeProducts.length; idxPdt++) {
+      for (var i= 0; i< this.detailOrderForm.value.compositeProducts[idxPdt].compositeProductElements.length; i++) {
+        productsAmount.push(this.detailOrderForm.value.compositeProductAmount[idxPdt])
+      }
+    }
+    console.log("testLackStock products ", products, "testLackStock productsAmount ", productsAmount);
 
     products.forEach((product, idx)=>{
       if (product.type==="rental") {
@@ -231,13 +241,20 @@ export class DetailOrderComponent implements OnInit {
 
   observeOrder(orderId: string) {
     console.log("observeOrder : "+orderId);
-    this.order = this.db.doc<Order>(this.orderTypeParams.path+'/'+orderId).valueChanges().pipe(
+    //this.order = this.db.doc<Order>(this.orderTypeParams.path+'/'+orderId).valueChanges().pipe(
+    this.order = this.db.doc<any>(this.orderTypeParams.path+'/'+orderId).valueChanges().pipe(
       tap(order => {
         if (order != undefined) {
           console.log("observe order :", order);
+          // pour assurer la compatibilité avec les anciennes commandes fait avant les multiples  produits composés
+          if (order.compositeProducts==undefined) {
+            order.compositeProductAmount = [order.compositeProductAmount];
+            order.compositeProducts=[{compositeProductElements: order.compositeProduct}];
+          }
           this.setSingleProducts(order.singleProduct.length);
-          this.setCompositeProducts(order.compositeProduct.length);
+          this.setCompositeProducts(order.compositeProducts);
           this.setSpecialProducts(order.specialProduct.length);
+          //if (order.optionalProduct!=undefined && order.optionalProduct.length>0) {this.setOptionalProducts(order.optionalProduct.length);}
           console.log("order.orderDate (TimeStamp) : ", order.orderDate);
           this.detailOrderForm.patchValue(order);
           // convert from TimeStamp (saved in firebase) to Date (used by angular DatePicker)
@@ -253,10 +270,9 @@ export class DetailOrderComponent implements OnInit {
           //const timestamp = order.orderDate.seconds*1000;
           //order.orderDate = new Date(timestamp);
           if (order.scanOrder!='') {console.log("observeOrder : scanOrder exist"); this.downloadScanOrderURL = this.storage.ref(order.scanOrder).getDownloadURL();} else {this.downloadScanOrderURL = undefined}
-          //this.computePrices();
           this.setPrice(this.computePriceService.computePrices(this.detailOrderForm.value));
-          this.stockService.verifyStock(this.detailOrderForm.value.singleProduct.concat(this.detailOrderForm.value.compositeProduct), this.detailOrderForm.value.immoDateFrom, this.detailOrderForm.value.immoDateTo, this.orderId);
           // vérification des stocks (devrait être fait automatiquement par le subscribe du form : bug ?
+          this.stockService.verifyStock(this.detailOrderForm.value.singleProduct, this.detailOrderForm.value.compositeProducts, this.detailOrderForm.value.immoDateFrom, this.detailOrderForm.value.immoDateTo, this.orderId);
           console.log("observe order detailOrderForm after patchValue  ", this.detailOrderForm.value)
         }
       })
@@ -318,8 +334,20 @@ export class DetailOrderComponent implements OnInit {
     return product ? product.name : undefined;
   }
 
-  /* used for add or remove single product*/
+  /* used for filter product*/
+  filterProducts(i, event: KeyboardEvent) {
+    console.log("filterProduct", i, " / ", (<HTMLInputElement>event.target).value);
+    console.log(this._filterProducts((<HTMLInputElement>event.target).value));
+    this.productFormOptionsFiltered = fromArray([this._filterProducts((<HTMLInputElement>event.target).value)]);
+  }
 
+  private _filterProducts(value: string): ProductId[] {
+    console.log("value", value);
+    const filterValue = value.toLowerCase();
+    return this.productFormOptions.filter(productOption => productOption.name.toLowerCase().indexOf(filterValue) === 0);
+  }
+
+  /* used for add or remove single, composite and optionnal product*/
   setSingleProducts(l) {
     while (this.singleProduct.length !== 1) {
       this.singleProduct.removeAt(1);
@@ -340,51 +368,20 @@ export class DetailOrderComponent implements OnInit {
   }
 
   rmSingleProduct(i) {
-    console.log("rmContact : "+i);
+    //console.log("rmSingleProduct : "+i);
     this.singleProduct.removeAt(Number(i));
     this.detailOrderForm.value.singleProductAmount.splice(Number(i),1);
   }
 
-  filterProducts(i, event: KeyboardEvent) {
-    console.log("filterProduct", i, " / ", (<HTMLInputElement>event.target).value);
-    console.log(this._filterProducts((<HTMLInputElement>event.target).value));
-    this.productFormOptionsFiltered = fromArray([this._filterProducts((<HTMLInputElement>event.target).value)]);
-  }
-
-  private _filterProducts(value: string): ProductId[] {
-    console.log("value", value);
-    const filterValue = value.toLowerCase();
-    return this.productFormOptions.filter(productOption => productOption.name.toLowerCase().indexOf(filterValue) === 0);
-  }
-
   private setSingleProductAmount(index: number, value: number) {
-    console.log("detailOrderForm.singleProductAmount :", this.detailOrderForm.value);
+    //console.log("detailOrderForm.singleProductAmount :", this.detailOrderForm.value);
     this.detailOrderForm.value.singleProductAmount[index] = Number(value);
     this.setPrice(this.computePriceService.computePrices(this.detailOrderForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
-    this.stockService.verifyStock(this.detailOrderForm.value.singleProduct.concat(this.detailOrderForm.value.compositeProduct), this.detailOrderForm.value.immoDateFrom, this.detailOrderForm.value.immoDateTo, this.orderId);// vérification des stocks (devrait être fait automatiquement par le subscribe du form : bug ?
+    this.stockService.verifyStock(this.detailOrderForm.value.singleProduct, this.detailOrderForm.value.compositeProducts, this.detailOrderForm.value.immoDateFrom, this.detailOrderForm.value.immoDateTo, this.orderId);// vérification des stocks (devrait être fait automatiquement par le subscribe du form : bug ?
   }
 
-  setCompositeProducts(l) {
-    while (this.compositeProduct.length !== 1) {
-      this.compositeProduct.removeAt(1)
-    }
-    for (var i=0; i<l-1; i++) {
-      this.addCompositeProduct();
-    }
-  }
 
-  get compositeProduct() {
-    return this.detailOrderForm.get('compositeProduct') as FormArray;
-  }
-
-  addCompositeProduct() {
-    this.compositeProduct.push(this.fb.control(''));
-  }
-
-  rmCompositeProduct(i) {
-    //console.log("rmContact : "+i);
-    this.compositeProduct.removeAt(Number(i));
-  }
+  /* used for add or remove special product*/
 
   get specialProduct() {
     return this.detailOrderForm.get('specialProduct') as FormArray;
@@ -399,7 +396,7 @@ export class DetailOrderComponent implements OnInit {
   }
 
   private setSpecialProductPrice(index: number, value: number) {
-    console.log("detailOrderForm.specialProductPrice:", this.detailOrderForm.value);
+    //console.log("detailOrderForm.specialProductPrice:", this.detailOrderForm.value);
     this.detailOrderForm.value.specialProductPrice[index] = Number(value);
     this.setPrice(this.computePriceService.computePrices(this.detailOrderForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
   }
@@ -412,6 +409,92 @@ export class DetailOrderComponent implements OnInit {
     for (var i=0; i<l-1; i++) {
       this.addSpecialProduct();
     }
+  }
+
+  // used for add or remove optionnal product
+/*
+  setOptionalProducts(l) {
+    while (this.optionalProduct.length !== 1) {
+      this.optionalProduct.removeAt(1);
+    }
+    this.detailOrderForm.value.optionalProductAmount = [1];
+    for (var i=0; i<l-1; i++) {
+      this.addOptionalProduct();
+    }
+  }
+
+  get optionalProduct() {
+    return this.detailOrderForm.get('optionalProduct') as FormArray;
+  }
+
+  addOptionalProduct() {
+    this.optionalProduct.push(this.fb.control(''));
+    this.detailOrderForm.value.optionalProductAmount.push(1);
+  }
+
+  rmOptionalProduct(i) {
+    //console.log("rmOptionalProduct : "+i);
+    this.optionalProduct.removeAt(Number(i));
+    this.detailOrderForm.value.optionalProductAmount.splice(Number(i),1);
+  }
+
+  private setOptionalProductAmount(index: number, value: number) {
+    //console.log("detailOrderForm.optionalProductAmount :", this.detailOrderForm.value);
+    this.detailOrderForm.value.optionalProductAmount[index] = Number(value);
+   }
+   */
+
+  /* used for add or remove composite product*/
+
+  setCompositeProducts(cpdt) {
+    //console.log("setCompositeProducts ", cpdt);
+    while (this.compositeProducts.length !== 0) {
+      this.compositeProducts.removeAt(0)
+    }
+    for (var idxPdt=0; idxPdt<cpdt.length; idxPdt++) {
+      this.addCompositeProduct();
+      for (var i=0; i<cpdt[idxPdt].compositeProductElements.length-1; i++) {
+        this.addCompositeProductElement(idxPdt);
+      }
+    }
+  }
+
+  get compositeProducts() {
+    return this.detailOrderForm.get('compositeProducts') as FormArray;
+  }
+
+  addCompositeProduct() {
+    let element = this.fb.group({compositeProductElements: this.fb.array([this.fb.control('')])});
+    this.compositeProducts.push(element);
+    this.detailOrderForm.value.compositeProductAmount.push(1);
+  }
+
+
+  rmCompositeProduct(i) {
+    console.log("rmCompositeProduct : "+i);
+    this.compositeProducts.removeAt(Number(i));
+    this.detailOrderForm.value.compositeProductAmount.splice(Number(i),1);
+  }
+
+
+  private setCompositeProductAmount(index: number, value: number) {
+    //console.log("detailOrderForm.compositeProductAmount :", this.detailOrderForm.value);
+    this.detailOrderForm.value.compositeProductAmount[index] = Number(value);
+    this.setPrice(this.computePriceService.computePrices(this.detailOrderForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
+  }
+
+
+  addCompositeProductElement(idxPdt) {
+    console.log('compositeProductElements before ', this.compositeProducts);
+    var compositePdts = this.compositeProducts.controls[idxPdt].get('compositeProductElements') as FormArray;
+    this.compositeProducts.value[idxPdt] = compositePdts.push(this.fb.control(''));
+    console.log('compositeProductElements after ', this.compositeProducts);
+  }
+
+  rmCompositeProductElement(idxPdt,i) {
+    console.log("rmCompositeProductElement : "+i);
+    var compositePdts = this.compositeProducts.controls[idxPdt].get('compositeProductElements') as FormArray;
+    this.compositeProducts.value[idxPdt] = compositePdts.removeAt(Number(i));
   }
 
 
@@ -439,14 +522,14 @@ export class DetailOrderComponent implements OnInit {
       singleProduct: this.fb.array([
         this.fb.control('')
       ]),
-      compositeProduct: this.fb.array([
-        this.fb.control('')
-      ]),
-      compositeProductAmount: [1],
+      compositeProducts : this.fb.array([this.fb.group({compositeProductElements: this.fb.array([this.fb.control('')])})]),
+      compositeProductAmount: [[1]],
       specialProduct: this.fb.array([
         this.fb.control('')
       ]),
       specialProductPrice: [[0]],
+      //optionalProductAmount: [[1]],
+      //optionalProduct: this.fb.array([this.fb.control('')]),
       rentDateFrom: [''],
       rentDateTo: [''],
       immoDateFrom: [''],
@@ -454,6 +537,8 @@ export class DetailOrderComponent implements OnInit {
       quotationComment: [''],
       privateQuotationComment: [''],
       quotationDate: [''],
+      quotationId: [''],
+      clientOrderNumber : [''],
       relaunchClientDate:[''],
       installationAddress: [''],
       installationZipcode: [''],
@@ -480,12 +565,13 @@ export class DetailOrderComponent implements OnInit {
     });
     this.detailOrderPricesForm = this.fb.group({
       price: [0], // le prix de base
-      discount: [0], // le % de remise
+      rentalDiscount: [0],// le % de remise sur locations
+      saleDiscount: [0],// le % de remise sur vente
       discountPrice: [0], // le prix une fois la remise appliquée
     });
   }
 
-  wantUpdateOrder(isAskedByPdf, pdfType:PdfType) {
+  wantUpdateOrder(isAskedByPdf, pdfType?:PdfType) {
     console.log("wantUpdateOrder", this.detailOrderForm.value);
     this.controlForm(isAskedByPdf, pdfType);
   }
@@ -494,7 +580,11 @@ export class DetailOrderComponent implements OnInit {
     var errorSource:string;
     if (this.detailOrderForm.value.client.id==undefined) {errorSource="client"}
     for (var i=0; i<this.detailOrderForm.value.singleProduct.length; i++) {if (this.detailOrderForm.value.singleProduct[i]!='' && this.detailOrderForm.value.singleProduct[i].id==undefined) {errorSource = "produit simple"}}
-    for (var i=0; i<this.detailOrderForm.value.compositeProduct.length; i++) {if (this.detailOrderForm.value.compositeProduct[i]!='' && this.detailOrderForm.value.compositeProduct[i].id==undefined) {errorSource="produit composé";}}
+    for (var idxPdt=0; idxPdt<this.detailOrderForm.value.compositeProducts.length; idxPdt++) {
+      for (var i=0; i<this.detailOrderForm.value.compositeProducts[idxPdt].compositeProductElements.length; i++) {
+        if (this.detailOrderForm.value.compositeProducts[idxPdt].compositeProductElements[i]!='' && this.detailOrderForm.value.compositeProducts[idxPdt].compositeProductElements[i].id==undefined) {errorSource="produit composé";}
+      }
+    }
     errorSource!=undefined? this.openFormErrorDialog(errorSource) : this.updateOrder(isAskedByPdf, pdfType);
   }
 
@@ -545,7 +635,7 @@ export class DetailOrderComponent implements OnInit {
 
   updateProductsStock() {
     if (this.detailOrderForm.value.immoDateFrom!='' && this.detailOrderForm.value.immoDateTo!='') {
-      this.stockService.updateProductsStock(this.detailOrderForm.value.singleProduct, this.detailOrderForm.value.singleProductAmount, this.detailOrderForm.value.compositeProduct, this.detailOrderForm.value.compositeProductAmount, this.detailOrderForm.value.immoDateFrom, this.detailOrderForm.value.immoDateTo, this.orderId);
+      this.stockService.updateProductsStock(this.detailOrderForm.value.singleProduct, this.detailOrderForm.value.singleProductAmount, this.detailOrderForm.value.compositeProducts, this.detailOrderForm.value.compositeProductAmount, this.detailOrderForm.value.immoDateFrom, this.detailOrderForm.value.immoDateTo, this.orderId);
     }
   }
 
@@ -609,7 +699,8 @@ export class DetailOrderComponent implements OnInit {
 
   setPrice(prices) {
     this.detailOrderPricesForm.value.price = prices.price;
-    this.detailOrderPricesForm.value.discount= prices.discount;
+    this.detailOrderPricesForm.value.rentalDiscount= prices.rentalDiscount;
+    this.detailOrderPricesForm.value.saleDiscount= prices.saleDiscount;
     //this.detailOrderPricesForm.value.discountPrice = prices.price - prices.price*prices.discount/100;
     this.detailOrderPricesForm.value.discountPrice = prices.discountPrice;
   }

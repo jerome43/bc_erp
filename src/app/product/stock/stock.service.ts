@@ -22,8 +22,15 @@ export class StockService {
 
   private productsImmo = Rx.Observable.create(e => this.newProductsImmoEmitter = e); // tableau qui récapitule pour chaque produit de la commande les dates si il est dispo ou pas.
 
-  verifyStock(products, immoDateFrom, immoDateTo, orderId) { // renvoie un tableau des immobilisation du produit en indiquant si il est immobilisé (true) sur les dates entrées en paramètre e
-      console.log('verify stock');
+  verifyStock(singleProducts, compositeProducts, immoDateFrom, immoDateTo, orderId) { // renvoie un tableau des immobilisation du produit en indiquant si il est immobilisé (true) sur les dates entrées en paramètre e
+    console.log('verify stock');
+    var products = singleProducts.slice(); // make a copy of the array
+    //console.log("updateProductsStock products ", products);
+    for (var idxPdt = 0; idxPdt < compositeProducts.length; idxPdt++) {
+      products = products.concat(compositeProducts[idxPdt].compositeProductElements);
+    }
+    //console.log("updateProductsStock products ", products);
+
       var productsImmo: [{product: ProductId, orderId: string, isImmo: boolean, immoDateFrom:Timestamp, immoDateTo: Timestamp, quantity: number}];
       console.log('products : ', products);
       var productsFiltered = products.filter(item => item !== ""); // on retire les éventuels produits vides, correspondant aux éléments de formulaire produits laissés vides
@@ -74,12 +81,22 @@ export class StockService {
       return isOverlay;
   }
 
-  updateProductsStock(singleProducts:ProductId[], singleProductsAmount:number[], compositeProducts:ProductId[], compositeProductsAmount:number, immoDateFrom, immoDateTo, orderId:string) {
-  console.log(singleProductsAmount, ' / ', compositeProductsAmount);
-    var products = singleProducts.concat(compositeProducts);
-    var productsAmount = singleProductsAmount.concat(compositeProductsAmount);
-    for (var i = 2; i<=compositeProducts.length; i++) {productsAmount.push(compositeProductsAmount)}
-    console.log("updateProductsStock : ", products, ' / ', productsAmount);
+  updateProductsStock(singleProducts:ProductId[], singleProductsAmount:number[], compositeProducts:{compositeProductElements:ProductId[]}[], compositeProductsAmount:number[], immoDateFrom, immoDateTo, orderId:string) {
+    //console.log("updateProductsStock");
+    var products = singleProducts.slice(); // make a copy of the array
+    //console.log("updateProductsStock products ", products);
+    for (var idxPdt = 0; idxPdt < compositeProducts.length; idxPdt++) {
+      products = products.concat(compositeProducts[idxPdt].compositeProductElements);
+    }
+    //console.log("updateProductsStock products ", products);
+
+    var productsAmount = singleProductsAmount.slice();
+    for (var idxPdt = 0; idxPdt < compositeProducts.length; idxPdt++) {
+      for (var i= 0; i< compositeProducts[idxPdt].compositeProductElements.length; i++) {
+        productsAmount.push(compositeProductsAmount[idxPdt])
+      }
+    }
+    console.log("updateProductsStock products ", products, "updateProductsStock productsAmount ", productsAmount);
 
     // mise à jours ou insertion des produits de la commande vers le stock
     products.forEach((product, idx)=> {

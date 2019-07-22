@@ -10,10 +10,13 @@ export class Quotation {
   employe: Employe;
   singleProductAmount: number[];
   singleProduct: Product[];
-  compositeProduct: Product[];
-  compositeProductAmount: number;
+  compositeProducts: {compositeProductElements:Product[]}[];
+  compositeProduct: Product[]; // only for compatibility devis antérieur à juillet 2019
+  compositeProductAmount: number[];
   specialProduct :  string[];
   specialProductPrice : number[];
+  optionalProductAmount: number[];
+  optionalProduct: Product[];
   rentDateFrom: Timestamp;
   rentDateTo: Timestamp;
   immoDateFrom: Timestamp;

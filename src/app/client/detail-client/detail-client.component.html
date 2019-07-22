@@ -55,8 +55,12 @@
   </mat-form-field>
   <div>
     <div class="display-inline-block width50">
-      <mat-form-field class="width50 margin-auto">
-        <input type="number" matInput formControlName="discount" placeholder="Remise">
+      <mat-form-field class="width40 margin-right">
+        <input type="number" matInput formControlName="rentalDiscount" placeholder="Remise sur locations">
+        <span matSuffix>%</span>
+      </mat-form-field>
+      <mat-form-field class="width40 margin-right">
+        <input type="number" matInput formControlName="saleDiscount" placeholder="Remise sur ventes">
         <span matSuffix>%</span>
       </mat-form-field>
     </div>

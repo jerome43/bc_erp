@@ -25,7 +25,7 @@ export class DetailEmployeComponent implements OnInit, OnDestroy {
   private employeDoc: AngularFirestoreDocument<Employe>;
   private employe: Observable<Employe>;
   private employeSubscription : Subscription;
-  private detailEmployeForm;
+  detailEmployeForm;
 
   constructor(private router: Router, private route: ActivatedRoute, private db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog) {
   }

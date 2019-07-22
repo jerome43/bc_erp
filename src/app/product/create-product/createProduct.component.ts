@@ -20,11 +20,11 @@ export interface DialogCreateProductData {
 
 export class CreateProductComponent implements OnInit {
 
-  private createProductForm;
+  createProductForm;
   private productsCollection: AngularFirestoreCollection<Product>;
   //private uploadPercent: Observable<number>;
   //private downloadURL: Observable<string>;
-  private photoFile:File;
+  photoFile:File;
   @ViewChild('inputPhoto') inputPhoto: ElementRef;
 
   constructor(private router: Router, db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog, private storage: AngularFireStorage) {

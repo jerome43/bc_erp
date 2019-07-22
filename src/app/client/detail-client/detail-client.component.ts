@@ -25,8 +25,8 @@ export class DetailClientComponent implements OnInit, OnDestroy {
   private clientDoc: AngularFirestoreDocument<Client>;
   private client: Observable<Client>;
   private clientSubscription : Subscription;
-  private inputContactNotEmpty=[];
-  private detailClientForm;
+  inputContactNotEmpty=[];
+  detailClientForm;
 
   constructor(private router: Router, private route: ActivatedRoute, private db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog) {
   }
@@ -148,7 +148,8 @@ export class DetailClientComponent implements OnInit, OnDestroy {
           contactEmail: ['', [Validators.email]]})
       ]),
       comment: [''],
-      discount: ['0'],
+      rentalDiscount: ['0'],
+      saleDiscount: ['0'],
       maintenance: ['false'],
       date: ['']
     });

@@ -17,7 +17,7 @@ export interface DialogCreateEmployeData {
 
 export class CreateEmployeComponent implements OnInit {
 
-  private createEmployeForm;
+  createEmployeForm;
   private employesCollection: AngularFirestoreCollection<Employe>;
 
   constructor(db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog) {

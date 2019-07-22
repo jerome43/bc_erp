@@ -16,7 +16,7 @@ export interface DialogExportOrderData {
   styleUrls: ['./export-order.component.less']
 })
 export class ExportOrderComponent implements OnInit {
-  private exportForm;
+  exportForm;
   private exportOrdersData = []; // tableau qui va récupérer les données à exporter
 
   constructor(private db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog, private exportCsvService: ExportCsvService) {

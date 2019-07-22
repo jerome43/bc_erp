@@ -69,7 +69,7 @@ export class ExportCsvService {
     contactEmail: "Email contact",
     employe: "Commercial BC",
     singleProduct: "Nom et quantité produits simples",
-    compositeProduct: "'Nom produits composé",
+    compositeProducts: "'Nom produits composé",
     compositeProductAmount: "Quantité produits composés",
     specialProduct: "Nom et prix produits spéciaux",
     rentDateFrom: "Début date location",
@@ -85,7 +85,8 @@ export class ExportCsvService {
     //orderComment: "Commentaire facture",
     //deliveryComment: "Commentaire bon de livraison",
     price: "prix total ht",
-    discountAmount:"Remise en €",
+    rentalDiscountAmount:"Remise en € sur location",
+    saleDiscountAmount:"Remise en € sur vente",
     discountPrice: "Prix total remisé"
   };
 
@@ -95,162 +96,185 @@ export class ExportCsvService {
   wantExportOrderCsv(advanceInvoiceData, balanceInvoiceData) {
     this.itemsFormatted = [];
 
+
     advanceInvoiceData.forEach((item) => { // ligne de facture d'acompte
-      const numeroInvoice = item.numerosInvoice.advance;
-      const invoiceId = item.id;
-      const clientName = item.client.name;
-      const clientAddress = item.client.address;
-      const clientZipcode = item.client.zipcode;
-      const clientTown = item.client.town;
-      const contactName = item.contact.contactName;
-      const contactPhone = item.contact.contactPhone;
-      const contactEmail = item.contact.contactEmail;
-      const employe = item.employe.name;
-      var singleProductArray = [];
-      for (var i=0; i<item.singleProduct.length; i++) {
-        singleProductArray.push(item.singleProduct[i].name + " : "+ item.singleProductAmount[i]);
+      if (item.numerosInvoice.advance!=null || item.numerosInvoice.advance!=undefined) {// si le numéro de facture d'acompte est renseignée, on pousse la facture d'acompte
+        // pour assurer la compatibilité avec les anciens devis fait avant les multiples  produits composés
+        if (item.compositeProducts==undefined) {
+          item.compositeProductAmount = [item.compositeProductAmount];
+          item.compositeProducts=[{compositeProductElements: item.compositeProduct}];
+        }
+
+        const numeroInvoice = item.numerosInvoice.advance;
+        const invoiceId = item.id;
+        const clientName = item.client.name;
+        const clientAddress = item.client.address;
+        const clientZipcode = item.client.zipcode;
+        const clientTown = item.client.town;
+        const contactName = item.contact.contactName;
+        const contactPhone = item.contact.contactPhone;
+        const contactEmail = item.contact.contactEmail;
+        const employe = item.employe.name;
+        var singleProductArray = [];
+        for (var i=0; i<item.singleProduct.length; i++) {
+          singleProductArray.push(item.singleProduct[i].name + " : "+ item.singleProductAmount[i]);
+        }
+        const singleProduct =  singleProductArray.join(' - ');
+        var compositeProductArray = [];
+        item.compositeProducts.forEach((compositeProductElements)=>{
+          console.log("compositeProductElements ", compositeProductElements);
+          compositeProductArray.push(compositeProductElements.compositeProductElements[0].name);
+        });
+        const compositeProducts =  compositeProductArray.join(' - ');
+        const compositeProductAmount= item.compositeProductAmount;
+
+        var specialProductArray = [];
+        for (var i=0; i<item.specialProduct.length; i++) {
+          specialProductArray.push(item.specialProduct[i] + " : "+ item.specialProductPrice[i]);
+        }
+        const specialProduct =  specialProductArray.join(' - ');
+
+
+        const rentDateFrom = this.getDate(item.rentDateFrom);
+        const rentDateTo= this.getDate(item.rentDateTo);
+        //const  immoDateFrom= this.getDate(item.immoDateFrom);
+        //const  immoDateTo= this.getDate(item.immoDateTo);
+        //const  quotationComment= item.quotationComment;
+        //const  quotationDate= this.getDate(item.quotationDate);
+        //const  relaunchClientDate= this.getDate(item.relaunchClientDate);
+        const orderDate= this.getDate(item.orderDate);
+        //const  scanOrder= item.scanOrder;
+        //const  orderComment= item.orderComment;
+        //const  deliveryComment= item.deliveryComment;
+        var prices = this.computePriceService.computePrices(item);
+        var price = prices.price*Number(item.advanceRate)/100; // prix facture d'acompte
+        var rentalDiscountAmount= prices.rentalDiscountAmount*Number(item.advanceRate)/100;
+        var saleDiscountAmount= prices.saleDiscountAmount*Number(item.advanceRate)/100;
+        var discountPrice = prices.discountPrice*Number(item.advanceRate)/100;
+
+        this.itemsFormatted.push({
+          //model: item.model.replace(/;/g, ' '), // remove commas to avoid errors,
+          numeroInvoice: numeroInvoice,
+          invoiceId: invoiceId,
+          clientName: clientName.replace(/;/g, ' '),
+          clientAddress: clientAddress.replace(/;/g, ' '),
+          clientZipcode: clientZipcode.toString().replace(/;/g, ' '),
+          clientTown: clientTown.replace(/;/g, ' '),
+          contactName: contactName.replace(/;/g, ' '),
+          contactPhone: contactPhone.replace(/;/g, ' '),
+          contactEmail: contactEmail.replace(/;/g, ' '),
+          employe: employe.replace(/;/g, ' '),
+          singleProduct: singleProduct.replace(/;/g, ' '),
+          compositeProducts: compositeProducts.replace(/;/g, ' '),
+          compositeProductAmount: compositeProductAmount.toString().replace(/;/g, ' '),
+          specialProduct: specialProduct.toString().replace(/;/g, ' '),
+          rentDateFrom: rentDateFrom,
+          rentDateTo: rentDateTo,
+          //immoDateFrom: immoDateFrom,
+          //immoDateTo: immoDateTo,
+          //quotationComment: quotationComment.replace(/;/g, ' '),
+          //quotationDate: quotationDate,
+          //relaunchClientDate: relaunchClientDate,
+          //scanOrder: scanOrder.replace(/;/g, ' '),
+          invoiceDate: orderDate,
+          //orderComment: orderComment.replace(/;/g, ' '),
+          //deliveryComment: deliveryComment.replace(/;/g, ' '),
+          price: price,
+          rentalDiscountAmount: rentalDiscountAmount,
+          saleDiscountAmount: saleDiscountAmount,
+          discountPrice : discountPrice,
+        });
       }
-      const singleProduct =  singleProductArray.join(' - ');
-      var compositeProductArray = [];
-      item.compositeProduct.forEach((product)=>{
-        compositeProductArray.push(product.name);
-      });
-      const compositeProduct =  compositeProductArray.join(' - ');
-      const compositeProductAmount= item.compositeProductAmount;
-
-      var specialProductArray = [];
-      for (var i=0; i<item.specialProduct.length; i++) {
-        specialProductArray.push(item.specialProduct[i] + " : "+ item.specialProductPrice[i]);
-      }
-      const specialProduct =  specialProductArray.join(' - ');
-
-
-      const rentDateFrom = this.getDate(item.rentDateFrom);
-      const rentDateTo= this.getDate(item.rentDateTo);
-      //const  immoDateFrom= this.getDate(item.immoDateFrom);
-      //const  immoDateTo= this.getDate(item.immoDateTo);
-      //const  quotationComment= item.quotationComment;
-      //const  quotationDate= this.getDate(item.quotationDate);
-      //const  relaunchClientDate= this.getDate(item.relaunchClientDate);
-      const orderDate= this.getDate(item.orderDate);
-      //const  scanOrder= item.scanOrder;
-      //const  orderComment= item.orderComment;
-      //const  deliveryComment= item.deliveryComment;
-      var prices = this.computePriceService.computePrices(item);
-      var price = prices.price*Number(item.advanceRate)/100; // prix facture d'acompte
-      var discountAmount= prices.discountAmont*Number(item.advanceRate)/100;
-      var discountPrice = prices.discountPrice*Number(item.advanceRate)/100;
-
-      this.itemsFormatted.push({
-        //model: item.model.replace(/;/g, ' '), // remove commas to avoid errors,
-        numeroInvoice: numeroInvoice,
-        invoiceId: invoiceId,
-        clientName: clientName.replace(/;/g, ' '),
-        clientAddress: clientAddress.replace(/;/g, ' '),
-        clientZipcode: clientZipcode.toString().replace(/;/g, ' '),
-        clientTown: clientTown.replace(/;/g, ' '),
-        contactName: contactName.replace(/;/g, ' '),
-        contactPhone: contactPhone.replace(/;/g, ' '),
-        contactEmail: contactEmail.replace(/;/g, ' '),
-        employe: employe.replace(/;/g, ' '),
-        singleProduct: singleProduct.replace(/;/g, ' '),
-        compositeProduct: compositeProduct.replace(/;/g, ' '),
-        compositeProductAmount: compositeProductAmount.toString().replace(/;/g, ' '),
-        specialProduct: specialProduct.toString().replace(/;/g, ' '),
-        rentDateFrom: rentDateFrom,
-        rentDateTo: rentDateTo,
-        //immoDateFrom: immoDateFrom,
-        //immoDateTo: immoDateTo,
-        //quotationComment: quotationComment.replace(/;/g, ' '),
-        //quotationDate: quotationDate,
-        //relaunchClientDate: relaunchClientDate,
-        //scanOrder: scanOrder.replace(/;/g, ' '),
-        invoiceDate: orderDate,
-        //orderComment: orderComment.replace(/;/g, ' '),
-        //deliveryComment: deliveryComment.replace(/;/g, ' '),
-        price: price,
-        discountAmount: discountAmount,
-        discountPrice : discountPrice,
-      });
-      // si la date de facture de solde est renseignée, on pousse une deuxième ligne de facture de sold
     });
 
     balanceInvoiceData.forEach((item) => { // ligne de facture de solde
-      const numeroInvoice = item.numerosInvoice.balance;
-      const invoiceId = item.id;
-      const clientName = item.client.name;
-      const clientAddress = item.client.address;
-      const clientZipcode = item.client.zipcode;
-      const clientTown = item.client.town;
-      const contactName = item.contact.contactName;
-      const contactPhone = item.contact.contactPhone;
-      const contactEmail = item.contact.contactEmail;
-      const employe = item.employe.name;
-      var singleProductArray = [];
-      for (var i=0; i<item.singleProduct.length; i++) {
-        singleProductArray.push(item.singleProduct[i].name + " : "+ item.singleProductAmount[i]);
-      }
-      const singleProduct =  singleProductArray.join(' - ');
-      var compositeProductArray = [];
-      item.compositeProduct.forEach((product)=>{
-        compositeProductArray.push(product.name);
-      });
-      const compositeProduct =  compositeProductArray.join(' - ');
-      const compositeProductAmount= item.compositeProductAmount;
-      var specialProductArray = [];
-      for (var i=0; i<item.specialProduct.length; i++) {
-        specialProductArray.push(item.specialProduct[i] + " : "+ item.specialProductPrice[i]);
-      }
-      const specialProduct =  specialProductArray.join(' - ');
-      const rentDateFrom = this.getDate(item.rentDateFrom);
-      const rentDateTo= this.getDate(item.rentDateTo);
-      //const  immoDateFrom= this.getDate(item.immoDateFrom);
-      //const  immoDateTo= this.getDate(item.immoDateTo);
-      //const  quotationComment= item.quotationComment;
-      //const  quotationDate= this.getDate(item.quotationDate);
-      //const  relaunchClientDate= this.getDate(item.relaunchClientDate);
-      //const  scanOrder= item.scanOrder;
-      const  balanceInvoiceDate= this.getDate(item.balanceInvoiceDate);
-      //const  orderComment= item.orderComment;
-      //const  deliveryComment= item.deliveryComment;
-      const prices = this.computePriceService.computePrices(item);
-      // prix facture de solde spécifiques
-      var price = prices.price*(100-Number(item.advanceRate))/100;
-      var discountAmount= prices.discountAmont*(100-Number(item.advanceRate))/100;
-      var discountPrice = prices.discountPrice*(100-Number(item.advanceRate))/100;
 
-      this.itemsFormatted.push({
-        //model: item.model.replace(/;/g, ' '), // remove commas to avoid errors,
-        numeroInvoice: numeroInvoice,
-        invoiceId: invoiceId,
-        clientName: clientName.replace(/;/g, ' '),
-        clientAddress: clientAddress.replace(/;/g, ' '),
-        clientZipcode: clientZipcode.toString().replace(/;/g, ' '),
-        clientTown: clientTown.replace(/;/g, ' '),
-        contactName: contactName.replace(/;/g, ' '),
-        contactPhone: contactPhone.replace(/;/g, ' '),
-        contactEmail: contactEmail.replace(/;/g, ' '),
-        employe: employe.replace(/;/g, ' '),
-        singleProduct: singleProduct.replace(/;/g, ' '),
-        compositeProduct: compositeProduct.replace(/;/g, ' '),
-        compositeProductAmount: compositeProductAmount.toString().replace(/;/g, ' '),
-        specialProduct: specialProduct.toString().replace(/;/g, ' '),
-        rentDateFrom: rentDateFrom,
-        rentDateTo: rentDateTo,
-        //immoDateFrom: immoDateFrom,
-        //immoDateTo: immoDateTo,
-        //quotationComment: quotationComment.replace(/;/g, ' '),
-        //quotationDate: quotationDate,
-        //relaunchClientDate: relaunchClientDate,
-        //orderDate: orderDate,
-        //scanOrder: scanOrder.replace(/;/g, ' '),
-        invoiceDate: balanceInvoiceDate,
-        //orderComment: orderComment.replace(/;/g, ' '),
-        //deliveryComment: deliveryComment.replace(/;/g, ' '),
-        price: price,
-        discountAmount: discountAmount,
-        discountPrice : discountPrice,
-      });
+      if (item.numerosInvoice.balance!=null || item.numerosInvoice.balance!=undefined) { // si la date de facture de solde est renseignée, on pousse la facture de solde
+        // pour assurer la compatibilité avec les anciens devis fait avant les multiples  produits composés
+        if (item.compositeProducts==undefined) {
+          item.compositeProductAmount = [item.compositeProductAmount];
+          item.compositeProducts=[{compositeProductElements: item.compositeProduct}];
+        }
+
+        const numeroInvoice = item.numerosInvoice.balance;
+        const invoiceId = item.id;
+        const clientName = item.client.name;
+        const clientAddress = item.client.address;
+        const clientZipcode = item.client.zipcode;
+        const clientTown = item.client.town;
+        const contactName = item.contact.contactName;
+        const contactPhone = item.contact.contactPhone;
+        const contactEmail = item.contact.contactEmail;
+        const employe = item.employe.name;
+        var singleProductArray = [];
+        for (var i=0; i<item.singleProduct.length; i++) {
+          singleProductArray.push(item.singleProduct[i].name + " : "+ item.singleProductAmount[i]);
+        }
+        const singleProduct =  singleProductArray.join(' - ');
+        var compositeProductArray = [];
+        item.compositeProducts.forEach((compositeProductElements)=>{
+          compositeProductArray.push(compositeProductElements.compositeProductElements[0].name);
+        });
+        const compositeProducts =  compositeProductArray.join(' - ');
+        const compositeProductAmount= item.compositeProductAmount;
+        var specialProductArray = [];
+        for (var i=0; i<item.specialProduct.length; i++) {
+          specialProductArray.push(item.specialProduct[i] + " : "+ item.specialProductPrice[i]);
+        }
+        const specialProduct =  specialProductArray.join(' - ');
+        const rentDateFrom = this.getDate(item.rentDateFrom);
+        const rentDateTo= this.getDate(item.rentDateTo);
+        //const  immoDateFrom= this.getDate(item.immoDateFrom);
+        //const  immoDateTo= this.getDate(item.immoDateTo);
+        //const  quotationComment= item.quotationComment;
+        //const  quotationDate= this.getDate(item.quotationDate);
+        //const  relaunchClientDate= this.getDate(item.relaunchClientDate);
+        //const  scanOrder= item.scanOrder;
+        const  balanceInvoiceDate= this.getDate(item.balanceInvoiceDate);
+        //const  orderComment= item.orderComment;
+        //const  deliveryComment= item.deliveryComment;
+        const prices = this.computePriceService.computePrices(item);
+        // prix facture de solde spécifiques
+        var price = prices.price*(100-Number(item.advanceRate))/100;
+        var rentalDiscountAmount= prices.rentalDiscountAmount*(100-Number(item.advanceRate))/100;
+        var saleDiscountAmount= prices.saleDiscountAmount*(100-Number(item.advanceRate))/100;
+        var discountPrice = prices.discountPrice*(100-Number(item.advanceRate))/100;
+
+        this.itemsFormatted.push({
+          //model: item.model.replace(/;/g, ' '), // remove commas to avoid errors,
+          numeroInvoice: numeroInvoice,
+          invoiceId: invoiceId,
+          clientName: clientName.replace(/;/g, ' '),
+          clientAddress: clientAddress.replace(/;/g, ' '),
+          clientZipcode: clientZipcode.toString().replace(/;/g, ' '),
+          clientTown: clientTown.replace(/;/g, ' '),
+          contactName: contactName.replace(/;/g, ' '),
+          contactPhone: contactPhone.replace(/;/g, ' '),
+          contactEmail: contactEmail.replace(/;/g, ' '),
+          employe: employe.replace(/;/g, ' '),
+          singleProduct: singleProduct.replace(/;/g, ' '),
+          compositeProducts: compositeProducts.replace(/;/g, ' '),
+          compositeProductAmount: compositeProductAmount.toString().replace(/;/g, ' '),
+          specialProduct: specialProduct.toString().replace(/;/g, ' '),
+          rentDateFrom: rentDateFrom,
+          rentDateTo: rentDateTo,
+          //immoDateFrom: immoDateFrom,
+          //immoDateTo: immoDateTo,
+          //quotationComment: quotationComment.replace(/;/g, ' '),
+          //quotationDate: quotationDate,
+          //relaunchClientDate: relaunchClientDate,
+          //orderDate: orderDate,
+          //scanOrder: scanOrder.replace(/;/g, ' '),
+          invoiceDate: balanceInvoiceDate,
+          //orderComment: orderComment.replace(/;/g, ' '),
+          //deliveryComment: deliveryComment.replace(/;/g, ' '),
+          price: price,
+          rentalDiscountAmount: rentalDiscountAmount,
+          saleDiscountAmount : saleDiscountAmount,
+          discountPrice : discountPrice,
+        });
+      }
+
     });
 
   var fileTitle = 'orders'; // or 'my-unique-title'

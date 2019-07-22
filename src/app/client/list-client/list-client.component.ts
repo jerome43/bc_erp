@@ -20,9 +20,9 @@ export interface ClientId extends Client { id: string; }
 export class ListClientComponent implements OnInit, OnDestroy {
   private fbClients: Observable<ClientId[]>; // clients on Firebase
   private fbClientsSubscription : Subscription;
-  private displayedColumns: string[] = ['name', 'date', 'edit', 'delete', 'id']; // colones affichées par le tableau
+  displayedColumns: string[] = ['name', 'date', 'edit', 'delete', 'id']; // colones affichées par le tableau
   private clientsData : Array<any>; // tableau qui va récupérer les données adéquates de fbClients pour être ensuite affectées au tableau de sources de données
-  private dataSource : MatTableDataSource<ClientId>; // source de données du tableau
+  dataSource : MatTableDataSource<ClientId>; // source de données du tableau
 
   @ViewChild(MatPaginator) paginator: MatPaginator; // pagination du tableau
   @ViewChild(MatSort) sort: MatSort; // tri sur le tableau

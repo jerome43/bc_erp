@@ -18,6 +18,7 @@ import {StockComponent} from "./product/stock/stock.component";
 import {CreateEmployeComponent} from "./employe/create-employe/createEmploye.component";
 import {ListEmployeComponent} from "./employe/list-employe/list-employe.component";
 import {DetailEmployeComponent} from "./employe/detail-employe/detail-employe.component";
+import { MaintenanceComponent } from './maintenance/maintenance.component';
 
 const routes: Routes = [
   { path: '', canActivate: [AuthGuard], redirectTo: 'home', pathMatch: 'full' },
@@ -39,6 +40,7 @@ const routes: Routes = [
   { path: 'create-employe', canActivate: [AuthGuard], component: CreateEmployeComponent},
   { path: 'list-employes', canActivate: [AuthGuard], component: ListEmployeComponent},
   { path: 'detail-employe/:employeId', canActivate: [AuthGuard], component: DetailEmployeComponent},
+  { path: 'maintenance', canActivate: [AuthGuard], component: MaintenanceComponent},
 ];
 
 @NgModule({

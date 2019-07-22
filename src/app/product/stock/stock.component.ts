@@ -15,6 +15,8 @@ export interface DialogStockData {
   detailStock: any,
   dateFrom: Date;
   dateTo: Date;
+  displayedDateFrom: Date;
+  displayedDateTo: Date;
 }
 
 export interface StockId extends StockProducts { id: string; }
@@ -26,12 +28,12 @@ export interface StockId extends StockProducts { id: string; }
 })
 
 export class StockComponent implements OnInit {
-  private stockDatesForm;
+  stockDatesForm;
   private fbStockProducts: Observable<any>; // stocks on Firebase
   private fbStockProductsSubscription : Subscription;
-  private displayedColumns: string[] = ['name', 'dates', 'view', 'id']; // colones affichées par le tableau
+  displayedColumns: string[] = ['name', 'dates', 'view', 'id']; // colones affichées par le tableau
   private stockProductsData : Array<any>; // tableau qui va récupérer les données adéquates de fbStockProducts pour être ensuite affectées au tableau de sources de données
-  private dataSource : MatTableDataSource<StockId>; // source de données du tableau
+  dataSource : MatTableDataSource<StockId>; // source de données du tableau
 
   @ViewChild(MatPaginator) paginator: MatPaginator; // pagination du tableau
   @ViewChild(MatSort) sort: MatSort; // tri sur le tableau
