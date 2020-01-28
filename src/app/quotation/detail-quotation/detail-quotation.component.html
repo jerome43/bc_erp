@@ -1,4 +1,4 @@
-<form [formGroup]="detailQuotationForm" class="main-container">
+<form [formGroup]="quotationForm" class="main-container">
   <h2>{{quotationTypeParams.templateTitle}} {{quotationId}}</h2>
   <mat-form-field >
     <input type="text" placeholder="Client" aria-label="Client" matInput formControlName="client" [matAutocomplete]="autoCompleteClient" required>
@@ -15,6 +15,10 @@
         {{contactOption.contactName}}
       </mat-option>
     </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <input type="text" matInput formControlName="referenceClient" placeholder="Référence fournie ou demandée par le client">
   </mat-form-field>
 
   <mat-form-field>
@@ -39,11 +43,11 @@
           </mat-autocomplete>
         </mat-form-field>
         <mat-form-field class="width15 margin-right">
-          <input type="number" matInput placeholder="Quantité produit simple" #inputSingleProductAmount (click)="setSingleProductAmount(i, inputSingleProductAmount.value)" (keyup)="setSingleProductAmount(i, inputSingleProductAmount.value)" [value]="this.detailQuotationForm.value.singleProductAmount[i]">
+          <input type="number" matInput placeholder="Quantité produit simple" #inputSingleProductAmount (click)="setSingleProductAmount(i, inputSingleProductAmount.value)" (keyup)="setSingleProductAmount(i, inputSingleProductAmount.value)" [value]="this.quotationForm.value.singleProductAmount[i]">
         </mat-form-field>
         <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmSingleProduct(i)" class="suppr-button margin-right">Supprimer</button>
       </div>
-      <button mat-raised-button color="accent" type="button" *ngIf="detailQuotationForm.value.singleProduct[detailQuotationForm.value.singleProduct.length-1]!=''" (click)="addSingleProduct()" class="margin-bottom-1">Ajouter produit simple</button>
+      <button mat-raised-button color="accent" type="button" *ngIf="quotationForm.value.singleProduct[quotationForm.value.singleProduct.length-1]!=''" (click)="addSingleProduct()" class="margin-bottom-1">Ajouter produit simple</button>
     </div>
     <div class="display-inline-block">
     </div>
@@ -72,7 +76,7 @@
             </ng-container>
             <button mat-raised-button color="accent" type="button" (click)="addCompositeProductElement(idxPdt)" class="margin-bottom-1">+ élt pdt composé</button>
             <mat-form-field class="width100">
-              <input type="number" class="" matInput placeholder="Quantité produit composé {{idxPdt+1}}" #inputCompositeProductAmount (click)="setCompositeProductAmount(idxPdt, inputCompositeProductAmount.value)" (keyup)="setCompositeProductAmount(idxPdt, inputCompositeProductAmount.value)" [value]="this.detailQuotationForm.value.compositeProductAmount[idxPdt]">
+              <input type="number" class="" matInput placeholder="Quantité produit composé {{idxPdt+1}}" #inputCompositeProductAmount (click)="setCompositeProductAmount(idxPdt, inputCompositeProductAmount.value)" (keyup)="setCompositeProductAmount(idxPdt, inputCompositeProductAmount.value)" [value]="this.quotationForm.value.compositeProductAmount[idxPdt]">
             </mat-form-field>
           </div>
         </div>
@@ -98,11 +102,11 @@
         <input matInput type="text" placeholder="Produit spécial (frais kilométriques...)" aria-label="Produit spécial" [formControlName]="i">
       </mat-form-field>
       <mat-form-field class="width15 margin-right">
-        <input type="number" matInput placeholder="Prix produit spécial" #inputSpecialProductPrice (click)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" (keyup)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" [value]="this.detailQuotationForm.value.specialProductPrice[i]">
+        <input type="number" matInput placeholder="Prix produit spécial" #inputSpecialProductPrice (click)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" (keyup)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" [value]="this.quotationForm.value.specialProductPrice[i]">
       </mat-form-field>
       <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmSpecialProduct(i)" class="suppr-button margin-right">Supprimer</button>
     </div>
-    <button mat-raised-button color="accent" type="button" *ngIf="detailQuotationForm.value.specialProduct[detailQuotationForm.value.specialProduct.length-1]!=''" (click)="addSpecialProduct()" class="margin-bottom-1">Ajouter produit spécial</button>
+    <button mat-raised-button color="accent" type="button" *ngIf="quotationForm.value.specialProduct[quotationForm.value.specialProduct.length-1]!=''" (click)="addSpecialProduct()" class="margin-bottom-1">Ajouter produit spécial</button>
   </div>
 
   <h4>Produits optionnels</h4>
@@ -119,14 +123,24 @@
           </mat-autocomplete>
         </mat-form-field>
         <mat-form-field class="width15 margin-right">
-          <input type="number" matInput placeholder="Quantité produit optionnel" #inputOptionalProductAmount (click)="setOptionalProductAmount(i, inputOptionalProductAmount.value)" (keyup)="setOptionalProductAmount(i, inputOptionalProductAmount.value)" [value]="this.detailQuotationForm.value.optionalProductAmount[i]">
+          <input type="number" matInput placeholder="Quantité produit optionnel" #inputOptionalProductAmount (click)="setOptionalProductAmount(i, inputOptionalProductAmount.value)" (keyup)="setOptionalProductAmount(i, inputOptionalProductAmount.value)" [value]="this.quotationForm.value.optionalProductAmount[i]">
         </mat-form-field>
         <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmOptionalProduct(i)" class="suppr-button margin-right">Supprimer</button>
       </div>
-      <button mat-raised-button color="accent" type="button" *ngIf="detailQuotationForm.value.optionalProduct[detailQuotationForm.value.optionalProduct.length-1]!=''" (click)="addOptionalProduct()" class="margin-bottom-1">Ajouter produit optionnel</button>
+      <button mat-raised-button color="accent" type="button" *ngIf="quotationForm.value.optionalProduct[quotationForm.value.optionalProduct.length-1]!=''" (click)="addOptionalProduct()" class="margin-bottom-1">Ajouter produit optionnel</button>
     </div>
     <div class="display-inline-block">
     </div>
+  </div>
+
+  <h4 class="margin-bottom-0-5">Option location longue durée</h4>
+  <div>
+    <mat-form-field class="width25 margin-right">
+      <input matInput type="number" placeholder="Nombre de mois" aria-label="Produit spécial" formControlName="optionalLongRentalMonth">
+    </mat-form-field>
+    <mat-form-field class="width25 margin-right">
+      <input type="number" matInput placeholder="Mensualité" formControlName="optionalLongRentalPrice" >
+    </mat-form-field>
   </div>
 
   <h4>Dates</h4>
@@ -219,26 +233,26 @@
 
 </form>
 
-<form [formGroup]="detailQuotationPricesForm" class="main-container">
+<form [formGroup]="pricesForm" class="main-container">
   <h4>Prix HT</h4>
   <div>
     <mat-form-field class="width20 margin-right">
-      <input type="number" matInput placeholder="Prix total HT avant remise" disabled [value]="detailQuotationPricesForm.value.price">
+      <input type="number" matInput placeholder="Prix total HT avant remise" disabled [value]="pricesForm.value.price">
     </mat-form-field>
     <mat-form-field class="width20 margin-right">
-      <input type="number" matInput placeholder="Remise sur locations en %" disabled [value]="detailQuotationPricesForm.value.rentalDiscount">
+      <input type="number" matInput placeholder="Remise sur locations en %" disabled [value]="pricesForm.value.rentalDiscount">
     </mat-form-field>
     <mat-form-field class="width20 margin-right">
-      <input type="number" matInput placeholder="Remise sur ventes en %" disabled [value]="detailQuotationPricesForm.value.saleDiscount">
+      <input type="number" matInput placeholder="Remise sur ventes en %" disabled [value]="pricesForm.value.saleDiscount">
     </mat-form-field>
     <mat-form-field class="width20">
-      <input type="number" matInput placeholder="Prix total HT remisé" disabled [value]="detailQuotationPricesForm.value.discountPrice">
+      <input type="number" matInput placeholder="Prix total HT remisé" disabled [value]="pricesForm.value.discountPrice">
     </mat-form-field>
   </div>
 </form>
 
 <div class="button-container">
-  <button mat-raised-button color="primary" type="button" (click)="wantUpdateQuotation(false)" [disabled]="!detailQuotationForm.valid">Enregistrer</button>
+  <button mat-raised-button color="primary" type="button" (click)="wantUpdateQuotation(false)" [disabled]="!quotationForm.valid">Enregistrer</button>
   <button mat-raised-button color="warn" type="button" (click)="wantDeleteQuotation()">Supprimer</button>
   <a routerLink="/list-quotations" mat-raised-button>Annuler</a>
   <button mat-raised-button color="accent" type="button" (click)="wantGenerateQuotationPdf()"><mat-icon>picture_as_pdf</mat-icon> Devis</button>

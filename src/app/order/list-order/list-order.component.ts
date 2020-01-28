@@ -1,13 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild, Inject } from '@angular/core';
-import { AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument } from '@angular/fire/firestore';
+import { AngularFirestore } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import {MatSort, MatPaginator, MatTableDataSource, MatSortable} from '@angular/material';
-import { FormControl, FormBuilder } from '@angular/forms';
+import { MatSort, MatPaginator, MatTableDataSource } from '@angular/material';
 import { Order } from '../order';
 import { Router, ActivatedRoute } from '@angular/router';
-import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
-import {Subscription} from "rxjs/index";
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+import { Subscription } from "rxjs";
 
 export interface DialogListOrderData { message: string; displayNoButton:boolean }
 export interface OrderId extends Order { id: string; }
@@ -21,23 +20,20 @@ export interface OrderId extends Order { id: string; }
 export class ListOrderComponent implements OnInit, OnDestroy {
   private fbOrders: Observable<OrderId[]>; // produtcs on Firebase
   private fbOrdersSubscription : Subscription;
-  //private displayedColumns: string[] = ['id', 'client', 'contact', 'orderDate', 'edit', 'delete']; // colones affichées par le tableau
-  displayedColumns: string[] = ['id', 'quotationId', 'client', 'contact', 'orderDate', 'edit']; // colones affichées par le tableau
+  public displayedColumns: string[] = ['id', 'quotationId', 'client', 'contact', 'orderDate', 'edit']; // colones affichées par le tableau
   private ordersData : Array<any>; // tableau qui va récupérer les données adéquates de fbOrders pour être ensuite affectées au tableau de sources de données
-  dataSource : MatTableDataSource<OrderId>; // source de données du tableau
-  orderTypeParams={path : "orders",isArchived:'false', displayInTemplate:"Commandes en cours"}; // les paramètres liés au type de commande (archivées ou courantes)
+  public dataSource : MatTableDataSource<OrderId>; // source de données du tableau
+  public orderTypeParams={path : "orders",isArchived:'false', displayInTemplate:"Commandes en cours"}; // les paramètres liés au type de commande (archivées ou courantes)
 
   @ViewChild(MatPaginator) paginator: MatPaginator; // pagination du tableau
   @ViewChild(MatSort) sort: MatSort; // tri sur le tableau
 
-  constructor(private router: Router, private route: ActivatedRoute, private db: AngularFirestore, private dialog: MatDialog, private fb: FormBuilder) {
+  constructor(private router: Router, private route: ActivatedRoute, private db: AngularFirestore) {
   }
 
   ngOnInit() {
-    // subscribe to the parameters observable
-    this.route.paramMap.subscribe(params => {
-      console.log(params.get('archived'));
-      this.setOrderTypeParams(this.isArchived());
+    this.route.paramMap.subscribe(() => {
+      this.setOrderTypeParams();
       this.initFbOrders();
     });
   }
@@ -46,31 +42,24 @@ export class ListOrderComponent implements OnInit, OnDestroy {
     this.fbOrdersSubscription.unsubscribe();
   }
 
-  isArchived(): boolean {
-    var isArchived;
-    this.route.snapshot.paramMap.get('archived')==="true" ? isArchived = true : isArchived = false;
-    return isArchived;
-  }
-
-  setOrderTypeParams(isArchived:boolean) {
-    console.log("isArchived :" + isArchived);
-    if (isArchived) {
+  private setOrderTypeParams() {
+    //console.log("isArchived :");
+    if (this.route.snapshot.paramMap.get('archived') === "true") {
       this.orderTypeParams.path='archived-orders';
       this.orderTypeParams.isArchived='true';
       this.orderTypeParams.displayInTemplate= "Commandes archivées";
-    }
-    else {
+    } else {
       this.orderTypeParams.path='orders';
       this.orderTypeParams.isArchived='false';
       this.orderTypeParams.displayInTemplate = "Commandes en cours"
     }
   }
 
-  initFbOrders() {
-    console.log("initFbOrders");
+  private initFbOrders() {
+    //console.log("initFbOrders");
     this.ordersData = [];
     this.dataSource = new MatTableDataSource<OrderId>(this.ordersData);
-    console.log("this.orderTypeParams.path",this.orderTypeParams.path);
+    //console.log("this.listInvoiceTitle.path",this.orderTypeParams.path);
     this.fbOrders = this.db.collection(this.orderTypeParams.path).snapshotChanges().pipe(
       map(actions => actions.map(a => {
         const data = a.payload.doc.data() as Order;
@@ -79,16 +68,12 @@ export class ListOrderComponent implements OnInit, OnDestroy {
       })));
     if (this.fbOrdersSubscription instanceof  Subscription) {this.fbOrdersSubscription.unsubscribe()}
     this.fbOrdersSubscription = this.fbOrders.subscribe((orders)=>{
-      console.log('Current orders: ', orders);
+      //console.log('Current orders: ', orders);
       this.ordersData = [];
       orders.forEach((order)=>{
-        const client = order.client.name;
-        const contact = order.contact.contactName;
-        const orderDate = order.orderDate;
-        const id = order.id;
-        var quotationId;
+        let quotationId;
         order.quotationId!=undefined ? quotationId = order.quotationId : quotationId="";
-        this.ordersData.push({id, quotationId, client, contact, orderDate});
+        this.ordersData.push({id : order.id, quotationId, client : order.client.name, contact : order.contact.contactName, orderDate : order.orderDate});
       });
       this.dataSource = new MatTableDataSource<OrderId>(this.ordersData);
       this.dataSource.paginator = this.paginator; // pagination du tableau
@@ -97,65 +82,14 @@ export class ListOrderComponent implements OnInit, OnDestroy {
     });
   }
 
-  applyFilter(filterValue: string) {
+  public applyFilter(filterValue: string) {
     this.dataSource.filter = filterValue.trim().toLowerCase(); // filtre sur le tableau
   }
 
-  editOrder(eventTargetId) {
-    console.log(eventTargetId);
-    this.router.navigate(['detail-order/'+eventTargetId, {archived: this.orderTypeParams.isArchived}]);
+  public editOrder(eventTargetId) {
+    //console.log(eventTargetId);
+    this.router.navigate(['detail-order/'+eventTargetId, {archived: this.orderTypeParams.isArchived}]).then();
   }
-
-  wantDeleteOrder(eventTargetId) {
-    console.log("wantDeleteOrder"+eventTargetId);
-    this.openDialogWantDelete(eventTargetId, "Voulez-vous vraiment supprimer la commande "+eventTargetId+" ?")
-  }
-
-  openDialogWantDelete(id, message): void {
-    const dialogRef = this.dialog.open(DialogListOrderOverview, {
-      width: '450px',
-      data: {
-        message: message,
-        displayNoButton:true}
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed'+result);
-      if (result=='yes') {
-        this.deleteOrder(id);
-      }
-    });
-  }
-
-  deleteOrder(eventTargetId) { // pour supprimer la commande dans firebase
-    console.warn("deleteOrder : "+eventTargetId);
-    const orderDoc: AngularFirestoreDocument<Order> = this.db.doc<Order>(this.orderTypeParams.path +'/' + eventTargetId );
-    orderDoc.ref.get().then((order)=>{
-      if (order.exists) {
-        this.ordersData = []; // on vide au préalable le tableau sinon les documents vont se surajouter aux anciens
-        // supression du commande dans firestore
-        orderDoc.delete().then(data => {
-          this.openDialogDelete("La commande "+eventTargetId+" a été supprimée.")});
-      }
-      else {
-        console.log("order doesn't exists");
-      }
-    });
-  }
-
-  openDialogDelete(message): void {
-    const dialogRef = this.dialog.open(DialogListOrderOverview, {
-      width: '450px',
-      data: {
-        message: message,
-        displayNoButton:false}
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-    });
-  }
-
 }
 
 @Component({

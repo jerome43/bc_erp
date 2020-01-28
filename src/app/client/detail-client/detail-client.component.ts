@@ -5,9 +5,10 @@ import { Observable } from 'rxjs'
 import { tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
-import { Validators, FormGroup, FormControl, FormBuilder, FormArray  } from '@angular/forms';
+import { FormBuilder, FormArray  } from '@angular/forms';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
-import {Subscription} from "rxjs/index";
+import {Subscription} from "rxjs";
+import {ClientFormManager} from "../../forms/clientFormManager";
 
 export interface DialogDetailClientData {
   message: string;
@@ -25,10 +26,12 @@ export class DetailClientComponent implements OnInit, OnDestroy {
   private clientDoc: AngularFirestoreDocument<Client>;
   private client: Observable<Client>;
   private clientSubscription : Subscription;
-  inputContactNotEmpty=[];
-  detailClientForm;
-
-  constructor(private router: Router, private route: ActivatedRoute, private db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog) {
+  public inputContactNotEmpty=[];
+  public detailClientForm;
+  private clientFormManager : ClientFormManager;
+  constructor(private router: Router, private route: ActivatedRoute, private db: AngularFirestore,
+              private fb: FormBuilder, private dialog: MatDialog ) {
+    this.clientFormManager = new ClientFormManager();
   }
 
   ngOnInit() {
@@ -42,42 +45,38 @@ export class DetailClientComponent implements OnInit, OnDestroy {
   }
 
   updateClient() {
-    console.warn(this.detailClientForm.value);
+    //console.warn(this.detailClientForm.value);
     this.clientDoc = this.db.doc<Client>('clients/' + this.clientId );
     //this.clientDoc.update(this.detailClientForm.value);
-    this.clientDoc.update(this.detailClientForm.value).then(data => {
+    this.clientDoc.update(this.detailClientForm.value).then( ()=> {
       this.openDialogUpdate("Le client "+this.clientId+" a été mis à jour.")});
   }
 
   wantDeleteClient() {
-    console.warn("wantDeleteClient"+this.clientId);
+    //console.warn("wantDeleteClient"+this.clientId);
     this.openDialogWantDelete("Voulez-vous vraiment supprimer le client "+this.clientId+" ?");
   }
 
   deleteClient() {
-    console.warn("deleteClient"+this.clientId);
+    //console.warn("deleteClient"+this.clientId);
     this.clientDoc = this.db.doc<Client>('clients/' + this.clientId );
-    this.clientDoc.delete().then(data => {
+    this.clientDoc.delete().then(() => {
       this.openDialogDelete("Le client "+this.clientId+" a été supprimé.")});
   }
 
 
   observeClient(clientId: String) {
-    console.log("observeClient : "+clientId);
+    //console.log("observeClient : "+clientId);
     this.client = this.db.doc<Client>('clients/'+clientId).valueChanges().pipe(
       tap(client => {
         if (client != undefined) {
-          var l = client.contacts.length;
+          let l = client.contacts.length;
           this.setContacts(l);
           this.detailClientForm.patchValue(client);
         }
       })
     );
-    this.clientSubscription = this.client.subscribe({
-      next(client) { console.log('Current clients ', client); },
-      error(msg) { console.log('Error Getting client ', msg);},
-      complete() {console.log('complete')}
-    });
+    this.clientSubscription = this.client.subscribe();
   }
 
   getClientId(): string {
@@ -93,24 +92,19 @@ export class DetailClientComponent implements OnInit, OnDestroy {
       this.contacts.removeAt(1)
     }
 
-    for (var i=0; i<l-1; i++) {
+    for (let i=0; i<l-1; i++) {
       this.addContacts();
     }
     this.inputContactNotEmpty = [false];
     if (l>1) {
-      for (var i=1; i<l; i++) {
+      for (let i=1; i<l; i++) {
           this.inputContactNotEmpty.push(true);
       }
     }
   }
 
   addContacts() {
-    this.contacts.push(this.fb.group({
-      contactName: [''],
-      contactFunction: [''],
-      contactPhone: [''],
-      contactCellPhone: [''],
-      contactEmail: ['', [Validators.email]]}));
+    this.contacts.push(this.clientFormManager.contactForm());
   }
 
   rmContacts(i) {
@@ -119,51 +113,15 @@ export class DetailClientComponent implements OnInit, OnDestroy {
   }
 
   get name() { return this.detailClientForm.get('name'); }
-  /*
-  get email() { return this.detailClientForm.get('email'); }
-
-  getEmailErrorMessage() {
-    return this.email.hasError('required') ? 'Vous devez renseigner l\'émail' :
-      this.email.hasError('email') ? 'L\'émail semble incorrect' :
-        '';
-  }
-  */
 
   initForm() {
     this.inputContactNotEmpty=[];
-    this.detailClientForm = this.fb.group({
-      name: ['', Validators.required],
-      address: [''],
-      zipcode: [''],
-      town: [''],
-      country: ['France'],
-      phone: [''],
-      //email: ['', [Validators.required, Validators.email]],
-      contacts: this.fb.array([
-        this.fb.group({
-          contactName: [''],
-          contactFunction: [''],
-          contactPhone: [''],
-          contactCellPhone: [''],
-          contactEmail: ['', [Validators.email]]})
-      ]),
-      comment: [''],
-      rentalDiscount: ['0'],
-      saleDiscount: ['0'],
-      maintenance: ['false'],
-      date: ['']
-    });
+    this.detailClientForm = this.clientFormManager.getForm();
 
     this.detailClientForm.valueChanges.subscribe(data => {
-      console.log('Form changes', data);
-      var l = data.contacts.length;
-
-      if (data.contacts[l-1]!="") {
-        this.inputContactNotEmpty[l-1]=true;
-      }
-      else {
-        this.inputContactNotEmpty[l-1]=false;
-      }
+      //console.log('Form changes', data);
+      let l = data.contacts.length;
+      this.inputContactNotEmpty[l - 1] = data.contacts[l - 1] != "";
     });
   }
 
@@ -176,9 +134,7 @@ export class DetailClientComponent implements OnInit, OnDestroy {
       }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-    });
+    dialogRef.afterClosed().subscribe();
   }
 
   openDialogWantDelete(message): void {
@@ -191,7 +147,7 @@ export class DetailClientComponent implements OnInit, OnDestroy {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
+      //console.log('The dialog was closed');
       if (result=='yes') {
         this.deleteClient();
       }
@@ -207,9 +163,8 @@ export class DetailClientComponent implements OnInit, OnDestroy {
       }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-      this.router.navigate(['list-clients/']);
+    dialogRef.afterClosed().subscribe(() => {
+      this.router.navigate(['list-clients/']).then();
     });
   }
 }

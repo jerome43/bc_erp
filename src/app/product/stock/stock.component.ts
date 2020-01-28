@@ -1,13 +1,13 @@
-import { Component, OnInit, OnDestroy, Inject, ViewChild } from '@angular/core';
-import { Validators, FormControl, FormBuilder } from '@angular/forms';
+import { Component, OnInit, Inject, ViewChild } from '@angular/core';
+import { Validators, FormBuilder } from '@angular/forms';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
 import { StockService } from './stock.service';
 import { StockProducts } from './StockProducts';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import {Subscription} from "rxjs/index";
-import {MatSort, MatPaginator, MatTableDataSource, MatSortable} from '@angular/material';
+import {Subscription} from "rxjs";
+import {MatSort, MatPaginator, MatTableDataSource} from '@angular/material';
+import {ActivatedRoute} from "@angular/router";
 
 export interface DialogStockData {
   message: string;
@@ -34,17 +34,26 @@ export class StockComponent implements OnInit {
   displayedColumns: string[] = ['name', 'dates', 'view', 'id']; // colones affichées par le tableau
   private stockProductsData : Array<any>; // tableau qui va récupérer les données adéquates de fbStockProducts pour être ensuite affectées au tableau de sources de données
   dataSource : MatTableDataSource<StockId>; // source de données du tableau
+  public stockTypeParams={path : "stockProducts", isLongRental:false, templateTitle:"Stocks Location produits courte durée ", templateButton:" voir stock longue durée"}; // les paramètres liés au type de stock (produits en location courte durée ou longue durée)
+
 
   @ViewChild(MatPaginator) paginator: MatPaginator; // pagination du tableau
   @ViewChild(MatSort) sort: MatSort; // tri sur le tableau
 
-  constructor(private fb: FormBuilder, public dialog: MatDialog, private stockService: StockService, private db: AngularFirestore) {
+  constructor(private route: ActivatedRoute, private fb: FormBuilder, public dialog: MatDialog, private stockService: StockService, private db: AngularFirestore) {
   }
 
   ngOnInit() {
-    this.initForm();
-    this.initStocks();
+    // subscribe to the parameters observable
+    this.route.paramMap.subscribe(params => {
+      console.log(params.get('isLongRental'));
+      this.route.snapshot.paramMap.get('isLongRental')==="true" ? this.stockTypeParams.isLongRental = true : this.stockTypeParams.isLongRental = false;
+      this.setStockTypeParams(this.stockTypeParams.isLongRental);
+      this.initForm();
+      this.initStocks();
+    });
   }
+
 
   ngOnDestroy() {
     this.fbStockProductsSubscription.unsubscribe();
@@ -81,10 +90,10 @@ export class StockComponent implements OnInit {
 
   initStocks() {
     if (this.fbStockProductsSubscription instanceof  Subscription) {this.fbStockProductsSubscription.unsubscribe()}
-    this.fbStockProducts = this.db.collection('stockProducts').valueChanges();
+    this.fbStockProducts = this.db.collection(this.stockTypeParams.path).valueChanges();
     // Call subscribe() to start listening for updates.
     this.fbStockProductsSubscription = this.fbStockProducts.subscribe((stockProducts)=>{
-      console.log("fbStockProductsSubscription stockProducts: ", stockProducts);
+      console.log("fbStockProductsSubscription ", this.stockTypeParams.path, ' - ', stockProducts);
       this.stockProductsData = [];
       stockProducts.forEach(stockProduct=> {
         const immoDates = stockProduct.immoDates;
@@ -104,10 +113,10 @@ export class StockComponent implements OnInit {
   }
 
   immosFromDateToDate(stockProduct): string { // récupère juste la prochaine immobilisation la plus proche de la date de début rentrée dans la formulaire
-    var immosFromDateToDate="aucunes futures immobilisations trouvées";
-    for (var i=0; i< stockProduct.immoDates.length; i++) {
-      if ( stockProduct.immoDates[i].immoDateFrom.seconds>=this.stockDatesForm.value.dateFrom.getTime()/1000
-      || stockProduct.immoDates[i].immoDateTo.seconds>=this.stockDatesForm.value.dateFrom.getTime()/1000) {
+    let immosFromDateToDate="aucunes futures immobilisations trouvées";
+    for (let i=0; i< stockProduct.immoDates.length; i++) {
+      if ( stockProduct.immoDates[i].immoDateFrom.seconds>=this.stockDatesForm.value.dateFrom.getTime() / 1000
+      || stockProduct.immoDates[i].immoDateTo.seconds>=this.stockDatesForm.value.dateFrom.getTime() / 1000) {
         immosFromDateToDate = 'du ' +  stockProduct.immoDates[i].immoDateFrom.toDate().toLocaleDateString() + ' au ' +  stockProduct.immoDates[i].immoDateTo.toDate().toLocaleDateString();
         break;
       }
@@ -136,8 +145,8 @@ export class StockComponent implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
+    dialogRef.afterClosed().subscribe(() => {
+      //console.log('The dialog was closed');
     });
   }
 
@@ -155,11 +164,26 @@ export class StockComponent implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
+    dialogRef.afterClosed().subscribe(() => {
+      //console.log('The dialog was closed');
     });
   }
 
+  private setStockTypeParams(isLongRental: boolean) {
+    console.log("isLongRental :" + isLongRental);
+    if (isLongRental) {
+      this.stockTypeParams.path='stockProducts-longRental';
+      this.stockTypeParams.isLongRental = true;
+      this.stockTypeParams.templateTitle= "Liste des produits immobilisés - longue durée";
+      this.stockTypeParams.templateButton = " Voir stock courte durée";
+    }
+    else {
+      this.stockTypeParams.path = 'stockProducts';
+      this.stockTypeParams.isLongRental = false;
+      this.stockTypeParams.templateTitle = "Liste des produits immobilisés - courte durée";
+      this.stockTypeParams.templateButton = " Voir stock longue durée";
+    }
+  }
 }
 
 @Component({

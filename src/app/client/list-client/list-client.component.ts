@@ -1,12 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild, Inject } from '@angular/core';
-import { AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument } from '@angular/fire/firestore';
+import { AngularFirestore } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import {MatSort, MatPaginator, MatTableDataSource, MatSortable} from '@angular/material';
+import {MatSort, MatPaginator, MatTableDataSource } from '@angular/material';
 import { Client } from '../client';
 import { Router } from '@angular/router';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
-import {Subscription} from "rxjs/index";
+import {Subscription} from "rxjs";
 
 export interface DialogListClientData { message: string; displayNoButton:boolean }
 export interface ClientId extends Client { id: string; }
@@ -47,7 +47,7 @@ export class ListClientComponent implements OnInit, OnDestroy {
       })));
     if (this.fbClientsSubscription instanceof  Subscription) {this.fbClientsSubscription.unsubscribe()}
     this.fbClientsSubscription = this.fbClients.subscribe((clients)=>{
-       console.log('Current clients: ', clients);
+       //console.log('Current clients: ', clients);
         this.clientsData = [];
         clients.forEach((client)=> {
           const id = client.id;
@@ -55,7 +55,7 @@ export class ListClientComponent implements OnInit, OnDestroy {
           const date = client.date;
           this.clientsData.push({id, name, date});
         });
-        console.log("this.clientsData : ", this.clientsData);
+        //console.log("this.clientsData : ", this.clientsData);
         this.dataSource = new MatTableDataSource<ClientId>(this.clientsData);
         this.dataSource.paginator = this.paginator; // pagination du tableau
         //this.sort.sort(<MatSortable>({id: 'name', start: 'desc'})); // pour trier sur les noms par ordre alphabétique
@@ -68,12 +68,12 @@ export class ListClientComponent implements OnInit, OnDestroy {
   }
 
   editClient(eventTargetId) {
-    console.log(eventTargetId);
-    this.router.navigate(['detail-client/'+eventTargetId]);
+    //console.log(eventTargetId);
+    this.router.navigate(['detail-client/'+eventTargetId]).then();
   }
 
   wantDeleteClient(eventTargetId) {
-    console.log("wantDeleteClient"+eventTargetId);
+    //console.log("wantDeleteClient"+eventTargetId);
     this.openDialogWantDelete(eventTargetId, "Voulez-vous vraiment supprimer le client "+eventTargetId+" ?")
   }
 
@@ -86,7 +86,7 @@ export class ListClientComponent implements OnInit, OnDestroy {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed'+result);
+      //console.log('The dialog was closed'+result);
       if (result=='yes') {
         this.deleteClient(id);
       }
@@ -95,9 +95,9 @@ export class ListClientComponent implements OnInit, OnDestroy {
 
 
   deleteClient(eventTargetId) {
-    console.log("deleteClient"+eventTargetId);
+    //console.log("deleteClient"+eventTargetId);
     this.clientsData = [];
-    this.db.doc("clients/"+eventTargetId).delete().then(data => {
+    this.db.doc("clients/"+eventTargetId).delete().then(() => {
       this.openDialogDelete("Le client "+eventTargetId+" a été supprimé.")
     });
   }
@@ -110,9 +110,7 @@ export class ListClientComponent implements OnInit, OnDestroy {
         displayNoButton:false}
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-    });
+    dialogRef.afterClosed().subscribe();
   }
 }
 

@@ -5,9 +5,10 @@ import { Observable } from 'rxjs'
 import { tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
-import { Validators, FormGroup, FormControl, FormBuilder, FormArray  } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
-import {Subscription} from "rxjs/index";
+import {Subscription} from "rxjs";
+import {EmployeFormManager} from "../../forms/employeFormManager";
 
 export interface DialogDetailEmployeData {
   message: string;
@@ -25,9 +26,12 @@ export class DetailEmployeComponent implements OnInit, OnDestroy {
   private employeDoc: AngularFirestoreDocument<Employe>;
   private employe: Observable<Employe>;
   private employeSubscription : Subscription;
-  detailEmployeForm;
+  private employeFormManager : EmployeFormManager;
+  public detailEmployeForm;
 
-  constructor(private router: Router, private route: ActivatedRoute, private db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog) {
+  constructor(private router: Router, private route: ActivatedRoute, private db: AngularFirestore,
+              private fb: FormBuilder, private dialog: MatDialog) {
+    this.employeFormManager = new EmployeFormManager();
   }
 
   ngOnInit() {
@@ -41,27 +45,27 @@ export class DetailEmployeComponent implements OnInit, OnDestroy {
   }
 
   updateEmploye() {
-    console.warn(this.detailEmployeForm.value);
+    //console.warn(this.detailEmployeForm.value);
     this.employeDoc = this.db.doc<Employe>('employes/' + this.employeId );
-    this.employeDoc.update(this.detailEmployeForm.value).then(data => {
+    this.employeDoc.update(this.detailEmployeForm.value).then(() => {
       this.openDialogUpdate("L'employé "+this.employeId+" a été mis à jour.")});
   }
 
   wantDeleteEmploye() {
-    console.warn("wantDeleteEmploye"+this.employeId);
+    //console.warn("wantDeleteEmploye"+this.employeId);
     this.openDialogWantDelete("Voulez-vous vraiment supprimer l'employé "+this.employeId+" ?");
   }
 
   deleteEmploye() {
-    console.warn("deleteEmploye"+this.employeId);
+    //console.warn("deleteEmploye"+this.employeId);
     this.employeDoc = this.db.doc<Employe>('employes/' + this.employeId );
-    this.employeDoc.delete().then(data => {
+    this.employeDoc.delete().then(() => {
       this.openDialogDelete("L'employé "+this.employeId+" a été supprimé.")});
   }
 
 
   observeEmploye(employeId: String) {
-    console.log("observeEmploye : "+employeId);
+    //console.log("observeEmploye : "+employeId);
     this.employe = this.db.doc<Employe>('employes/'+employeId).valueChanges().pipe(
       tap(employe => {
         if (employe != undefined) {
@@ -69,17 +73,12 @@ export class DetailEmployeComponent implements OnInit, OnDestroy {
         }
       })
     );
-    this.employeSubscription = this.employe.subscribe({
-      next(employe) { console.log('Current employes ', employe); },
-      error(msg) { console.log('Error Getting employe ', msg);},
-      complete() {console.log('complete')}
-    });
+    this.employeSubscription = this.employe.subscribe();
   }
 
   getEmployeId(): string {
     return this.route.snapshot.paramMap.get('employeId');
   }
-
 
   get name() { return this.detailEmployeForm.get('name'); }
 
@@ -92,20 +91,8 @@ export class DetailEmployeComponent implements OnInit, OnDestroy {
   }
 
   initForm() {
-    this.detailEmployeForm = this.fb.group({
-      name: ['', Validators.required],
-      address: [''],
-      zipcode: [''],
-      town: [''],
-      phone: ['', Validators.required],
-      cellPhone: [''],
-      email: ['', [Validators.required, Validators.email]],
-      date: ['']
-    });
-
-    this.detailEmployeForm.valueChanges.subscribe(data => {
-      console.log('Form changes', data);
-    });
+    this.detailEmployeForm = this.employeFormManager.getForm();
+    this.detailEmployeForm.valueChanges.subscribe();
   }
 
   openDialogUpdate(message): void {
@@ -117,9 +104,7 @@ export class DetailEmployeComponent implements OnInit, OnDestroy {
       }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-    });
+    dialogRef.afterClosed().subscribe();
   }
 
   openDialogWantDelete(message): void {
@@ -132,7 +117,7 @@ export class DetailEmployeComponent implements OnInit, OnDestroy {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
+      //console.log('The dialog was closed');
       if (result=='yes') {
         this.deleteEmploye();
       }
@@ -148,9 +133,8 @@ export class DetailEmployeComponent implements OnInit, OnDestroy {
       }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-      this.router.navigate(['list-employes/']);
+    dialogRef.afterClosed().subscribe(() => {
+      this.router.navigate(['list-employes/']).then();
     });
   }
 }

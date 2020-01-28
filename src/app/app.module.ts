@@ -34,7 +34,6 @@ import {DetailProductComponent} from "./product/detail-product/detail-product.co
 import {DialogCreateProductOverview} from "./product/create-product/createProduct.component";
 import {DialogDetailProductOverview} from "./product/detail-product/detail-product.component";
 import {DialogListProductOverview} from "./product/list-product/list-product.component";
-import { CreateOrderComponent } from './order/create-order/create-order.component';
 import { DetailOrderComponent } from './order/detail-order/detail-order.component';
 import { ListOrderComponent } from './order/list-order/list-order.component';
 import { CreateQuotationComponent } from './quotation/create-quotation/create-quotation.component';
@@ -56,6 +55,16 @@ import {DialogCreateEmployeOverview} from "./employe/create-employe/createEmploy
 import {DialogDetailEmployeOverview} from "./employe/detail-employe/detail-employe.component";
 import {DialogListEmployeOverview} from "./employe/list-employe/list-employe.component";
 import { MaintenanceComponent } from './maintenance/maintenance.component';
+import {ListInvoiceComponent} from "./order/list-invoice/list-invoice.component";
+import {
+  DialogListServiceContractOverview,
+  ListServiceContractComponent
+} from "./service-contract/list-service-contract/list-service-contract.component";
+import {CreateServiceContractComponent} from "./service-contract/create-service-contract/create-service-contract.component";
+import {
+  DetailServiceContractComponent,
+  DialogDetailServiceContractOverview
+} from "./service-contract/detail-service-contract/detail-service-contract.component";
 
 
 @NgModule({
@@ -80,9 +89,11 @@ import { MaintenanceComponent } from './maintenance/maintenance.component';
     DialogDetailQuotationOverview,
     DialogDetailOrderOverview,
     DialogListOrderOverview,
-    CreateOrderComponent,
+    DialogListServiceContractOverview,
+    DialogDetailServiceContractOverview,
     DetailOrderComponent,
     ListOrderComponent,
+    ListInvoiceComponent,
     CreateQuotationComponent,
     DetailQuotationComponent,
     ListQuotationComponent,
@@ -97,6 +108,9 @@ import { MaintenanceComponent } from './maintenance/maintenance.component';
     DialogDetailEmployeOverview,
     DialogListEmployeOverview,
     MaintenanceComponent,
+    CreateServiceContractComponent,
+    DetailServiceContractComponent,
+    ListServiceContractComponent
   ],
   imports: [
     BrowserModule,
@@ -145,6 +159,8 @@ import { MaintenanceComponent } from './maintenance/maintenance.component';
     DialogDetailOrderOverview,
     DialogListOrderOverview,
     DialogExportOrderOverview,
+    DialogListServiceContractOverview,
+    DialogDetailServiceContractOverview,
     DialogStockOverview,
     DialogCreateEmployeOverview,
     DialogDetailEmployeOverview,

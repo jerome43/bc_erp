@@ -1,12 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild, Inject } from '@angular/core';
-import { AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument } from '@angular/fire/firestore';
+import { AngularFirestore } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import {MatSort, MatPaginator, MatTableDataSource, MatSortable} from '@angular/material';
+import {MatSort, MatPaginator, MatTableDataSource } from '@angular/material';
 import { Employe } from '../employe';
 import { Router } from '@angular/router';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
-import {Subscription} from "rxjs/index";
+import {Subscription} from "rxjs";
 
 export interface DialogListEmployeData { message: string; displayNoButton:boolean }
 export interface EmployeId extends Employe { id: string; }
@@ -20,9 +20,9 @@ export interface EmployeId extends Employe { id: string; }
 export class ListEmployeComponent implements OnInit, OnDestroy {
   private fbEmployes: Observable<EmployeId[]>; // employes on Firebase
   private fbEmployesSubscription : Subscription;
-  displayedColumns: string[] = ['name', 'date', 'edit', 'delete', 'id']; // colones affichées par le tableau
+  public displayedColumns: string[] = ['name', 'date', 'edit', 'delete', 'id']; // colones affichées par le tableau
   private employesData : Array<any>; // tableau qui va récupérer les données adéquates de fbEmployes pour être ensuite affectées au tableau de sources de données
-  dataSource : MatTableDataSource<EmployeId>; // source de données du tableau
+  public dataSource : MatTableDataSource<EmployeId>; // source de données du tableau
 
   @ViewChild(MatPaginator) paginator: MatPaginator; // pagination du tableau
   @ViewChild(MatSort) sort: MatSort; // tri sur le tableau
@@ -47,7 +47,7 @@ export class ListEmployeComponent implements OnInit, OnDestroy {
       })));
     if (this.fbEmployesSubscription instanceof  Subscription) {this.fbEmployesSubscription.unsubscribe()}
     this.fbEmployesSubscription = this.fbEmployes.subscribe((employes)=>{
-       console.log('Current employes: ', employes);
+       //console.log('Current employes: ', employes);
         this.employesData = [];
         employes.forEach((employe)=> {
           const id = employe.id;
@@ -55,7 +55,7 @@ export class ListEmployeComponent implements OnInit, OnDestroy {
           const date = employe.date;
           this.employesData.push({id, name, date});
         });
-        console.log("this.employesData : ", this.employesData);
+        //console.log("this.employesData : ", this.employesData);
         this.dataSource = new MatTableDataSource<EmployeId>(this.employesData);
         this.dataSource.paginator = this.paginator; // pagination du tableau
         //this.sort.sort(<MatSortable>({id: 'name', start: 'desc'})); // pour trier sur les noms par ordre alphabétique
@@ -68,12 +68,12 @@ export class ListEmployeComponent implements OnInit, OnDestroy {
   }
 
   editEmploye(eventTargetId) {
-    console.log(eventTargetId);
-    this.router.navigate(['detail-employe/'+eventTargetId]);
+    //console.log(eventTargetId);
+    this.router.navigate(['detail-employe/'+eventTargetId]).then();
   }
 
   wantDeleteEmploye(eventTargetId) {
-    console.log("wantDeleteEmploye"+eventTargetId);
+    //console.log("wantDeleteEmploye"+eventTargetId);
     this.openDialogWantDelete(eventTargetId, "Voulez-vous vraiment supprimer l'employe "+eventTargetId+" ?")
   }
 
@@ -86,7 +86,7 @@ export class ListEmployeComponent implements OnInit, OnDestroy {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed'+result);
+      //console.log('The dialog was closed'+result);
       if (result=='yes') {
         this.deleteEmploye(id);
       }
@@ -95,9 +95,9 @@ export class ListEmployeComponent implements OnInit, OnDestroy {
 
 
   deleteEmploye(eventTargetId) {
-    console.log("deleteEmploye"+eventTargetId);
+    //console.log("deleteEmploye"+eventTargetId);
     this.employesData = [];
-    this.db.doc("employes/"+eventTargetId).delete().then(data => {
+    this.db.doc("employes/"+eventTargetId).delete().then(() => {
       this.openDialogDelete("L'employe "+eventTargetId+" a été supprimé.")
     });
   }
@@ -110,9 +110,7 @@ export class ListEmployeComponent implements OnInit, OnDestroy {
         displayNoButton:false}
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-    });
+    dialogRef.afterClosed().subscribe();
   }
 }
 

@@ -7,6 +7,7 @@ import {Employe} from "../employe/employe";
 export class Order {
   client: Client;
   contact: any;
+  referenceClient : string; // optionnel, référence devis ou commande fournie par le client
   employe: Employe;
   singleProductAmount: number[];
   singleProduct: Product[];
@@ -40,5 +41,7 @@ export class Order {
   deliveryComment: string;
   advanceRate:number;
   numerosInvoice: {advance: number, balance: number};
-  credit:number;
+  paymentInvoice : {advance: {amount: number, date: Timestamp}, balance: { amount: number, date: Timestamp}}; // introduce in january 2020
+  credit:number; // avance donnée par le client sur devis
+  externalCosts : Array<{ name : string, amount : number }>; // introduce in january 2020
 }

@@ -1,9 +1,9 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { Employe } from '../employe';
 import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
-import { Validators, FormGroup, FormControl, FormBuilder, FormArray } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
+import {EmployeFormManager} from "../../forms/employeFormManager";
 
 export interface DialogCreateEmployeData {
   id: string;
@@ -17,10 +17,12 @@ export interface DialogCreateEmployeData {
 
 export class CreateEmployeComponent implements OnInit {
 
-  createEmployeForm;
+  public createEmployeForm;
   private employesCollection: AngularFirestoreCollection<Employe>;
+  private employeFormManager : EmployeFormManager;
 
   constructor(db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog) {
+    this.employeFormManager = new EmployeFormManager();
     this.employesCollection = db.collection('employes');
   }
 
@@ -30,7 +32,7 @@ export class CreateEmployeComponent implements OnInit {
 
   addEmploye() {
     this.employesCollection.add(this.createEmployeForm.value).then(data => {
-      console.log("Document written with ID: ", data.id);
+      //console.log("Document written with ID: ", data.id);
       this.openDialog(data.id)});
   }
 
@@ -49,23 +51,13 @@ export class CreateEmployeComponent implements OnInit {
       data: {id: id}
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
+    dialogRef.afterClosed().subscribe(() => {
       this.initForm();
     });
   }
 
   initForm() {
-     this.createEmployeForm = this.fb.group({
-      name: ['', Validators.required],
-      address: [''],
-      zipcode: [''],
-      town: [''],
-      phone: ['', Validators.required],
-      cellPhone: [''],
-      email: ['', [Validators.required, Validators.email]],
-      date: [new Date()]
-    });
+     this.createEmployeForm = this.employeFormManager.getForm();
     this.createEmployeForm.valueChanges.subscribe(data => {
       console.log('Form changes', data);
     });

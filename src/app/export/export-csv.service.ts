@@ -1,52 +1,51 @@
 import { Injectable } from '@angular/core';
-import {firestore} from 'firebase/app';
-import Timestamp = firestore.Timestamp;
 import {ComputePriceService} from "../price/compute-price.service";
+import {UtilServices} from "../common-services/utilServices";
 
 @Injectable({
   providedIn: 'root'
 })
+
 export class ExportCsvService {
 
   constructor(private computePriceService: ComputePriceService) { }
 
-  convertToCSV(objArray) {
-    var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
-    var str = '';
-
-    for (var i = 0; i < array.length; i++) {
-      var line = '';
-      for (var index in array[i]) {
+  private static convertToCSV(objArray) {
+    let array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+    let str = '';
+    for (let i = 0; i < array.length; i++) {
+      let line = '';
+      for (let index in array[i]) {
         if (line != '') line += ';';
-
-        line += array[i][index];
+        if (array[i].hasOwnProperty(index)) {
+          line += array[i][index];
+        }
       }
-
       str += line + '\r\n';
     }
     return str;
   }
 
-  exportCSVFile(headers, items, fileTitle) {
+  private static exportCSVFile(headers, invoicesTable, fileTitle) {
     if (headers) {
-      items.unshift(headers);
+      invoicesTable.unshift(headers);
     }
 
     // Convert Object to JSON
-    var jsonObject = JSON.stringify(items);
+    let jsonInvoicesTable = JSON.stringify(invoicesTable);
 
-    var csv = this.convertToCSV(jsonObject);
+    let csv = ExportCsvService.convertToCSV(jsonInvoicesTable);
 
-    var exportedFilenmae = fileTitle + '.csv' || 'export.csv';
+    let exportedFilenmae = fileTitle + '.csv' || 'export.csv';
 
-    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     if (navigator.msSaveBlob) { // IE 10+
       navigator.msSaveBlob(blob, exportedFilenmae);
     } else {
-      var link = document.createElement("a");
+      let link = document.createElement("a");
       if (link.download !== undefined) { // feature detection
         // Browsers that support HTML5 download attribute
-        var url = URL.createObjectURL(blob);
+        let url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
         link.setAttribute("download", exportedFilenmae);
         link.style.visibility = 'hidden';
@@ -74,6 +73,11 @@ export class ExportCsvService {
     specialProduct: "Nom et prix produits spéciaux",
     rentDateFrom: "Début date location",
     rentDateTo: "Fin date location",
+    invoiceDate:"Date facture",
+    price: "prix total ht",
+    rentalDiscountAmount:"Remise en € sur location",
+    saleDiscountAmount:"Remise en € sur vente",
+    discountPrice: "Prix total remisé"
     //immoDateFrom: "Début date immobilisation",
     //immoDateTo: "Fin date d'immobilisation",
     //quotationComment: "Commentaire devis",
@@ -81,212 +85,125 @@ export class ExportCsvService {
     //relaunchClientDate: "Date relance client",
     //orderDate: "Date commande",
     //scanOrder: "scan devis signé",
-    invoiceDate:"Date facture",
     //orderComment: "Commentaire facture",
     //deliveryComment: "Commentaire bon de livraison",
-    price: "prix total ht",
-    rentalDiscountAmount:"Remise en € sur location",
-    saleDiscountAmount:"Remise en € sur vente",
-    discountPrice: "Prix total remisé"
   };
 
 
-  private itemsFormatted = [];
+  private invoicesTable = [];
 
-  wantExportOrderCsv(advanceInvoiceData, balanceInvoiceData) {
-    this.itemsFormatted = [];
+  public wantExportOrderCsv(advanceInvoiceData, balanceInvoiceData) {
+    this.invoicesTable = [];
 
-
-    advanceInvoiceData.forEach((item) => { // ligne de facture d'acompte
-      if (item.numerosInvoice.advance!=null || item.numerosInvoice.advance!=undefined) {// si le numéro de facture d'acompte est renseignée, on pousse la facture d'acompte
-        // pour assurer la compatibilité avec les anciens devis fait avant les multiples  produits composés
-        if (item.compositeProducts==undefined) {
-          item.compositeProductAmount = [item.compositeProductAmount];
-          item.compositeProducts=[{compositeProductElements: item.compositeProduct}];
-        }
-
-        const numeroInvoice = item.numerosInvoice.advance;
-        const invoiceId = item.id;
-        const clientName = item.client.name;
-        const clientAddress = item.client.address;
-        const clientZipcode = item.client.zipcode;
-        const clientTown = item.client.town;
-        const contactName = item.contact.contactName;
-        const contactPhone = item.contact.contactPhone;
-        const contactEmail = item.contact.contactEmail;
-        const employe = item.employe.name;
-        var singleProductArray = [];
-        for (var i=0; i<item.singleProduct.length; i++) {
-          singleProductArray.push(item.singleProduct[i].name + " : "+ item.singleProductAmount[i]);
-        }
-        const singleProduct =  singleProductArray.join(' - ');
-        var compositeProductArray = [];
-        item.compositeProducts.forEach((compositeProductElements)=>{
-          console.log("compositeProductElements ", compositeProductElements);
-          compositeProductArray.push(compositeProductElements.compositeProductElements[0].name);
-        });
-        const compositeProducts =  compositeProductArray.join(' - ');
-        const compositeProductAmount= item.compositeProductAmount;
-
-        var specialProductArray = [];
-        for (var i=0; i<item.specialProduct.length; i++) {
-          specialProductArray.push(item.specialProduct[i] + " : "+ item.specialProductPrice[i]);
-        }
-        const specialProduct =  specialProductArray.join(' - ');
-
-
-        const rentDateFrom = this.getDate(item.rentDateFrom);
-        const rentDateTo= this.getDate(item.rentDateTo);
-        //const  immoDateFrom= this.getDate(item.immoDateFrom);
-        //const  immoDateTo= this.getDate(item.immoDateTo);
-        //const  quotationComment= item.quotationComment;
-        //const  quotationDate= this.getDate(item.quotationDate);
-        //const  relaunchClientDate= this.getDate(item.relaunchClientDate);
-        const orderDate= this.getDate(item.orderDate);
-        //const  scanOrder= item.scanOrder;
-        //const  orderComment= item.orderComment;
-        //const  deliveryComment= item.deliveryComment;
-        var prices = this.computePriceService.computePrices(item);
-        var price = prices.price*Number(item.advanceRate)/100; // prix facture d'acompte
-        var rentalDiscountAmount= prices.rentalDiscountAmount*Number(item.advanceRate)/100;
-        var saleDiscountAmount= prices.saleDiscountAmount*Number(item.advanceRate)/100;
-        var discountPrice = prices.discountPrice*Number(item.advanceRate)/100;
-
-        this.itemsFormatted.push({
-          //model: item.model.replace(/;/g, ' '), // remove commas to avoid errors,
-          numeroInvoice: numeroInvoice,
-          invoiceId: invoiceId,
-          clientName: clientName.replace(/;/g, ' '),
-          clientAddress: clientAddress.replace(/;/g, ' '),
-          clientZipcode: clientZipcode.toString().replace(/;/g, ' '),
-          clientTown: clientTown.replace(/;/g, ' '),
-          contactName: contactName.replace(/;/g, ' '),
-          contactPhone: contactPhone.replace(/;/g, ' '),
-          contactEmail: contactEmail.replace(/;/g, ' '),
-          employe: employe.replace(/;/g, ' '),
-          singleProduct: singleProduct.replace(/;/g, ' '),
-          compositeProducts: compositeProducts.replace(/;/g, ' '),
-          compositeProductAmount: compositeProductAmount.toString().replace(/;/g, ' '),
-          specialProduct: specialProduct.toString().replace(/;/g, ' '),
-          rentDateFrom: rentDateFrom,
-          rentDateTo: rentDateTo,
-          //immoDateFrom: immoDateFrom,
-          //immoDateTo: immoDateTo,
-          //quotationComment: quotationComment.replace(/;/g, ' '),
-          //quotationDate: quotationDate,
-          //relaunchClientDate: relaunchClientDate,
-          //scanOrder: scanOrder.replace(/;/g, ' '),
-          invoiceDate: orderDate,
-          //orderComment: orderComment.replace(/;/g, ' '),
-          //deliveryComment: deliveryComment.replace(/;/g, ' '),
-          price: price,
-          rentalDiscountAmount: rentalDiscountAmount,
-          saleDiscountAmount: saleDiscountAmount,
-          discountPrice : discountPrice,
-        });
-      }
+    advanceInvoiceData.forEach((invoiceData) => { // ligne de facture d'acompte
+      this.pushInvoice(invoiceData, invoiceData.numerosInvoice.advance, 'advance');
     });
 
-    balanceInvoiceData.forEach((item) => { // ligne de facture de solde
+    balanceInvoiceData.forEach((invoiceData) => { // ligne de facture de solde
+      this.pushInvoice(invoiceData, invoiceData.numerosInvoice.balance, 'balance');
+    });
 
-      if (item.numerosInvoice.balance!=null || item.numerosInvoice.balance!=undefined) { // si la date de facture de solde est renseignée, on pousse la facture de solde
-        // pour assurer la compatibilité avec les anciens devis fait avant les multiples  produits composés
-        if (item.compositeProducts==undefined) {
-          item.compositeProductAmount = [item.compositeProductAmount];
-          item.compositeProducts=[{compositeProductElements: item.compositeProduct}];
-        }
+  let fileTitle = 'orders'; // or 'my-unique-title'
 
-        const numeroInvoice = item.numerosInvoice.balance;
-        const invoiceId = item.id;
-        const clientName = item.client.name;
-        const clientAddress = item.client.address;
-        const clientZipcode = item.client.zipcode;
-        const clientTown = item.client.town;
-        const contactName = item.contact.contactName;
-        const contactPhone = item.contact.contactPhone;
-        const contactEmail = item.contact.contactEmail;
-        const employe = item.employe.name;
-        var singleProductArray = [];
-        for (var i=0; i<item.singleProduct.length; i++) {
-          singleProductArray.push(item.singleProduct[i].name + " : "+ item.singleProductAmount[i]);
+  ExportCsvService.exportCSVFile(this.headers, this.invoicesTable, fileTitle); // call the exportCSVFile() function to process the JSON and trigger the download
+  }
+
+  private pushInvoice(invoice, numeroInvoice, invoiceType) {
+    //console.log("invoice : ", invoice);
+    if (numeroInvoice != null || numeroInvoice != undefined) { // si la date de facture de solde est renseignée, on pousse la facture de solde
+      // pour assurer la compatibilité avec les anciens devis fait avant les multiples  produits composés
+      invoice = ExportCsvService.setCompositeProductsIfUndefined(invoice);
+
+      let singleProductArray = [];
+      if (invoice.singleProduct !== undefined) {
+
+        for (let i=0; i<invoice.singleProduct.length; i++) {
+            if (invoice.singleProduct[i].name != undefined && invoice.singleProductAmount[i] !== 0) {
+            singleProductArray.push(invoice.singleProduct[i].name + " : "+ invoice.singleProductAmount[i]);
+          }
         }
-        const singleProduct =  singleProductArray.join(' - ');
-        var compositeProductArray = [];
-        item.compositeProducts.forEach((compositeProductElements)=>{
-          compositeProductArray.push(compositeProductElements.compositeProductElements[0].name);
+      }
+      const singleProduct =  singleProductArray.join(' - ');
+
+      let compositeProductArray = [];
+      let compositeProductAmount = '';
+      if (invoice.compositeProducts !== undefined) {
+        invoice.compositeProducts.forEach((compositeProductElements)=>{
+          if (compositeProductElements.compositeProductElements[0].name != undefined) {
+            compositeProductArray.push(compositeProductElements.compositeProductElements[0].name);
+            if (typeof (invoice.compositeProductAmount[0]) === "number" && invoice.compositeProductAmount[0] !== 0) {
+              compositeProductAmount = invoice.compositeProductAmount[0];
+            }
+          }
         });
-        const compositeProducts =  compositeProductArray.join(' - ');
-        const compositeProductAmount= item.compositeProductAmount;
-        var specialProductArray = [];
-        for (var i=0; i<item.specialProduct.length; i++) {
-          specialProductArray.push(item.specialProduct[i] + " : "+ item.specialProductPrice[i]);
-        }
-        const specialProduct =  specialProductArray.join(' - ');
-        const rentDateFrom = this.getDate(item.rentDateFrom);
-        const rentDateTo= this.getDate(item.rentDateTo);
-        //const  immoDateFrom= this.getDate(item.immoDateFrom);
-        //const  immoDateTo= this.getDate(item.immoDateTo);
-        //const  quotationComment= item.quotationComment;
-        //const  quotationDate= this.getDate(item.quotationDate);
-        //const  relaunchClientDate= this.getDate(item.relaunchClientDate);
-        //const  scanOrder= item.scanOrder;
-        const  balanceInvoiceDate= this.getDate(item.balanceInvoiceDate);
-        //const  orderComment= item.orderComment;
-        //const  deliveryComment= item.deliveryComment;
-        const prices = this.computePriceService.computePrices(item);
+      }
+      const compositeProducts =  compositeProductArray.join(' - ');
+
+      let specialProductArray = [];
+      if (invoice.specialProduct !== undefined) {
+        for (let i = 0; i < invoice.specialProduct.length; i++) {
+            if (invoice.specialProduct[i] != undefined && invoice.specialProductPrice[i] !== 0) {
+              specialProductArray.push(invoice.specialProduct[i] + " : " + invoice.specialProductPrice[i]);
+            }
+          }
+      }
+      const specialProduct =  specialProductArray.join(' - ');
+
+      const prices = this.computePriceService.computePrices(invoice);
+      let price = 0, rentalDiscountAmount = 0, saleDiscountAmount = 0, discountPrice = 0;
+      if (invoiceType === "advance" ) {
+        price = prices.price*Number(invoice.advanceRate)/100; // prix facture d'acompte
+        rentalDiscountAmount = prices.rentalDiscountAmount*Number(invoice.advanceRate)/100;
+        saleDiscountAmount = prices.saleDiscountAmount*Number(invoice.advanceRate)/100;
+        discountPrice = prices.discountPrice*Number(invoice.advanceRate)/100;
+      } else if (invoiceType === "balance") {
+        price = prices.price*(100-Number(invoice.advanceRate))/100;
+        rentalDiscountAmount = prices.rentalDiscountAmount*(100-Number(invoice.advanceRate))/100;
+        saleDiscountAmount = prices.saleDiscountAmount*(100-Number(invoice.advanceRate))/100;
+        discountPrice = prices.discountPrice*(100-Number(invoice.advanceRate))/100
+      }
+
+      this.invoicesTable.push({
+        numeroInvoice: numeroInvoice,
+        invoiceId: invoice.id,
+        clientName: invoice.client.name.replace(/;/g, ' '),
+        clientAddress: invoice.client.address.replace(/;/g, ' '),
+        clientZipcode: invoice.client.zipcode.toString().replace(/;/g, ' '),
+        clientTown: invoice.client.town.replace(/;/g, ' '),
+        contactName: invoice.contact.contactName.replace(/;/g, ' '),
+        contactPhone: invoice.contact.contactPhone.replace(/;/g, ' '),
+        contactEmail: invoice.contact.contactEmail.replace(/;/g, ' '),
+        employe: invoice.employe.name.replace(/;/g, ' '),
+        singleProduct: singleProduct.replace(/;/g, ' '),
+        compositeProducts: compositeProducts.replace(/;/g, ' '),
+        compositeProductAmount: compositeProductAmount,
+        specialProduct: specialProduct.toString().replace(/;/g, ' '),
+        rentDateFrom: UtilServices.getDate(invoice.rentDateFrom),
+        rentDateTo: UtilServices.getDate(invoice.rentDateTo),
+        invoiceDate: UtilServices.getDate(invoice.balanceInvoiceDate),
+        price: UtilServices.formatToTwoDecimal(price).toString().replace('.',','),
+        rentalDiscountAmount: UtilServices.formatToTwoDecimal(rentalDiscountAmount).toString().replace('.',','),
+        saleDiscountAmount : UtilServices.formatToTwoDecimal(saleDiscountAmount).toString().replace('.',','),
+        discountPrice : UtilServices.formatToTwoDecimal(discountPrice).toString().replace('.',','),
+        //immoDateFrom: UtilServices.getDate(invoice.immoDateFrom),
+        //immoDateTo: UtilServices.getDate(invoice.immoDateTo),
+        //quotationComment: invoice.quotationComment.replace(/;/g, ' '),
+        //quotationDate: UtilServices.getDate(invoice.quotationDate),
+        //relaunchClientDate: UtilServices.getDate(invoice.relaunchClientDate),
+        //orderDate: UtilServices.getDate(invoice.orderDate),
+        //scanOrder: invoice.scanOrder.replace(/;/g, ' '),
+        //orderComment: invoice.orderComment.replace(/;/g, ' '),
+        //deliveryComment: invoice.deliveryComment.replace(/;/g, ' '),
         // prix facture de solde spécifiques
-        var price = prices.price*(100-Number(item.advanceRate))/100;
-        var rentalDiscountAmount= prices.rentalDiscountAmount*(100-Number(item.advanceRate))/100;
-        var saleDiscountAmount= prices.saleDiscountAmount*(100-Number(item.advanceRate))/100;
-        var discountPrice = prices.discountPrice*(100-Number(item.advanceRate))/100;
-
-        this.itemsFormatted.push({
-          //model: item.model.replace(/;/g, ' '), // remove commas to avoid errors,
-          numeroInvoice: numeroInvoice,
-          invoiceId: invoiceId,
-          clientName: clientName.replace(/;/g, ' '),
-          clientAddress: clientAddress.replace(/;/g, ' '),
-          clientZipcode: clientZipcode.toString().replace(/;/g, ' '),
-          clientTown: clientTown.replace(/;/g, ' '),
-          contactName: contactName.replace(/;/g, ' '),
-          contactPhone: contactPhone.replace(/;/g, ' '),
-          contactEmail: contactEmail.replace(/;/g, ' '),
-          employe: employe.replace(/;/g, ' '),
-          singleProduct: singleProduct.replace(/;/g, ' '),
-          compositeProducts: compositeProducts.replace(/;/g, ' '),
-          compositeProductAmount: compositeProductAmount.toString().replace(/;/g, ' '),
-          specialProduct: specialProduct.toString().replace(/;/g, ' '),
-          rentDateFrom: rentDateFrom,
-          rentDateTo: rentDateTo,
-          //immoDateFrom: immoDateFrom,
-          //immoDateTo: immoDateTo,
-          //quotationComment: quotationComment.replace(/;/g, ' '),
-          //quotationDate: quotationDate,
-          //relaunchClientDate: relaunchClientDate,
-          //orderDate: orderDate,
-          //scanOrder: scanOrder.replace(/;/g, ' '),
-          invoiceDate: balanceInvoiceDate,
-          //orderComment: orderComment.replace(/;/g, ' '),
-          //deliveryComment: deliveryComment.replace(/;/g, ' '),
-          price: price,
-          rentalDiscountAmount: rentalDiscountAmount,
-          saleDiscountAmount : saleDiscountAmount,
-          discountPrice : discountPrice,
-        });
-      }
-
-    });
-
-  var fileTitle = 'orders'; // or 'my-unique-title'
-
-  this.exportCSVFile(this.headers, this.itemsFormatted, fileTitle); // call the exportCSVFile() function to process the JSON and trigger the download
-  }
-
-  getDate(timestamp) {
-    if (timestamp instanceof Timestamp) {
-      return timestamp.toDate().toLocaleDateString("fr-FR");
+      });
     }
-    else {return '';}
   }
 
+  private static setCompositeProductsIfUndefined(item) {
+    if (item.compositeProducts==undefined) {
+      item.compositeProductAmount = [item.compositeProductAmount];
+      item.compositeProducts=[{compositeProductElements: item.compositeProduct}];
+    }
+    return item;
+  }
 }

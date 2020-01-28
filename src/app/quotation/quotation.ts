@@ -7,6 +7,7 @@ import {Employe} from "../employe/employe";
 export class Quotation {
   client: Client;
   contact: any;
+  referenceClient : string; // optionnel, référence devis ou commande fournie par le client
   employe: Employe;
   singleProductAmount: number[];
   singleProduct: Product[];
@@ -17,6 +18,8 @@ export class Quotation {
   specialProductPrice : number[];
   optionalProductAmount: number[];
   optionalProduct: Product[];
+  optionalLongRentalMonth : number;
+  optionalLongRentalPrice : number;
   rentDateFrom: Timestamp;
   rentDateTo: Timestamp;
   immoDateFrom: Timestamp;

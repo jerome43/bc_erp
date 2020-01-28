@@ -15,7 +15,7 @@ export class AuthService {
   isLoggedIn = false;
 
   // todo récupérer les user dans la BD pour ne pas qu'ils apparaissent dans le code source et compromettent la sécurité.
-  authorizedUser = ["jerome.lions@ovh.fr", "laurent.mannarelli@gmail.com", "francisdony94@gmail.com", "marina.bourdon025@gmail.com"];
+  authorizedUser = ["jerome.lions@ovh.fr", "laurent.mannarelli@gmail.com", "francisdony94@gmail.com", "marina.bourdon025@gmail.com", "didier.borneconcept@gmail.com"];
 
   // store the URL so we can redirect after logging in
   redirectUrl: string = "home";
@@ -25,11 +25,12 @@ export class AuthService {
   }
 
    loginConfirm(): Observable<boolean> {
-   return of(true).pipe(
-   tap(val => {console.log("tap");this.isLoggedIn = true;})
-   );
+    return of(true).pipe(tap(val => {
+     //console.log("tap");
+     this.isLoggedIn = true;
+    }
+    ));
    }
-
 
   logout(): void {
     this.afAuth.auth.signOut();

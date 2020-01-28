@@ -38,9 +38,25 @@
     <mat-icon>folder</mat-icon>
     <span>Commandes archivées</span>
   </a>
+  <a mat-menu-item [routerLink]="['/create-service-contract', {archived: 'false'}]" routerLinkActive="active">
+    <mat-icon>add</mat-icon><mat-icon>build</mat-icon>
+    <span>Nouveau contrat maintenance</span>
+  </a>
+  <a mat-menu-item [routerLink]="['/list-service-contract', {archived: 'false'}]" routerLinkActive="active">
+    <mat-icon>sort</mat-icon><mat-icon>build</mat-icon>
+    <span>Contrats de maintenance</span>
+  </a>
+  <a mat-menu-item [routerLink]="['/list-service-contract', {archived: 'true'}]" routerLinkActive="active">
+  <mat-icon>folder</mat-icon><mat-icon>build</mat-icon>
+  <span>Contrats de maintenance archivés</span>
+  </a>
+  <a mat-menu-item (click)="onSidenavClose()" routerLink="/list-invoices" routerLinkActive="active">
+    <mat-icon>credit_card</mat-icon>
+    <span>Factures</span>
+  </a>
   <a mat-menu-item (click)="onSidenavClose()" routerLink="/export-orders" routerLinkActive="active">
     <mat-icon>save_alt</mat-icon>
-    <span>Export commandes</span>
+    <span>Export factures</span>
   </a>
 </mat-menu>
 
@@ -84,7 +100,7 @@
 
 <mat-list-item>
   <button mat-button [matMenuTriggerFor]="parametersMenu">
-    <mat-icon>build</mat-icon>
+    <mat-icon>settings_applications</mat-icon>
     <span class="top-menu-item">Paramètres</span>
   </button>
 </mat-list-item>

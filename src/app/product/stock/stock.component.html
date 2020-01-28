@@ -1,5 +1,5 @@
 <div class="main-container">
-  <h2>Liste des produits immobilisés</h2>
+  <h2>{{stockTypeParams.templateTitle}}</h2>
   <form [formGroup]="stockDatesForm">
     <h4>Dates d'immobilisations</h4>
     <div>
@@ -17,6 +17,7 @@
           <mat-datepicker #dateTo></mat-datepicker>
         </mat-form-field>
       </div>
+      <button  mat-raised-button color="accent" type="button" [routerLink]="['/stock', {isLongRental: !stockTypeParams.isLongRental}]">{{stockTypeParams.templateButton}}</button>
     </div>
   </form>
 
@@ -38,9 +39,9 @@
       <td mat-cell *matCellDef="let element"> {{element.immosFromDateToDate}} </td>
     </ng-container>
 
-    <!-- Edit Column -->
+    <!-- View Column -->
     <ng-container matColumnDef="view">
-      <th mat-header-cell *matHeaderCellDef></th>
+      <th mat-header-cell *matHeaderCellDef> Détail immobilisations </th>
       <td mat-cell *matCellDef="let element" >
         <button mat-button>
           <mat-icon color="primary" (click)="viewDetailStock($event.target.id)" [id]="element.id">pageview</mat-icon>
@@ -48,10 +49,14 @@
       </td>
     </ng-container>
 
-    <!-- Id Column -->
+    <!-- Edit Column -->
     <ng-container matColumnDef="id">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Id </th>
-      <td mat-cell *matCellDef="let element"> {{element.id}} </td>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Editer produit </th>
+
+      <td mat-cell *matCellDef="let element">
+        <button mat-button [routerLink]="['/detail-product/'+element.id]">
+          <mat-icon color="primary">edit</mat-icon>
+        </button>
     </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>

@@ -1,12 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild, Inject } from '@angular/core';
-import { AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument } from '@angular/fire/firestore';
+import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import {MatSort, MatPaginator, MatTableDataSource, MatSortable} from '@angular/material';
+import {MatSort, MatPaginator, MatTableDataSource } from '@angular/material';
 import { Quotation } from '../quotation';
 import { Router, ActivatedRoute } from '@angular/router';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
-import {Subscription} from "rxjs/index";
+import {Subscription} from "rxjs";
 import {firestore} from 'firebase/app';
 import Timestamp = firestore.Timestamp;
 
@@ -35,9 +35,8 @@ export class ListQuotationComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     // subscribe to the parameters observable
-    this.route.paramMap.subscribe(params => {
-      console.log(params.get('archived'));
-      this.setQuotationTypeParams(this.isArchived());
+    this.route.paramMap.subscribe(() => {
+      this.setQuotationTypeParams();
       this.initFbQuotations();
     });
   }
@@ -46,20 +45,13 @@ export class ListQuotationComponent implements OnInit, OnDestroy {
     this.fbQuotationsSubscription.unsubscribe();
   }
 
-  isArchived(): boolean {
-    var isArchived;
-    this.route.snapshot.paramMap.get('archived')==="true" ? isArchived = true : isArchived = false;
-    return isArchived;
-  }
-
-  setQuotationTypeParams(isArchived:boolean) {
-    console.log("isArchived :" + isArchived);
-    if (isArchived) {
+  setQuotationTypeParams() {
+    //console.log("isArchived :");
+    if (this.route.snapshot.paramMap.get('archived') === "true") {
       this.quotationTypeParams.path='archived-quotations';
       this.quotationTypeParams.isArchived='true';
       this.quotationTypeParams.displayInTemplate= "Devis archivés";
-    }
-    else {
+    } else {
       this.quotationTypeParams.path='quotations';
       this.quotationTypeParams.isArchived='false';
       this.quotationTypeParams.displayInTemplate = "Devis en cours"
@@ -67,10 +59,10 @@ export class ListQuotationComponent implements OnInit, OnDestroy {
   }
 
   initFbQuotations() {
-    console.log("initFbQuotations");
+    //console.log("initFbQuotations");
     this.quotationsData = [];
     this.dataSource = new MatTableDataSource<QuotationId>(this.quotationsData);
-    console.log("this.quotationTypeParams.path",this.quotationTypeParams.path);
+    //console.log("this.quotationTypeParams.path",this.quotationTypeParams.path);
     this.fbQuotations = this.db.collection(this.quotationTypeParams.path).snapshotChanges().pipe(
       //  this.fbQuotations = db.collection('quotations').stateChanges(['added','removed']).pipe(
       map(actions => actions.map(a => {
@@ -80,14 +72,14 @@ export class ListQuotationComponent implements OnInit, OnDestroy {
       })));
     if (this.fbQuotationsSubscription instanceof  Subscription) {this.fbQuotationsSubscription.unsubscribe()}
     this.fbQuotationsSubscription = this.fbQuotations.subscribe((quotations)=>{
-      console.log('Current quotations: ', quotations);
+      //console.log('Current quotations: ', quotations);
       this.quotationsData = [];
       quotations.forEach((quotation)=>{
         const client = quotation.client.name;
         const contact = quotation.contact.contactName;
         const employe = quotation.employe.name;
         const quotationDate = quotation.quotationDate;
-        var relaunchClientDate;
+        let relaunchClientDate;
         quotation.relaunchClientDate instanceof Timestamp ? relaunchClientDate = quotation.relaunchClientDate.toDate() : relaunchClientDate = quotation.relaunchClientDate;
         const id = quotation.id;
         this.quotationsData.push({id, client, contact, employe, quotationDate, relaunchClientDate});
@@ -104,12 +96,12 @@ export class ListQuotationComponent implements OnInit, OnDestroy {
   }
 
   editQuotation(eventTargetId) {
-    console.log(eventTargetId);
-    this.router.navigate(['detail-quotation/'+eventTargetId, {archived: this.quotationTypeParams.isArchived}]);
+    //console.log(eventTargetId);
+    this.router.navigate(['detail-quotation/'+eventTargetId, {archived: this.quotationTypeParams.isArchived}]).then();
   }
 
   wantDeleteQuotation(eventTargetId) {
-    console.log("wantDeleteQuotation"+eventTargetId);
+    //console.log("wantDeleteQuotation"+eventTargetId);
     this.openDialogWantDelete(eventTargetId, "Voulez-vous vraiment supprimer le devis "+eventTargetId+" ?")
   }
 
@@ -122,7 +114,7 @@ export class ListQuotationComponent implements OnInit, OnDestroy {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed'+result);
+      //console.log('The dialog was closed'+result);
       if (result=='yes') {
         this.deleteQuotation(id);
       }
@@ -130,17 +122,17 @@ export class ListQuotationComponent implements OnInit, OnDestroy {
   }
 
   deleteQuotation(eventTargetId) { // pour supprimer le devis dans firebase
-    console.warn("deleteQuotation : "+eventTargetId);
+    //console.warn("deleteQuotation : "+eventTargetId);
     const quotationDoc: AngularFirestoreDocument<Quotation> = this.db.doc<Quotation>(this.quotationTypeParams.path +'/'+ eventTargetId );
     quotationDoc.ref.get().then((quotation)=>{
       if (quotation.exists) {
         this.quotationsData = []; // on vide au préalable le tableau sinon les documents vont se surajouter aux anciens
         // supression du devis dans firestore
-        quotationDoc.delete().then(data => {
+        quotationDoc.delete().then(() => {
           this.openDialogDelete("Le devis "+eventTargetId+" a été supprimé.")});
       }
       else {
-        console.log("quotation doesn't exists");
+        //console.log("quotation doesn't exists");
       }
     });
   }
@@ -153,9 +145,7 @@ export class ListQuotationComponent implements OnInit, OnDestroy {
         displayNoButton:false}
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-    });
+    dialogRef.afterClosed().subscribe();
   }
 }
 

@@ -2,7 +2,9 @@
   <h2>Liste des employés</h2>
 
   <mat-form-field>
-    <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Rechercher">
+    <label>
+      <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Rechercher">
+    </label>
   </mat-form-field>
 
   <table mat-table [dataSource]="dataSource" matSort matSortActive="name" matSortDirection="asc" matSortDisableClear class="mat-elevation-z8">

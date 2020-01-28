@@ -2,11 +2,10 @@ import { Component, OnInit, Inject, ViewChild, ElementRef } from '@angular/core'
 import { Router } from '@angular/router';
 import { Product } from '../product';
 import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
-import { finalize } from 'rxjs/operators';
-import { Validators, FormGroup, FormControl, FormBuilder, FormArray } from '@angular/forms';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
 import { AngularFireStorage } from '@angular/fire/storage';
+import {ProductFormManager} from "../../forms/productFormManager";
+import {ProductType} from "../ProductType";
 
 export interface DialogCreateProductData {
   message: string;
@@ -20,79 +19,52 @@ export interface DialogCreateProductData {
 
 export class CreateProductComponent implements OnInit {
 
-  createProductForm;
+  public createProductForm;
+  public photoFile:File;
+
   private productsCollection: AngularFirestoreCollection<Product>;
-  //private uploadPercent: Observable<number>;
-  //private downloadURL: Observable<string>;
-  photoFile:File;
+
+  public ProductType = ProductType;
+
+  private productFormManager : ProductFormManager;
+
   @ViewChild('inputPhoto') inputPhoto: ElementRef;
 
-  constructor(private router: Router, db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog, private storage: AngularFireStorage) {
+  constructor(private router: Router, db: AngularFirestore, private storage: AngularFireStorage, private dialog: MatDialog) {
     this.productsCollection = db.collection('products');
+    this.productFormManager = new ProductFormManager();
   }
 
   ngOnInit() {
     this.initForm();
   }
 
-
-  /**
-   * FILE GESTION
-   */
-/*
-  convertFileToBase64(event) {
-    var f = event.target.files[0]; // FileList object
-    var reader = new FileReader();
-    // Closure to capture the file information.
-    reader.onload = (function(theFile) {
-      return function(e) {
-        var binaryData = e.target.result;
-        //Converting Binary Data to base 64
-        const encode64 = window.btoa(binaryData);
-        //showing file converted to base64
-        console.log('File converted to base64 successfuly!', encode64);
-      };
-    })(f);
-    // Read in the image file as a data URL.
-    reader.readAsBinaryString(f);
-  }
-  */
-
-
-  updateFile(event) {
+  public updateFile(event) {
     this.photoFile = event.target.files[0];
-   // console.log("updateFile :"+this.photoFile.name);
   }
 
-  uploadFile() {
+  private uploadFile() {
     console.log("uploadFile :"+this.photoFile.name + ' / '+this.photoFile);
     const fileRef = this.storage.ref('products/'+this.photoFile.name);
     // test si le fichier existe déjà
     fileRef.getDownloadURL().toPromise().then(
-      onResolve=> { // le fichier existe
+      ()=> { // le fichier existe
         this.openDialogMessage("Le fichier existe déjà, veuillez en utiliser un autre !");
       },
-      onReject => {// le fichier n'existe pas, on peut l'uploader
+      () => {// le fichier n'existe pas, on peut l'uploader
         console.log("file doesn't exists");
         this.storage.upload('products/'+this.photoFile.name, this.photoFile);
-         //this.storage.ref("products/"+this.photoFile.name).putString(encode64, 'base64', {contentType:'image/jpg'});
         this.addProduct();
       }
     );
   }
 
-  deletePhoto(inputPhoto) {
+  public deletePhoto(inputPhoto) {
     inputPhoto.value='';
     this.photoFile=undefined;
   }
 
-
-  /**
-   * END FILE GESTION
-   */
-
-
-  wantAddProduct() {
+  public wantAddProduct() {
      if (this.photoFile!=undefined) {
       this.uploadFile();
     }
@@ -101,7 +73,7 @@ export class CreateProductComponent implements OnInit {
     }
   }
 
-  addProduct() {
+  private addProduct() {
     if (this.photoFile!=undefined) {this.createProductForm.value.photo='products/'+this.photoFile.name;}
     this.productsCollection.add(this.createProductForm.value).then(data => {
       console.log("Document written with ID: ", data.id);
@@ -113,52 +85,34 @@ export class CreateProductComponent implements OnInit {
   get stock() { return this.createProductForm.get('stock'); }
 
 
-  openDialogProductAdded(message, id): void {
+  private openDialogProductAdded(message, id): void {
     const dialogRef = this.dialog.open(DialogCreateProductOverview, {
       width: '450px',
       data: {message: message}
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-     // this.initForm();
-      this.router.navigate(['detail-product/'+id]);
+    dialogRef.afterClosed().subscribe(() => {
+      this.router.navigate(['detail-product/' + id]).then();
     });
   }
 
-  openDialogMessage(message): void {
+  private openDialogMessage(message): void {
     const dialogRef = this.dialog.open(DialogCreateProductOverview, {
       width: '450px',
       data: {message: message}
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-    });
+    dialogRef.afterClosed().subscribe();
   }
 
-  initForm() {
-    this.photoFile=undefined;
-    this.inputPhoto.nativeElement.value='';
-     this.createProductForm = this.fb.group({
-      name: ['', Validators.required],
-      description: [''],
-      //serial_number: [''],
-      internal_number: ['', Validators.required],
-      //barcode: [''],
-      stock: ['1', Validators.required],
-      type: ['rental', Validators.required],
-      sell_price : [0, Validators.required],
-      rent_price : [0, Validators.required],
-      apply_degressivity: ['true', Validators.required],
-      photo: [''],
-      comment: [''],
-      date: [new Date()]
-    });
+  private initForm() {
+    this.photoFile = undefined;
+    this.inputPhoto.nativeElement.value = '';
+    this.createProductForm = this.productFormManager.getForm();
     this.createProductForm.valueChanges.subscribe(data => {
       console.log('Form changes', data);
-      if (data.type=='sale' || data.type=='service') {
-        if (data.apply_degressivity==="true") {this.createProductForm.controls['apply_degressivity'].patchValue('false');}
+      if (data.type === ProductType.sale || data.type === ProductType.service) {
+        if (data.apply_degressivity === "true") {this.createProductForm.controls['apply_degressivity'].patchValue('false');}
       }
     });
   }

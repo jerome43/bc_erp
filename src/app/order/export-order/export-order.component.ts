@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
-import { AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument } from '@angular/fire/firestore';
+import { Component, OnInit, Inject } from '@angular/core';
+import { AngularFirestore } from '@angular/fire/firestore';
 import {ExportCsvService} from "../../export/export-csv.service";
 import { map } from 'rxjs/operators';
-import { FormControl, FormBuilder } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
 
 export interface DialogExportOrderData {
@@ -16,8 +16,8 @@ export interface DialogExportOrderData {
   styleUrls: ['./export-order.component.less']
 })
 export class ExportOrderComponent implements OnInit {
-  exportForm;
-  private exportOrdersData = []; // tableau qui va récupérer les données à exporter
+
+  public exportForm;
 
   constructor(private db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog, private exportCsvService: ExportCsvService) {
   }
@@ -28,7 +28,6 @@ export class ExportOrderComponent implements OnInit {
 
   ngOnDestroy() {
     // unsubscribe to avoid memory leaks
-
   }
 
   initForm() {
@@ -39,64 +38,106 @@ export class ExportOrderComponent implements OnInit {
   }
 
   wantExportOrderCsv() {
-    console.log("wantExportOrderCsv");
+    //console.log("wantExportOrderCsv");
     this.selectOrderByDate(this.exportForm.value.dateFrom, this.exportForm.value.dateTo);
   }
 
   selectOrderByDate(dateFrom, dateTo) {
     if (dateFrom===undefined || dateFrom==='' || dateFrom===null || dateTo===undefined || dateTo==='' || dateTo===null) {
       this.openDialogMessage("Vous devez spécifier des dates d'export !");
-    }
-    else {
+    } else {
       dateTo.setDate(dateTo.getDate() + 1);   // on rajoute 24h car la date de fin est les jour à 0h00 et non à 23h59h59
-      console.log("dateFrom : ", dateFrom, ' / dateTo : ', dateTo);
+      //console.log("dateFrom : ", dateFrom, ' / dateTo : ', dateTo);
 
-      var orderDateToExport = this.db.collection('orders', ref => ref.orderBy('orderDate').startAt(dateFrom)
+      const fbAdvanceOrders = this.db.collection('orders', ref => ref.orderBy('orderDate').startAt(dateFrom)
         .endAt(dateTo)).snapshotChanges().pipe(
           map(actions => actions.map(a => {
             const data = a.payload.doc.data();
             const id = a.payload.doc.id;
             return { id, ...data };
-          }))).subscribe(advanceData => {
-            orderDateToExport.unsubscribe();
-            console.log("advanceData", advanceData);
-            var archivedOrderDateToExport = this.db.collection('archived-orders', ref => ref.orderBy('orderDate').startAt(dateFrom)
+            }))).subscribe(advanceOrders => {
+            fbAdvanceOrders.unsubscribe();
+            //console.log("advanceOrders", advanceOrders);
+            const fbArchivedAdvanceOrders = this.db.collection('archived-orders', ref => ref.orderBy('orderDate').startAt(dateFrom)
               .endAt(dateTo)).snapshotChanges().pipe(
                 map(actions => actions.map(a => {
                   const data = a.payload.doc.data();
                   const id = a.payload.doc.id;
                   return { id, ...data };
-                }))).subscribe(archivedAdvanceData => {
-                  console.log("archivedAdvanceData", archivedAdvanceData);
-                  var advanceInvoiceData = advanceData.concat(archivedAdvanceData);
-                  console.log("advanceInvoiceData", advanceInvoiceData);
-                  archivedOrderDateToExport.unsubscribe();
-                  var balanceInvoiceDateToExport = this.db.collection('orders', ref => ref.orderBy('balanceInvoiceDate').startAt(dateFrom)
+                }))).subscribe(archivedAdvanceOrders => {
+                  fbArchivedAdvanceOrders.unsubscribe();
+                  //console.log("archivedAdvanceOrders", archivedAdvanceOrders);
+                  const allAdvanceOrders = advanceOrders.concat(archivedAdvanceOrders);
+                  const fbBalanceOrders = this.db.collection('orders', ref => ref.orderBy('balanceInvoiceDate').startAt(dateFrom)
                     .endAt(dateTo)).snapshotChanges().pipe(
-                    map(actions => actions.map(a => {
-                      const data = a.payload.doc.data();
-                      const id = a.payload.doc.id;
-                      return { id, ...data };
-                    }))).subscribe(balanceData => {
-                    balanceInvoiceDateToExport.unsubscribe();
-                    console.log("balanceData", balanceData);
-                    var archivedBalanceInvoiceDateToExport = this.db.collection('archived-orders', ref => ref.orderBy('balanceInvoiceDate').startAt(dateFrom)
-                      .endAt(dateTo)).snapshotChanges().pipe(
                       map(actions => actions.map(a => {
                         const data = a.payload.doc.data();
                         const id = a.payload.doc.id;
-                        return { id, ...data };
-                      }))).subscribe(archivedBalanceData => {
-                      console.log("archivedBalanceData", archivedBalanceData);
-                      var balanceInvoiceData = balanceData.concat(archivedBalanceData);
-                      console.log("balanceInvoiceData", balanceInvoiceData);
-                      this.exportCsvService.wantExportOrderCsv(advanceInvoiceData, balanceInvoiceData);
-                      archivedBalanceInvoiceDateToExport.unsubscribe();
-                    });
+                        return {id, ...data};
+                      }))).subscribe(balanceOrders => {
+                        fbBalanceOrders.unsubscribe();
+                        //console.log("balanceOrders", balanceOrders);
+                        const fbArchivedBalanceOrders = this.db.collection('archived-orders', ref => ref.orderBy('balanceInvoiceDate').startAt(dateFrom)
+                          .endAt(dateTo)).snapshotChanges().pipe(
+                            map(actions => actions.map(a => {
+                              const data = a.payload.doc.data();
+                              const id = a.payload.doc.id;
+                              return {id, ...data};
+                              }))).subscribe(archivedBalanceOrders => {
+                                //console.log("archivedBalanceOrders", archivedBalanceOrders);
+                                fbArchivedBalanceOrders.unsubscribe();
+                                const allBalanceOrders = balanceOrders.concat(archivedBalanceOrders);
+
+                                const fbAdvanceServiceContracts = this.db.collection('service-contracts', ref => ref.orderBy('orderDate').startAt(dateFrom)
+                                  .endAt(dateTo)).snapshotChanges().pipe(
+                                  map(actions => actions.map(a => {
+                                    const data = a.payload.doc.data();
+                                    const id = a.payload.doc.id;
+                                    return { id, ...data };
+                                  }))).subscribe(advanceServiceContracts => {
+                                  fbAdvanceServiceContracts.unsubscribe();
+                                  //console.log("advanceServiceContracts", advanceServiceContracts);
+                                  const fbArchivedAdvanceServiceContracts = this.db.collection('archived-service-contracts', ref => ref.orderBy('orderDate').startAt(dateFrom)
+                                    .endAt(dateTo)).snapshotChanges().pipe(
+                                    map(actions => actions.map(a => {
+                                      const data = a.payload.doc.data();
+                                      const id = a.payload.doc.id;
+                                      return { id, ...data };
+                                    }))).subscribe(archivedAdvanceServiceContracts => {
+                                    fbArchivedAdvanceServiceContracts.unsubscribe();
+                                    //console.log("archivedAdvanceServiceContracts", archivedAdvanceServiceContracts);
+                                    const allAdvanceServiceContracts = advanceServiceContracts.concat(archivedAdvanceServiceContracts);
+                                    const fbBalanceServiceContracts = this.db.collection('service-contracts', ref => ref.orderBy('balanceInvoiceDate').startAt(dateFrom)
+                                      .endAt(dateTo)).snapshotChanges().pipe(
+                                      map(actions => actions.map(a => {
+                                        const data = a.payload.doc.data();
+                                        const id = a.payload.doc.id;
+                                        return {id, ...data};
+                                      }))).subscribe(balanceServiceContracts => {
+                                      fbBalanceServiceContracts.unsubscribe();
+                                      //console.log("balanceServiceContracts", balanceServiceContracts);
+                                      const fbArchivedBalanceServiceContracts = this.db.collection('archived-service-contracts', ref => ref.orderBy('balanceInvoiceDate').startAt(dateFrom)
+                                        .endAt(dateTo)).snapshotChanges().pipe(
+                                        map(actions => actions.map(a => {
+                                          const data = a.payload.doc.data();
+                                          const id = a.payload.doc.id;
+                                          return {id, ...data};
+                                        }))).subscribe(archivedBalanceServiceContracts => {
+                                        //console.log("archivedBalanceServiceContracts", archivedBalanceServiceContracts);
+                                        fbArchivedBalanceServiceContracts.unsubscribe();
+                                        const allBalanceServiceContracts = balanceServiceContracts.concat(archivedBalanceServiceContracts);
+                                        const allAdvanceOrdersAndServiceContracts = allAdvanceOrders.concat(allAdvanceServiceContracts);
+                                        const allBalanceOrdersAndServiceContracts = allBalanceOrders.concat(allBalanceServiceContracts);
+                                        this.exportCsvService.wantExportOrderCsv(allAdvanceOrdersAndServiceContracts, allBalanceOrdersAndServiceContracts);
+                                      });
+                                    });
+                                  });
+                                });
+                              });
+                        });
                   });
-                });
-            });
-    }
+              });
+        }
   }
 
   openDialogMessage(message): void {
@@ -107,10 +148,7 @@ export class ExportOrderComponent implements OnInit {
         displayNoButton:false
       }
     });
-
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-    });
+    dialogRef.afterClosed().subscribe();
   }
 }
 

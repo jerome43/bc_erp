@@ -1,10 +1,10 @@
-<form [formGroup]="detailOrderForm" class="main-container">
-  <h2>{{orderTypeParams.templateTitle}} {{orderId}} - référence devis n° {{detailOrderForm.value.quotationId}}</h2>
+<form [formGroup]="orderForm" class="main-container">
+  <h2>{{orderTypeParams.templateTitle}} {{orderId}} - référence devis n° {{orderForm.value.quotationId}}</h2>
   <div class="margin-bottom-1">
-    <span class="margin-right" *ngIf="detailOrderForm.value.numerosInvoice.advance!=null">Référence facture acompte : {{detailOrderForm.value.numerosInvoice.advance}}</span>
-    <span class="margin-right" *ngIf="detailOrderForm.value.numerosInvoice.advance==null">Référence facture acompte : facture non générée</span>
-    <span class="" *ngIf="detailOrderForm.value.numerosInvoice.balance!=null">Référence facture solde : {{detailOrderForm.value.numerosInvoice.balance}}</span>
-    <span class="" *ngIf="detailOrderForm.value.numerosInvoice.balance==null">Référence facture solde : facture non générée</span>
+    <span class="margin-right" *ngIf="orderForm.value.numerosInvoice.advance!=null">Référence facture acompte : {{orderForm.value.numerosInvoice.advance}}</span>
+    <span class="margin-right" *ngIf="orderForm.value.numerosInvoice.advance==null">Référence facture acompte : facture non générée</span>
+    <span class="" *ngIf="orderForm.value.numerosInvoice.balance!=null">Référence facture solde : {{orderForm.value.numerosInvoice.balance}}</span>
+    <span class="" *ngIf="orderForm.value.numerosInvoice.balance==null">Référence facture solde : facture non générée</span>
   </div>
   <mat-form-field >
     <input type="text" placeholder="Client" aria-label="Client" matInput formControlName="client" [matAutocomplete]="autoCompleteClient" required>
@@ -21,6 +21,12 @@
         {{contactOption.contactName}}
       </mat-option>
     </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <label>
+      <input type="text" matInput formControlName="referenceClient" placeholder="Référence fournie ou demandée par le client">
+    </label>
   </mat-form-field>
 
   <mat-form-field>
@@ -45,11 +51,13 @@
           </mat-autocomplete>
         </mat-form-field>
         <mat-form-field class="width15 margin-right">
-          <input type="number" matInput placeholder="Quantité produit simple" #inputSingleProductAmount (click)="setSingleProductAmount(i, inputSingleProductAmount.value)" (keyup)="setSingleProductAmount(i, inputSingleProductAmount.value)" [value]="this.detailOrderForm.value.singleProductAmount[i]">
+          <label>
+            <input type="number" matInput placeholder="Quantité produit simple" #inputSingleProductAmount (click)="setSingleProductAmount(i, inputSingleProductAmount.value)" (keyup)="setSingleProductAmount(i, inputSingleProductAmount.value)" [value]="this.orderForm.value.singleProductAmount[i]">
+          </label>
         </mat-form-field>
         <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmSingleProduct(i)" class="suppr-button margin-right">Supprimer</button>
       </div>
-      <button mat-raised-button color="accent" type="button" *ngIf="detailOrderForm.value.singleProduct[detailOrderForm.value.singleProduct.length-1]!=''" (click)="addSingleProduct()" class="margin-bottom-1">Ajouter produit simple</button>
+      <button mat-raised-button color="accent" type="button" *ngIf="orderForm.value.singleProduct[orderForm.value.singleProduct.length-1]!=''" (click)="addSingleProduct()" class="margin-bottom-1">Ajouter produit simple</button>
     </div>
     <div class="display-inline-block">
     </div>
@@ -78,7 +86,9 @@
             </ng-container>
             <button mat-raised-button color="accent" type="button" (click)="addCompositeProductElement(idxPdt)" class="margin-bottom-1">+ élt pdt composé</button>
             <mat-form-field class="width100">
-              <input type="number" class="" matInput placeholder="Quantité produit composé {{idxPdt+1}}" #inputCompositeProductAmount (click)="setCompositeProductAmount(idxPdt, inputCompositeProductAmount.value)" (keyup)="setCompositeProductAmount(idxPdt, inputCompositeProductAmount.value)" [value]="this.detailOrderForm.value.compositeProductAmount[idxPdt]">
+              <label>
+                <input type="number" class="" matInput placeholder="Quantité produit composé {{idxPdt+1}}" #inputCompositeProductAmount (click)="setCompositeProductAmount(idxPdt, inputCompositeProductAmount.value)" (keyup)="setCompositeProductAmount(idxPdt, inputCompositeProductAmount.value)" [value]="this.orderForm.value.compositeProductAmount[idxPdt]">
+              </label>
             </mat-form-field>
           </div>
         </div>
@@ -104,62 +114,49 @@
         <input matInput type="text" placeholder="Produit spécial (frais kilométriques...)" aria-label="Produit spécial" [formControlName]="i">
       </mat-form-field>
       <mat-form-field class="width15 margin-right">
-        <input type="number" matInput placeholder="Prix produit spécial" #inputSpecialProductPrice (click)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" (keyup)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" [value]="this.detailOrderForm.value.specialProductPrice[i]">
+        <label>
+          <input type="number" matInput placeholder="Prix produit spécial" #inputSpecialProductPrice (click)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" (keyup)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" [value]="this.orderForm.value.specialProductPrice[i]">
+        </label>
       </mat-form-field>
       <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmSpecialProduct(i)" class="suppr-button margin-right">Supprimer</button>
     </div>
-    <button mat-raised-button color="accent" type="button" *ngIf="detailOrderForm.value.specialProduct[detailOrderForm.value.specialProduct.length-1]!=''" (click)="addSpecialProduct()" class="margin-bottom-1">Ajouter produit spécial</button>
+    <button mat-raised-button color="accent" type="button" *ngIf="orderForm.value.specialProduct[orderForm.value.specialProduct.length-1]!=''" (click)="addSpecialProduct()" class="margin-bottom-1">Ajouter produit spécial</button>
   </div>
-
-  <!--h4>Produits optionnels</h4>
-  <div>
-    <div formArrayName="optionalProduct">
-      <div *ngFor="let product of optionalProduct.controls; let i=index" class="form-array-container">
-        <mat-form-field class="width70 margin-right">
-          <input type="text" placeholder="Produit optionnel" aria-label="Produit optionnel" [formControlName]="i" matInput [matAutocomplete]="autoCompleteOptionalProduct" (click)="filterProducts(i, $event)" (keyup)="filterProducts(i, $event)">
-          <mat-autocomplete #autoCompleteOptionalProduct="matAutocomplete" [displayWith]="displayProductFn">
-            <mat-option *ngFor="let productOption of productFormOptionsFiltered | async" [value]="productOption">
-              {{productOption.name}}
-            </mat-option>
-          </mat-autocomplete>
-        </mat-form-field>
-        <mat-form-field class="width15 margin-right">
-          <input type="number" matInput placeholder="Quantité produit optionnel" #inputOptionalProductAmount (click)="setOptionalProductAmount(i, inputOptionalProductAmount.value)" (keyup)="setOptionalProductAmount(i, inputOptionalProductAmount.value)" [value]="this.detailOrderForm.value.optionalProductAmount[i]">
-        </mat-form-field>
-        <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmOptionalProduct(i)" class="suppr-button margin-right">Supprimer</button>
-      </div>
-      <button mat-raised-button color="accent" type="button" *ngIf="detailOrderForm.value.optionalProduct[detailOrderForm.value.optionalProduct.length-1]!=''" (click)="addOptionalProduct()" class="margin-bottom-1">Ajouter produit optionnel</button>
-    </div>
-    <div class="display-inline-block">
-    </div>
-  </div-->
 
   <h4>Dates</h4>
   <div>
     <div class="display-inline-block width25">
       <mat-form-field class="width80 margin-auto">
-        <input matInput [matDatepicker]="rentDateFrom" formControlName="rentDateFrom" placeholder="Début location">
+        <label>
+          <input matInput [matDatepicker]="rentDateFrom" formControlName="rentDateFrom" placeholder="Début location">
+        </label>
         <mat-datepicker-toggle matSuffix [for]="rentDateFrom"></mat-datepicker-toggle>
         <mat-datepicker #rentDateFrom></mat-datepicker>
       </mat-form-field>
     </div>
     <div class="display-inline-block width25">
       <mat-form-field class="width80 margin-auto">
-        <input matInput [matDatepicker]="rentDateTo" formControlName="rentDateTo" placeholder="Fin location">
+        <label>
+          <input matInput [matDatepicker]="rentDateTo" formControlName="rentDateTo" placeholder="Fin location">
+        </label>
         <mat-datepicker-toggle matSuffix [for]="rentDateTo"></mat-datepicker-toggle>
         <mat-datepicker #rentDateTo></mat-datepicker>
       </mat-form-field>
     </div>
     <div class="display-inline-block width25">
       <mat-form-field class="width80 margin-auto">
-        <input matInput [matDatepicker]="immoDateFrom" formControlName="immoDateFrom" placeholder="Début immobilisation">
+        <label>
+          <input matInput [matDatepicker]="immoDateFrom" formControlName="immoDateFrom" placeholder="Début immobilisation">
+        </label>
         <mat-datepicker-toggle matSuffix [for]="immoDateFrom"></mat-datepicker-toggle>
         <mat-datepicker #immoDateFrom></mat-datepicker>
       </mat-form-field>
     </div>
     <div class="display-inline-block width25">
       <mat-form-field class="width80 margin-auto">
-        <input matInput [matDatepicker]="immoDateTo" formControlName="immoDateTo" placeholder="Fin immobilisation">
+        <label>
+          <input matInput [matDatepicker]="immoDateTo" formControlName="immoDateTo" placeholder="Fin immobilisation">
+        </label>
         <mat-datepicker-toggle matSuffix [for]="immoDateTo"></mat-datepicker-toggle>
         <mat-datepicker #immoDateTo></mat-datepicker>
       </mat-form-field>
@@ -169,27 +166,35 @@
   <div>
     <div class="display-inline-block width25">
       <mat-form-field class="width80">
-        <input type="text" matInput placeholder="Date devis" disabled [value]="detailOrderForm.value.quotationDate.seconds*1000 | date:'dd/MM/yyyy'">
+        <label>
+          <input type="text" matInput placeholder="Date devis" disabled [value]="orderForm.value.quotationDate.seconds*1000 | date:'dd/MM/yyyy'">
+        </label>
       </mat-form-field>
     </div>
 
     <div class="display-inline-block width25">
       <mat-form-field class="width80 margin-auto">
-        <input matInput [matDatepicker]="orderDate" formControlName="orderDate" placeholder="Date commande" required>
+        <label>
+          <input matInput [matDatepicker]="orderDate" formControlName="orderDate" placeholder="Date commande" required>
+        </label>
         <mat-datepicker-toggle matSuffix [for]="orderDate"></mat-datepicker-toggle>
         <mat-datepicker #orderDate></mat-datepicker>
       </mat-form-field>
     </div>
     <div class="display-inline-block width25">
       <mat-form-field class="width80 margin-auto">
-        <input matInput [matDatepicker]="relaunchClientDate" formControlName="relaunchClientDate" placeholder="Date dernière relance client">
+        <label>
+          <input matInput [matDatepicker]="relaunchClientDate" formControlName="relaunchClientDate" placeholder="Date dernière relance client">
+        </label>
         <mat-datepicker-toggle matSuffix [for]="relaunchClientDate"></mat-datepicker-toggle>
         <mat-datepicker #relaunchClientDate></mat-datepicker>
       </mat-form-field>
     </div>
     <div class="display-inline-block width25">
       <mat-form-field class="width80 margin-auto">
-        <input matInput [matDatepicker]="balanceInvoiceDate" formControlName="balanceInvoiceDate" placeholder="Date facture solde">
+        <label>
+          <input matInput [matDatepicker]="balanceInvoiceDate" formControlName="balanceInvoiceDate" placeholder="Date facture solde">
+        </label>
         <mat-datepicker-toggle matSuffix [for]="balanceInvoiceDate"></mat-datepicker-toggle>
         <mat-datepicker #balanceInvoiceDate></mat-datepicker>
       </mat-form-field>
@@ -200,76 +205,169 @@
   <div>
     <div class="display-inline-block width25">
       <mat-form-field class="width80 margin-auto">
-        <input matInput [matDatepicker]="installationDate" formControlName="installationDate" placeholder="Date d'installation">
+        <label>
+          <input matInput [matDatepicker]="installationDate" formControlName="installationDate" placeholder="Date d'installation">
+        </label>
         <mat-datepicker-toggle matSuffix [for]="installationDate"></mat-datepicker-toggle>
         <mat-datepicker #installationDate></mat-datepicker>
       </mat-form-field>
     </div>
     <div class="display-inline-block width25">
       <mat-form-field class="width80 margin-auto" >
-        <input type="text" matInput formControlName="installationHours" placeholder="Horaires d'installation">
+        <label>
+          <input type="text" matInput formControlName="installationHours" placeholder="Horaires d'installation">
+        </label>
       </mat-form-field>
     </div>
     <mat-form-field class="width60 margin-right">
-      <input type="text" matInput formControlName="installationContactName" placeholder="Nom du contact sur place">
+      <label>
+        <input type="text" matInput formControlName="installationContactName" placeholder="Nom du contact sur place">
+      </label>
     </mat-form-field>
     <mat-form-field class="width30 margin-auto">
-      <input type="text" matInput formControlName="installationContactPhone" placeholder="Téléphone du contact sur place">
+      <label>
+        <input type="text" matInput formControlName="installationContactPhone" placeholder="Téléphone du contact sur place">
+      </label>
     </mat-form-field>
     <mat-form-field class="width100 margin-auto">
-      <input type="text" matInput formControlName="installationAddress" placeholder="Adresse">
+      <label>
+        <input type="text" matInput formControlName="installationAddress" placeholder="Adresse">
+      </label>
     </mat-form-field>
     <mat-form-field class="width30 margin-right">
-      <input type="number" matInput formControlName="installationZipcode" placeholder="Code postal">
+      <label>
+        <input type="number" matInput formControlName="installationZipcode" placeholder="Code postal">
+      </label>
     </mat-form-field>
     <mat-form-field class="width60 margin-auto">
-      <input type="text" matInput formControlName="installationTown" placeholder="Ville">
+      <label>
+        <input type="text" matInput formControlName="installationTown" placeholder="Ville">
+      </label>
     </mat-form-field>
   </div>
 
   <h4>Commentaires</h4>
   <mat-form-field class="width100 margin-auto">
-    <input type="text" matInput formControlName="quotationComment" placeholder="Commentaires devis (apparaissent sur le devis)">
+    <label>
+      <input type="text" matInput formControlName="quotationComment" placeholder="Commentaires devis (apparaissent sur le devis)">
+    </label>
   </mat-form-field>
   <mat-form-field class="width100 margin-auto">
-    <input type="text" matInput formControlName="privateQuotationComment" placeholder="Commentaires privés (apparaissent sur le bon de préparation)">
+    <label>
+      <input type="text" matInput formControlName="privateQuotationComment" placeholder="Commentaires privés (apparaissent sur le bon de préparation)">
+    </label>
   </mat-form-field>
   <mat-form-field class="width100 margin-auto">
-    <input type="text" matInput formControlName="orderComment" placeholder="Commentaires facture (apparaissent sur les factures)">
+    <label>
+      <input type="text" matInput formControlName="orderComment" placeholder="Commentaires facture (apparaissent sur les factures)">
+    </label>
   </mat-form-field>
   <mat-form-field class="width100 margin-auto">
-    <input type="text" matInput formControlName="deliveryComment" placeholder="Commentaires bon de livraison (apparaissent sur le bon de livraison)">
+    <label>
+      <input type="text" matInput formControlName="deliveryComment" placeholder="Commentaires bon de livraison (apparaissent sur le bon de livraison)">
+    </label>
   </mat-form-field>
   <h4>Références clients</h4>
   <mat-form-field class="width25 margin-right">
-    <input type="text" matInput formControlName="clientOrderNumber" placeholder="Numéro de commande du client">
+    <label>
+      <input type="text" matInput formControlName="clientOrderNumber" placeholder="Numéro de commande du client">
+    </label>
   </mat-form-field>
-  <h4>Prix HT</h4>
+  <h4>Facturation</h4>
   <div>
     <mat-form-field class="width25 margin-right">
-      <input type="number" matInput formControlName="advanceRate" placeholder="Taux facture acompte en %">
+      <label>
+        <input type="number" matInput formControlName="advanceRate" placeholder="Taux facture acompte en %">
+      </label>
     </mat-form-field>
     <mat-form-field class="width50 margin-right">
-      <input type="number" matInput formControlName="credit" placeholder="Acompte en € TTC versé par le client sur devis (sans facture d'acompte)">
+      <label>
+        <input type="number" matInput formControlName="credit" placeholder="Acompte en € TTC versé par le client sur devis (sans facture d'acompte)">
+      </label>
     </mat-form-field>
   </div>
 </form>
 
-<form [formGroup]="detailOrderPricesForm" class="main-container">
+<form [formGroup]="pricesForm" class="main-container">
   <div>
     <mat-form-field class="width20 margin-right">
-      <input type="number" matInput placeholder="Prix total HT avant remise" disabled [value]="detailOrderPricesForm.value.price">
+      <label>
+        <input type="number" matInput placeholder="Prix total HT avant remise" disabled [value]="pricesForm.value.price">
+      </label>
     </mat-form-field>
     <mat-form-field class="width20 margin-right">
-      <input type="number" matInput placeholder="Remise sur locations en %" disabled [value]="detailOrderPricesForm.value.rentalDiscount">
+      <label>
+        <input type="number" matInput placeholder="Remise sur locations en %" disabled [value]="pricesForm.value.rentalDiscount">
+      </label>
     </mat-form-field>
     <mat-form-field class="width20 margin-right">
-      <input type="number" matInput placeholder="Remise sur ventes en %" disabled [value]="detailOrderPricesForm.value.saleDiscount">
+      <label>
+        <input type="number" matInput placeholder="Remise sur ventes en %" disabled [value]="pricesForm.value.saleDiscount">
+      </label>
     </mat-form-field>
     <mat-form-field class="width20">
-      <input type="number" matInput placeholder="Prix total HT remisé" disabled [value]="detailOrderPricesForm.value.discountPrice">
+      <label>
+        <input type="number" matInput placeholder="Prix total HT remisé" disabled [value]="pricesForm.value.discountPrice">
+      </label>
     </mat-form-field>
   </div>
+</form>
+
+<form [formGroup]="orderForm" class="main-container">
+  <div>
+    <mat-form-field class="width30 margin-right">
+      <label>
+        <input type="number" matInput placeholder="Montant HT facture acompte" disabled  [value]="orderForm.value.paymentInvoice.advance.amount">
+      </label>
+    </mat-form-field>
+    <mat-form-field class="width30 margin-right">
+      <label>
+        <input matInput type="text" disabled placeholder="Référence facture acompte " [value]="orderForm.value.numerosInvoice.advance !== null ? orderForm.value.numerosInvoice.advance.toString() : 'non générée'">
+      </label>
+    </mat-form-field>
+    <mat-form-field class="width30 margin-right">
+      <label>
+        <input matInput [matDatepicker]="paymentAdvanceDate" [(ngModel)]="orderForm.value.paymentInvoice.advance.date" [ngModelOptions]="{standalone: true}" placeholder="Date paiement facture d'acompte">
+      </label>
+      <mat-datepicker-toggle matSuffix [for]="paymentAdvanceDate"></mat-datepicker-toggle>
+      <mat-datepicker #paymentAdvanceDate></mat-datepicker>
+    </mat-form-field>
+    <mat-form-field class="width30 margin-right">
+      <label>
+        <input type="number" matInput placeholder="Montant HT facture solde" disabled [value]="orderForm.value.paymentInvoice.balance.amount">
+      </label>
+    </mat-form-field>
+    <mat-form-field class="width30 margin-right">
+      <label>
+        <input matInput type="text" disabled placeholder="Référence facture solde " [value]="orderForm.value.numerosInvoice.balance !== null ? orderForm.value.numerosInvoice.balance.toString() : 'non générée'">
+      </label>
+    </mat-form-field>
+    <mat-form-field class="width30 margin-right">
+      <label>
+        <input matInput [matDatepicker]="paymentBalanceDate" [(ngModel)]="orderForm.value.paymentInvoice.balance.date" [ngModelOptions]="{standalone: true}" placeholder="Date paiement facture de solde">
+      </label>
+      <mat-datepicker-toggle matSuffix [for]="paymentBalanceDate"></mat-datepicker-toggle>
+      <mat-datepicker #paymentBalanceDate></mat-datepicker>
+    </mat-form-field>
+  </div>
+
+  <h4>Coûts externes</h4>
+  <div formArrayName="externalCosts">
+    <div *ngFor="let externalCost of externalCosts.controls; let i=index" class="form-array-container">
+      <!-- The repeated alias template -->
+      <mat-form-field class="width70 margin-right">
+        <input matInput type="text" placeholder="Intitulé coût externe" aria-label="Coût externes" [(ngModel)]="this.orderForm.value.externalCosts[i].name" [ngModelOptions]="{standalone: true}">
+      </mat-form-field>
+      <mat-form-field class="width15 margin-right">
+        <label>
+          <input type="number" matInput placeholder="Prix coût externe" [(ngModel)]="this.orderForm.value.externalCosts[i].amount" [ngModelOptions]="{standalone: true}">
+        </label>
+      </mat-form-field>
+      <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmExternalCost(i)" class="suppr-button margin-right">Supprimer</button>
+    </div>
+    <button mat-raised-button color="accent" type="button" *ngIf="orderForm.value.externalCosts[orderForm.value.externalCosts.length-1].name !== '' && orderForm.value.externalCosts[orderForm.value.externalCosts.length-1].amount !== ''" (click)="addExternalCost()" class="margin-bottom-1">Ajouter coût externe</button>
+  </div>
+
 </form>
 
 <div class="main-container">
@@ -289,8 +387,7 @@
 </div>
 
 <div class="button-container">
-  <button mat-raised-button color="primary" type="button" (click)="wantUpdateOrder(false)" [disabled]="!detailOrderForm.valid">Enregistrer</button>
-  <!--button mat-raised-button color="warn" type="button" (click)="wantDeleteOrder()">Supprimer</button-->
+  <button mat-raised-button color="primary" type="button" (click)="wantUpdateOrder(false)" [disabled]="!orderForm.valid">Enregistrer</button>
   <a routerLink="/list-orders" mat-raised-button>Annuler</a>
   <button mat-raised-button color="accent" type="button" (click)="wantGeneratePreparationReceiptPdf()"><mat-icon>picture_as_pdf</mat-icon> Bon préparation</button>
   <button mat-raised-button color="accent" type="button" (click)="wantGenerateDeliveryReceiptPdf()"><mat-icon>picture_as_pdf</mat-icon> Bon livraison</button>
