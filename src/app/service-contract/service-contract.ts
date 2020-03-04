@@ -41,5 +41,5 @@ export class ServiceContract {
   numerosInvoice: {advance: number, balance: number};
   paymentInvoice : {advance: {amount: number, date: Timestamp}, balance: { amount: number, date: Timestamp}}; // introduce in january 2020
   credit:number; // avance donnée par le client sur devis
-  externalCosts : Array<{ name : string, amount : number }>; // introduce in january 2020
+  tickets : Array<{ticketElements: Array<{comment: String, date : Timestamp, author: String}>}>// introduce in februrary 2020
 }

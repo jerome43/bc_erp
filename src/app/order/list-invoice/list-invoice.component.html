@@ -18,6 +18,9 @@
           <mat-datepicker #dateTo></mat-datepicker>
         </mat-form-field>
       </div>
+      <div class="display-inline-block width25">
+        <button mat-raised-button color="primary" type="button" (click)="wantExportOrderCsv()"><mat-icon>save_alt</mat-icon> export csv</button>
+      </div>
     </div>
   </form>
 
@@ -25,24 +28,30 @@
     <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Rechercher">
   </mat-form-field>
 
-  <table mat-table [dataSource]="dataSource" matSort matSortActive="orderDate" matSortDirection="desc" matSortDisableClear class="mat-elevation-z8">
+  <table mat-table [dataSource]="dataSource" matSort matSortActive="numeroInvoice" matSortDirection="desc" matSortDisableClear class="mat-elevation-z8">
 
-    <!-- Id Column -->
-    <ng-container matColumnDef="id">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Numéro commande </th>
-      <td mat-cell *matCellDef="let element"> {{element.id}} </td>
+    <!-- NumeroInvoice Column -->
+    <ng-container matColumnDef="numeroInvoice">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Numéro de facture </th>
+      <td mat-cell *matCellDef="let element"> {{element.numeroInvoice}} </td>
     </ng-container>
 
-    <!-- quotationId Column -->
-    <ng-container matColumnDef="quotationId">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Numéro devis </th>
-      <td mat-cell *matCellDef="let element"> {{element.quotationId}} </td>
+    <!-- Invoice Date Column -->
+    <ng-container matColumnDef="dateInvoice">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Date facture </th>
+      <td mat-cell *matCellDef="let element"> {{element.dateInvoice }} </td>
     </ng-container>
 
     <!-- Client Name Column -->
     <ng-container matColumnDef="client">
       <th mat-header-cell *matHeaderCellDef mat-sort-header> Client </th>
       <td mat-cell *matCellDef="let element"> {{element.client}} </td>
+    </ng-container>
+
+    <!-- Id Column -->
+    <ng-container matColumnDef="id">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Numéro commande </th>
+      <td mat-cell *matCellDef="let element"> {{element.id}} </td>
     </ng-container>
 
     <!-- Date Column -->
@@ -69,12 +78,6 @@
       <td mat-cell *matCellDef="let element"> {{element.totalTTC}} </td>
     </ng-container>
 
-    <!-- Marge Column -->
-    <ng-container matColumnDef="marge">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Marge HT </th>
-      <td mat-cell *matCellDef="let element"> {{element.marge}} </td>
-    </ng-container>
-
     <!-- Payment invoice Column -->
     <ng-container matColumnDef="invoiceInfos">
       <th mat-header-cell *matHeaderCellDef mat-sort-header> Facture payée ? </th>
@@ -83,6 +86,12 @@
         <span *ngIf="element.invoiceInfos.date === null && element.invoiceInfos.numero !== null">non payée</span>
         <span *ngIf="element.invoiceInfos.date !== null && element.invoiceInfos.numero !== null ">le {{element.invoiceInfos.date.toDate() | date:'dd/MM/yyyy'}}</span>
       </td>
+    </ng-container>
+
+    <!-- Marge Column -->
+    <ng-container matColumnDef="marge">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Marge HT </th>
+      <td mat-cell *matCellDef="let element"> {{element.marge}} </td>
     </ng-container>
 
     <!-- Edit Column -->

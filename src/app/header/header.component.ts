@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, Input, EventEmitter} from '@angular/core';
+import {Component, OnInit, Output, Input, EventEmitter} from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 
 @Component({
@@ -6,6 +6,7 @@ import { AuthService } from '../auth/auth.service';
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.less']
 })
+
 export class HeaderComponent implements OnInit {
 
   @Input() user; // pour recevoir l'user du template parent
@@ -13,9 +14,11 @@ export class HeaderComponent implements OnInit {
   @Output() public sidenavToggle = new EventEmitter();
   title = 'ERP BORNE CONCEPT';
 
+
   constructor(public authService: AuthService) { }
 
   ngOnInit() {
+    console.log("user ", this.user);
   }
 
   public onToggleSidenav = () => {

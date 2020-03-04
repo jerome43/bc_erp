@@ -13,7 +13,7 @@ import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
 import {Quotation} from "../quotation";
 import {ComputePriceService} from "../../price/compute-price.service";
 import {FirebaseServices} from "../../common-services/firebaseServices";
-import {QuotationFormManger} from "../../forms/quotationFormManger";
+import {QuotationFormManager} from "../../forms/quotation-form-manager.service";
 import {PricesFormManager} from "../../forms/pricesFormManager";
 import {UtilServices} from "../../common-services/utilServices";
 
@@ -53,14 +53,14 @@ export class CreateQuotationComponent implements OnInit {
   private quotationsCollection: AngularFirestoreCollection<Quotation>;
   private numerosQuotation:any;
 
-  private quotationFormManager : QuotationFormManger;
+  private quotationFormManager : QuotationFormManager;
   private pricesFormManager : PricesFormManager;
 
   constructor(private router: Router, private db: AngularFirestore, private fb: FormBuilder,
               private dialog: MatDialog, private computePriceService: ComputePriceService,
               private firebaseServices : FirebaseServices
               ) {
-    this.quotationFormManager = new QuotationFormManger();
+    this.quotationFormManager = new QuotationFormManager();
     this.pricesFormManager = new PricesFormManager();
     this.quotationsCollection = db.collection('quotations');
   }

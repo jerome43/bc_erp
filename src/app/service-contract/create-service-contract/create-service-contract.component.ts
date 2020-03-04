@@ -142,7 +142,7 @@ export class CreateServiceContractComponent implements OnInit {
     return this.clientFormOptions.filter(clientOption => clientOption.name.toLowerCase().indexOf(filterValue) === 0);
   }
 
-  /* nécessaire pour mettre à jour dans le template au chargement de la page  le contact (car sinon angular ne siat pas sur quel champs comparer les objets) */
+  /* nécessaire pour mettre à jour dans le template au chargement de la page  le contact (car sinon angular ne sait pas sur quel champs comparer les objets) */
   public compareContactOptionFn(x: any, y: any): boolean {
     return x && y ? x.contactName === y.contactName : x === y;
   }

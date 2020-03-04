@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import {Component, OnInit, Inject, Input} from '@angular/core';
 import { Client } from '../../client/client';
 import {Contact} from '../../client/contact';
 import { Product } from '../../product/product';
@@ -20,6 +20,10 @@ import {Employe} from "../../employe/employe";
 import {ServiceContractFormManager} from "../../forms/serviceContractFormManager";
 import {PricesFormManager} from "../../forms/pricesFormManager";
 import {FirebaseServices} from "../../common-services/firebaseServices";
+import {firestore} from 'firebase/app';
+import Timestamp = firestore.Timestamp;
+import {AuthService} from "../../auth/auth.service";
+import {AppComponent} from "../../app.component";
 
 export interface ClientId extends Client { id: string; }
 export interface ProductId extends Product { id: string; }
@@ -32,6 +36,8 @@ export interface DialogServiceContractData { message: string; displayNoButton:bo
   styleUrls: ['./detail-service-contract.component.less']
 })
 export class DetailServiceContractComponent implements OnInit {
+
+  public user;
 
   // for client
   private fbClientsSubscription : Subscription; // then we can unsubscribe after having subscribe
@@ -69,10 +75,12 @@ export class DetailServiceContractComponent implements OnInit {
   private pricesFormManager : PricesFormManager;
   constructor(private router: Router, private route: ActivatedRoute, private db: AngularFirestore, private fb: FormBuilder,
               private dialog: MatDialog, private storage: AngularFireStorage, private pdfService: PdfService,
-              private computePriceService: ComputePriceService, private firebaseServices : FirebaseServices) {
+              private computePriceService: ComputePriceService, private firebaseServices : FirebaseServices,
+              private appComponent : AppComponent) {
     this.serviceContractFormManager = new ServiceContractFormManager();
     this.pricesFormManager = new PricesFormManager();
     this.setserviceContractTypeParams();
+    this.user = this.appComponent.user;
   }
 
   ngOnInit() {
@@ -135,14 +143,14 @@ export class DetailServiceContractComponent implements OnInit {
     this.serviceContract = this.db.doc<any>(this.serviceContractTypeParams.path+'/'+serviceContractId).valueChanges().pipe(
       tap(serviceContract => {
         if (serviceContract != undefined) {
-          //console.log("observe serviceContract :", serviceContract);
-          // pour assurer la compatibilité avec les anciennes commandes fait avant les multiples  produits composés
-          if (serviceContract.compositeProducts == undefined) {
-            serviceContract.compositeProductAmount = [serviceContract.compositeProductAmount];
-            serviceContract.compositeProducts=[{compositeProductElements: serviceContract.compositeProduct}];
+          console.log("observe serviceContract :", serviceContract);
+          // pour assurer la compatibilité avec les anciens contrats de maintenance
+          if (serviceContract.tickets == undefined) {
+            serviceContract.tickets=[{ticketElements: [{comment: ''}]}];
           }
           this.setSingleProducts(serviceContract.singleProduct.length);
           this.setCompositeProducts(serviceContract.compositeProducts);
+          this.setTickets(serviceContract.tickets);
           if (serviceContract.externalCosts !== undefined) { // pour assurer compatibilité commandes faites avant implémentation coûts externes
             this.setExternalCosts(serviceContract.externalCosts);
           }
@@ -305,6 +313,54 @@ export class DetailServiceContractComponent implements OnInit {
     this.compositeProducts.value[idxPdt] = compositePdts.removeAt(Number(i));
   }
 
+  /* Tickets */
+
+  get tickets() {
+    return this.serviceContractForm.get('tickets') as FormArray;
+  }
+
+  public addTicket() {
+    let ticket = this.fb.group({ ticketElements: this.fb.array([this.fb.control( {comment: '', date : Timestamp.fromDate(new Date()), author: this.user.displayName})])});
+    this.tickets.push(ticket);
+  }
+
+  public rmTicket(i) {
+    //console.log("rmTicket : "+i);
+    this.tickets.removeAt(Number(i));
+  }
+
+  public addTicketElement(idxPdt) {
+    //console.log('addTicketElement before ', this.tickets);
+    let ticketElements = this.tickets.controls[idxPdt].get('ticketElements') as FormArray;
+    this.tickets.value[idxPdt] = ticketElements.push(this.fb.control({comment: '', date : Timestamp.fromDate(new Date()), author: this.user.displayName}));
+    //console.log('addTicketElement after ', this.tickets);
+  }
+
+  public rmTicketElement(idxPdt,i) {
+    //console.log("rmTicketElement : "+i);
+    let ticketElements = this.tickets.controls[idxPdt].get('ticketElements') as FormArray;
+    this.tickets.value[idxPdt] = ticketElements.removeAt(Number(i));
+  }
+
+  private setTickets(tickets) {
+    //console.log("setTickets", tickets);
+    while (this.tickets.length !== 0) {
+      this.tickets.removeAt(0)
+    }
+    for (let idxTicket=0; idxTicket<tickets.length; idxTicket++) {
+      this.addTicket();
+      for (let i=0; i<tickets[idxTicket].ticketElements.length-1; i++) {
+        this.addTicketElement(idxTicket);
+      }
+    }
+  }
+
+  public updateTicket(idxTicket, idxElt, comment) {
+    //console.log("updateTicket ", comment);
+    this.tickets.value[idxTicket].ticketElements[idxElt] = {comment: comment, date: Timestamp.fromDate(new Date()), author: this.user.displayName};
+  }
+
+
   /* used for add or remove external costs*/
   get externalCosts() {
     return this.serviceContractForm.get('externalCosts') as FormArray;
@@ -372,7 +428,7 @@ export class DetailServiceContractComponent implements OnInit {
    * @param pdfType
    */
   private updateserviceContract(isAskedByPdf, pdfType:PdfType) {
-    //console.warn(this.serviceContractForm.value);
+    console.warn(this.serviceContractForm.value);
 
     if (this.scanserviceContractPathToDeleteOnFirestorage!=undefined) {this.deletePhotoOnFirestorage();}
     if (this.scanServiceContractFile!=undefined) {

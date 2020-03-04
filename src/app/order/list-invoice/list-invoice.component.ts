@@ -1,16 +1,25 @@
-import { Component, OnInit, OnDestroy, ViewChild} from '@angular/core';
-import { AngularFirestore } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import {MatSort, MatPaginator, MatTableDataSource} from '@angular/material';
-import { Order } from '../order';
-import { Router, ActivatedRoute } from '@angular/router';
-import {Subscription} from "rxjs";
+import {Component, Inject, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {AngularFirestore} from '@angular/fire/firestore';
+import {Observable, Subscription} from 'rxjs';
+import {map} from 'rxjs/operators';
+import {MatPaginator, MatSort, MatTableDataSource} from '@angular/material';
+import {Order} from '../order';
+import {ActivatedRoute, Router} from '@angular/router';
 import {FormBuilder} from "@angular/forms";
 import {ComputePriceService} from "../../price/compute-price.service";
 import {UtilServices} from "../../common-services/utilServices";
+import {firestore} from 'firebase/app';
+import Timestamp = firestore.Timestamp;
+import {ExportCsvService} from "../../export/export-csv.service";
+import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material/dialog";
+import {DialogListInvoiceData} from "../list-invoice/list-invoice.component";
 
 export interface OrderId extends Order { id: string; }
+
+export interface DialogListInvoiceData {
+  message: string;
+  displayNoButton:boolean;
+}
 
 @Component({
   selector: 'app-list-order',
@@ -22,7 +31,7 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
   private fbOrders: Observable<any>; // orders in Firebase
   private fbOrdersSubscription : Subscription;
   public formDates;
-  public displayedColumns: string[] = ['id', 'client', 'orderDate', 'type', 'totalHT', 'totalTTC', 'invoiceInfos', 'marge', 'edit']; // colones affichées par le tableau
+  public displayedColumns: string[] = ['numeroInvoice', 'dateInvoice', 'client', 'id', 'orderDate', 'type', 'totalHT', 'totalTTC', 'invoiceInfos', 'marge', 'edit']; // colones affichées par le tableau
   private ordersData : Array<any>; // tableau qui va récupérer les données adéquates de fbOrders pour être ensuite affectées au tableau de sources de données
   public dataSource : MatTableDataSource<OrderId>; // source de données du tableau
   public listInvoiceTitle = "Factures Commandes en cours";
@@ -30,7 +39,10 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
   @ViewChild(MatPaginator) paginator: MatPaginator; // pagination du tableau
   @ViewChild(MatSort) sort: MatSort; // tri sur le tableau
 
-  constructor(private router: Router, private fb: FormBuilder, private route: ActivatedRoute, private db: AngularFirestore, private computePriceService : ComputePriceService ) {
+  constructor(private router: Router, private fb: FormBuilder, private route: ActivatedRoute,
+              private db: AngularFirestore, private computePriceService : ComputePriceService,
+              private exportCsvService: ExportCsvService,
+              private dialog: MatDialog) {
   }
 
   ngOnInit() {
@@ -88,18 +100,86 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
       }
       if (order.advanceRate !== 0) {
         if (order.advanceRate === 100) {
-          this.ordersData.push({route : order.route, id : order.id, client : order.client.name, orderDate : order.orderDate , type : 'acompte ' + order.advanceRate + ' %', invoiceInfos: invoiceInfos.advance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal(price.discountPrice * 1.20 / 100 * order.advanceRate), totalHT: UtilServices.formatToTwoDecimal(price.discountPrice / 100 * order.advanceRate ), marge: marge});
+          this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.advance, dateInvoice : order.orderDate.toDate().toLocaleDateString(), id : order.id, client : order.client.name, orderDate : order.orderDate , type : 'acompte ' + order.advanceRate + ' %', invoiceInfos: invoiceInfos.advance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal(price.discountPrice * 1.20 / 100 * order.advanceRate), totalHT: UtilServices.formatToTwoDecimal(price.discountPrice / 100 * order.advanceRate ), marge: marge});
         } else {
-          this.ordersData.push({route : order.route, id : order.id, client : order.client.name, orderDate : order.orderDate , type : 'acompte ' + order.advanceRate + ' %', invoiceInfos: invoiceInfos.advance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal(price.discountPrice * 1.20 / 100 * order.advanceRate), totalHT: UtilServices.formatToTwoDecimal(price.discountPrice / 100 * order.advanceRate ), marge: 'voir solde'});
+          this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.advance, dateInvoice : order.orderDate.toDate().toLocaleDateString(), id : order.id, client : order.client.name, orderDate : order.orderDate , type : 'acompte ' + order.advanceRate + ' %', invoiceInfos: invoiceInfos.advance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal(price.discountPrice * 1.20 / 100 * order.advanceRate), totalHT: UtilServices.formatToTwoDecimal(price.discountPrice / 100 * order.advanceRate ), marge: 'voir solde'});
         }
       }
-      if (order.advanceRate !== 100)
-      this.ordersData.push({route : order.route, id : order.id, client : order.client.name, orderDate : order.orderDate , type: 'solde ' + (100-order.advanceRate) + ' %', invoiceInfos: invoiceInfos.balance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal((price.discountPrice * 1.20 / 100*(100-order.advanceRate)) - order.credit), totalHT: UtilServices.formatToTwoDecimal((price.discountPrice / 100 * ( 100 - order.advanceRate )) - order.credit), marge: marge});
+      if (order.advanceRate !== 100) {
+        let dateInvoice;
+        order.balanceInvoiceDate instanceof Timestamp ? dateInvoice = order.balanceInvoiceDate.toDate().toLocaleDateString() : dateInvoice ='';
+        this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.balance, dateInvoice, id : order.id, client : order.client.name, orderDate : order.orderDate , type: 'solde ' + (100-order.advanceRate) + ' %', invoiceInfos: invoiceInfos.balance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal((price.discountPrice * 1.20 / 100*(100-order.advanceRate)) - order.credit), totalHT: UtilServices.formatToTwoDecimal((price.discountPrice / 100 * ( 100 - order.advanceRate )) - order.credit), marge: marge});
+      }
     });
     this.dataSource = new MatTableDataSource<any>(this.ordersData);
     this.dataSource.paginator = this.paginator; // pagination du tableau
     //this.sort.sort(<MatSortable>({id: 'orderDate', start: 'desc'})); // pour trier sur la date les plus récentes
     this.dataSource.sort = this.sort; // tri sur le tableau
+  }
+
+  populateInvoiceDataSource(orders, dateFrom, dateTo) {
+    //console.log('Current orders: ', orders);
+    this.ordersData = [];
+    orders.forEach((order)=>{
+      let invoiceInfos;
+      order.paymentInvoice !== undefined ? invoiceInfos = {advance: {numero: order.numerosInvoice.advance, date: order.paymentInvoice.advance.date}, balance: { numero: order.numerosInvoice.balance, date: order.paymentInvoice.balance.date}} : invoiceInfos = {advance: {numero: order.numerosInvoice.advance, date: null}, balance: { numero: order.numerosInvoice.balance, date: null}};
+      let price = this.computePriceService.computePrices(order);
+      let marge;
+      if (order.externalCosts === undefined) {
+        marge = price.discountPrice;
+      } else {
+        marge = ComputePriceService.calcMarge(order.externalCosts, price.discountPrice);
+      }
+      // if the rate is not equal to zero, then we have a advance invoice and we can push it in the array
+      if (order.advanceRate !== 0 && order.orderDate instanceof Timestamp && typeof (order.numerosInvoice.advance) === "number") {
+        if (order.orderDate.toDate() >= dateFrom && order.orderDate.toDate() <= dateTo) {
+          if (order.advanceRate === 100) {
+            this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.advance, dateInvoice : order.orderDate.toDate().toLocaleDateString(), id : order.id, client : order.client.name, orderDate : order.orderDate , type : 'acompte ' + order.advanceRate + ' %', invoiceInfos: invoiceInfos.advance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal(price.discountPrice * 1.20 / 100 * order.advanceRate), totalHT: UtilServices.formatToTwoDecimal(price.discountPrice / 100 * order.advanceRate ), marge: marge});
+          } else {
+            this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.advance, dateInvoice : order.orderDate.toDate().toLocaleDateString(), id : order.id, client : order.client.name, orderDate : order.orderDate , type : 'acompte ' + order.advanceRate + ' %', invoiceInfos: invoiceInfos.advance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal(price.discountPrice * 1.20 / 100 * order.advanceRate), totalHT: UtilServices.formatToTwoDecimal(price.discountPrice / 100 * order.advanceRate ), marge: 'voir solde'});
+          }
+        }
+      }
+      // if the rate is not equal to hundred, then we have a balance invoice and we can push it in the array
+        if (order.advanceRate !== 100 && order.balanceInvoiceDate instanceof Timestamp) {
+          if (order.balanceInvoiceDate.toDate()>= dateFrom && order.balanceInvoiceDate.toDate()<=dateTo) {
+            //console.log(order.balanceInvoiceDate.toDate() + '  / ' + dateFrom + ' / ' + order.balanceInvoiceDate.toDate() + ' ' + dateTo);
+            let dateInvoice;
+            order.balanceInvoiceDate instanceof Timestamp ? dateInvoice = order.balanceInvoiceDate.toDate().toLocaleDateString() : dateInvoice ='';
+            this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.balance, dateInvoice, id : order.id, client : order.client.name, orderDate : order.orderDate , type: 'solde ' + (100-order.advanceRate) + ' %', invoiceInfos: invoiceInfos.balance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal((price.discountPrice * 1.20 / 100*(100-order.advanceRate)) - order.credit), totalHT: UtilServices.formatToTwoDecimal((price.discountPrice / 100 * ( 100 - order.advanceRate )) - order.credit), marge: marge});
+          }
+         }
+    });
+
+    this.dataSource = new MatTableDataSource<any>(this.ordersData);
+    this.dataSource.paginator = this.paginator; // pagination du tableau
+    //this.sort.sort(<MatSortable>({id: 'orderDate', start: 'desc'})); // pour trier sur la date les plus récentes
+    this.dataSource.sort = this.sort; // tri sur le tableau
+  }
+
+  populateExportInvoice(invoices, dateFrom, dateTo) {
+    //console.log('Current invoices: ', invoices);
+    let exportInvoices = [];
+    invoices.forEach((invoice)=>{
+      // if the rate is not equal to zero, then we have a advance invoice and we can push it in the array
+      if (invoice.advanceRate !== 0 && invoice.orderDate instanceof Timestamp && typeof (invoice.numerosInvoice.advance) === "number") {
+        if (invoice.orderDate.toDate() >= dateFrom && invoice.orderDate.toDate() <= dateTo) {
+          if (invoice.advanceRate === 100) {
+            exportInvoices.push({invoice : invoice, numeroInvoice : invoice.numerosInvoice.advance, type: 'advance'});
+          } else {
+            exportInvoices.push({invoice : invoice, numeroInvoice : invoice.numerosInvoice.advance, type: 'advance'});
+          }
+        }
+      }
+      // if the rate is not equal to hundred, then we have a balance invoice and we can push it in the array
+      if (invoice.advanceRate !== 100 && invoice.balanceInvoiceDate instanceof Timestamp) {
+        if (invoice.balanceInvoiceDate.toDate()>= dateFrom && invoice.balanceInvoiceDate.toDate()<=dateTo) {
+          //console.log(invoice.balanceInvoiceDate.toDate() + '  / ' + dateFrom + ' / ' + invoice.balanceInvoiceDate.toDate() + ' ' + dateTo);
+          exportInvoices.push({invoice : invoice, numeroInvoice : invoice.numerosInvoice.balance, type: 'balance'});
+        }
+      }
+    });
+    this.exportCsvService.wantExportOrderCsv(exportInvoices);
   }
 
   applyFilter(filterValue: string) {
@@ -114,15 +194,39 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
   wantOrdersByDate() {
     //console.log("wantOrdersByDate");
     this.listInvoiceTitle = "Factures commandes par date";
-    this.selectOrderByDate(this.formDates.value.dateFrom, this.formDates.value.dateTo);
+    //this.selectOrderByDate(this.formDates.value.dateFrom, this.formDates.value.dateTo);
+    this.selectInvoiceByDate(this.formDates.value.dateFrom, this.formDates.value.dateTo, false);
   }
 
-  selectOrderByDate(dateFrom, dateTo) {
+  wantExportOrderCsv() {
+    //console.log("wantExportOrderCsv");
+    if (this.formDates.value.dateFrom === undefined || this.formDates.value.dateFrom === '' || this.formDates.value.dateFrom === null
+      || this.formDates.value.dateTo === undefined || this.formDates.value.dateTo === '' || this.formDates.value.dateTo === null) {
+      this.openDialogMessage("Vous devez spécifier des dates d'export !");
+    } else {
+      this.selectInvoiceByDate(this.formDates.value.dateFrom, this.formDates.value.dateTo, true);
+    }
+  }
+
+  openDialogMessage(message): void {
+    const dialogRef = this.dialog.open(DialogListInvoiceOverview, {
+      width: '450px',
+      data: {
+        message: message,
+        displayNoButton:false
+      }
+    });
+    dialogRef.afterClosed().subscribe();
+  }
+
+  selectInvoiceByDate(dateFrom, dateTo, shouldExport) {
     if (dateFrom === undefined || dateFrom === '' || dateFrom === null || dateTo === undefined || dateTo === '' || dateTo === null) {
     }
     else {
       dateTo.setDate(dateTo.getDate() + 1);   // on rajoute 24h car la date de fin est les jour à 0h00 et non à 23h59h59
       //console.log("dateFrom : ", dateFrom, ' / dateTo : ', dateTo);
+
+      // first we fetch by orderDate
       const fbOrders = this.db.collection('orders', ref => ref
         .orderBy('orderDate')
         .startAt(dateFrom)
@@ -131,48 +235,121 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
         .pipe(map(actions => actions.map(a => {
           const data = a.payload.doc.data();
           return { route : 'detail-order/', id : a.payload.doc.id, isArchived : false, ...data };
-          }))).subscribe(orders => {
-            fbOrders.unsubscribe();
-            //console.log("orders", orders);
-            const fbArchivedOrders = this.db.collection('archived-orders', ref => ref
-              .orderBy('orderDate')
-              .startAt(dateFrom)
-              .endAt(dateTo))
-              .snapshotChanges()
-              .pipe(map(actions => actions.map(a => {
-                const data = a.payload.doc.data();
-                return { route : 'detail-order/', id : a.payload.doc.id, isArchived : true, ...data };
-                }))).subscribe(archivedOrders => {
-                  fbArchivedOrders.unsubscribe();
-                  const allOrders = orders.concat(archivedOrders);
-                  const fbServiceContracts = this.db.collection('service-contracts', ref => ref
+        }))).subscribe(orders => {
+          fbOrders.unsubscribe();
+          //console.log("orders by orderDate", orders);
+          const fbArchivedOrders = this.db.collection('archived-orders', ref => ref
+            .orderBy('orderDate')
+            .startAt(dateFrom)
+            .endAt(dateTo))
+            .snapshotChanges()
+            .pipe(map(actions => actions.map(a => {
+              const data = a.payload.doc.data();
+              return { route : 'detail-order/', id : a.payload.doc.id, isArchived : true, ...data };
+            }))).subscribe(archivedOrders => {
+              fbArchivedOrders.unsubscribe();
+              const allOrders = orders.concat(archivedOrders);
+              const fbServiceContracts = this.db.collection('service-contracts', ref => ref
+                .orderBy('orderDate')
+                .startAt(dateFrom)
+                .endAt(dateTo))
+                .snapshotChanges()
+                .pipe(map(actions => actions.map(a => {
+                  const data = a.payload.doc.data();
+                  return { route : 'detail-service-contract/', id : a.payload.doc.id, isArchived : false, ...data };
+                }))).subscribe(serviceContracts => {
+                  fbServiceContracts.unsubscribe();
+                  //console.log("orders", orders);
+                  const fbArchivedServiceContracts = this.db.collection('archived-service-contracts', ref => ref
                     .orderBy('orderDate')
                     .startAt(dateFrom)
                     .endAt(dateTo))
                     .snapshotChanges()
                     .pipe(map(actions => actions.map(a => {
                       const data = a.payload.doc.data();
-                      return { route : 'detail-service-contract/', id : a.payload.doc.id, isArchived : false, ...data };
-                    }))).subscribe(serviceContracts => {
-                      fbServiceContracts.unsubscribe();
-                      //console.log("orders", orders);
-                      const fbArchivedServiceContracts = this.db.collection('archived-service-contracts', ref => ref
-                        .orderBy('orderDate')
+                      return { route : 'detail-service-contract/', id : a.payload.doc.id, isArchived : true, ...data };
+                    }))).subscribe(archivedServiceContracts => {
+                      fbArchivedServiceContracts.unsubscribe();
+                      const allServicesContract = serviceContracts.concat(archivedServiceContracts);
+                      const allOrdersAndServiceContracts = allOrders.concat(allServicesContract);
+
+                      // second we fetch by balanceInvoiceDate
+                      const fbOrders = this.db.collection('orders', ref => ref
+                        .orderBy('balanceInvoiceDate')
                         .startAt(dateFrom)
                         .endAt(dateTo))
                         .snapshotChanges()
                         .pipe(map(actions => actions.map(a => {
                           const data = a.payload.doc.data();
-                          return { route : 'detail-service-contract/', id : a.payload.doc.id, isArchived : true, ...data };
-                        }))).subscribe(archivedServiceContracts => {
-                          fbArchivedServiceContracts.unsubscribe();
-                          const allServicesContract = serviceContracts.concat(archivedServiceContracts);
-                          const allOrdersAndServiceContracts = allOrders.concat(allServicesContract);
-                          this.populateDataSource(allOrdersAndServiceContracts);
+                          return { route : 'detail-order/', id : a.payload.doc.id, isArchived : false, ...data };
+                        }))).subscribe(orders => {
+                          fbOrders.unsubscribe();
+                          const ordersC = allOrdersAndServiceContracts.concat(orders);
+                          //console.log("orders by balanceInvoiceDate", orders);
+                          const fbArchivedOrders = this.db.collection('archived-orders', ref => ref
+                            .orderBy('balanceInvoiceDate')
+                            .startAt(dateFrom)
+                            .endAt(dateTo))
+                            .snapshotChanges()
+                            .pipe(map(actions => actions.map(a => {
+                              const data = a.payload.doc.data();
+                              return { route : 'detail-order/', id : a.payload.doc.id, isArchived : true, ...data };
+                            }))).subscribe(archivedOrders => {
+                              fbArchivedOrders.unsubscribe();
+                              const allOrders = ordersC.concat(archivedOrders);
+                              const fbServiceContracts = this.db.collection('service-contracts', ref => ref
+                                .orderBy('balanceInvoiceDate')
+                                .startAt(dateFrom)
+                                .endAt(dateTo))
+                                .snapshotChanges()
+                                .pipe(map(actions => actions.map(a => {
+                                  const data = a.payload.doc.data();
+                                  return { route : 'detail-service-contract/', id : a.payload.doc.id, isArchived : false, ...data };
+                                }))).subscribe(serviceContracts => {
+                                  fbServiceContracts.unsubscribe();
+                                  //console.log("orders", orders);
+                                  const fbArchivedServiceContracts = this.db.collection('archived-service-contracts', ref => ref
+                                    .orderBy('balanceInvoiceDate')
+                                    .startAt(dateFrom)
+                                    .endAt(dateTo))
+                                    .snapshotChanges()
+                                    .pipe(map(actions => actions.map(a => {
+                                      const data = a.payload.doc.data();
+                                      return { route : 'detail-service-contract/', id : a.payload.doc.id, isArchived : true, ...data };
+                                    }))).subscribe(archivedServiceContracts => {
+                                      fbArchivedServiceContracts.unsubscribe();
+                                      const allServicesContract = serviceContracts.concat(archivedServiceContracts);
+                                      let allOrdersAndServiceContracts = allOrders.concat(allServicesContract);
+                                      // remove duplicate entries
+                                      allOrdersAndServiceContracts = allOrdersAndServiceContracts.filter((object, index) => index === allOrdersAndServiceContracts.findIndex(obj => JSON.stringify(obj) === JSON.stringify(object)));
+                                      if (shouldExport) {
+                                        //this.exportCsvService.wantExportOrderCsv(allOrdersAndServiceContracts);
+                                        this.populateExportInvoice(allOrdersAndServiceContracts, dateFrom, dateTo);
+                                      } else {
+                                        this.populateInvoiceDataSource(allOrdersAndServiceContracts, dateFrom, dateTo);
+                                      }
+                                    });
+                                });
+                            });
                         });
                     });
                 });
-          });
-      }
+            });
+        });
+    }
+  }
+}
+
+@Component({
+  selector: 'dialog-list-invoice-overview',
+  templateUrl: 'dialog-list-invoice-overview.html',
+})
+export class DialogListInvoiceOverview {
+  constructor(
+    public dialogRef: MatDialogRef<DialogListInvoiceOverview>,
+    @Inject(MAT_DIALOG_DATA) public data: DialogListInvoiceData) {}
+
+  onNoClick(): void {
+    this.dialogRef.close();
   }
 }

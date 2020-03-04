@@ -79,6 +79,10 @@ export class ServiceContractFormManager {
       externalCosts : this.fb.array([
         this.fb.control({ name : '', amount : 0 }) // introduce in january 2020
       ]),
+      tickets : this.fb.array([this.fb.group({
+        ticketElements: this.fb.array([this.fb.control( {comment : "", date : null, author: null})]),
+        }
+      )]),
     });
   };
 

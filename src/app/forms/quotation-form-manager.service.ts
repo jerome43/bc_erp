@@ -7,7 +7,7 @@ import Timestamp = firestore.Timestamp;
   providedIn: 'root'
 })
 
-export class QuotationFormManger {
+export class QuotationFormManager {
 
   private readonly form;
 
@@ -59,6 +59,7 @@ export class QuotationFormManger {
       ]),
       optionalLongRentalMonth : [0],
       optionalLongRentalPrice : [0],
+      optionalLongRentalAmount : [1],
       rentDateFrom: [''],
       rentDateTo: [''],
       immoDateFrom: [''],

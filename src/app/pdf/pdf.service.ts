@@ -341,7 +341,7 @@ export class PdfService {
         clientStack = [
           formValue.client.name,
           formValue.contact.contactName,
-          'Service compatbilité',
+          'Service comptabilité',
           formValue.client.address,
           formValue.client.zipcode + ' ' + formValue.client.town,
         ];
@@ -385,7 +385,7 @@ export class PdfService {
         clientStack = [
           formValue.client.name,
           formValue.contact.contactName,
-          'Service compatbilité',
+          'Service comptabilité',
           formValue.client.address,
           formValue.client.zipcode + ' ' + formValue.client.town,
         ];
@@ -532,12 +532,16 @@ export class PdfService {
 
         // PRODUITS OPTIONNELS
         let optionalLongRentalContent = '';
-        if (formValue.optionalLongRentalMonth !== undefined && formValue.optionalLongRentalPrice !== undefined
-          && formValue.optionalLongRentalMonth !== '' && formValue.optionalLongRentalPrice !== ''
-          && formValue.optionalLongRentalMonth !== 0 && formValue.optionalLongRentalPrice !== 0
-          && formValue.optionalLongRentalMonth !== null && formValue.optionalLongRentalPrice !== null) {
+        if (formValue.optionalLongRentalMonth !== undefined && formValue.optionalLongRentalPrice !== undefined && formValue.optionalLongRentalAmount !== undefined
+          && formValue.optionalLongRentalMonth !== '' && formValue.optionalLongRentalPrice !== '' && formValue.optionalLongRentalAmount !== ''
+          && formValue.optionalLongRentalMonth !== 0 && formValue.optionalLongRentalPrice !== 0 && formValue.optionalLongRentalAmount !== 0
+          && formValue.optionalLongRentalMonth !== null && formValue.optionalLongRentalPrice !== null && formValue.optionalLongRentalAmount !== null) {
+          let optionnalLongRentalTotal = '.';
+          if (formValue.optionalLongRentalAmount>1) {
+            optionnalLongRentalTotal = ', soit un total de ' + formValue.optionalLongRentalAmount * formValue.optionalLongRentalPrice + '€ HT par mois pour ' + formValue.optionalLongRentalAmount + ' éléments.'
+          }
           optionalLongRentalContent = 'Option location longue durée sur ' + formValue.optionalLongRentalMonth
-            + ' mois avec des mensualités de ' + formValue.optionalLongRentalPrice + '€.';
+            + ' mois avec des mensualités unitaites de ' + formValue.optionalLongRentalPrice + '€ HT' + optionnalLongRentalTotal;
         }
 
         optionalLongRentalStack = [

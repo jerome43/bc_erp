@@ -45,7 +45,8 @@ import {DialogDetailQuotationOverview} from "./quotation/detail-quotation/detail
 import {DialogDetailOrderOverview} from "./order/detail-order/detail-order.component";
 import {DialogListOrderOverview} from "./order/list-order/list-order.component";
 import { ExportOrderComponent } from './order/export-order/export-order.component';
-import {DialogExportOrderOverview} from "./order/export-order/export-order.component";
+//import {DialogExportOrderOverview} from "./order/export-order/export-order.component";
+import {DialogListInvoiceOverview} from "./order/list-invoice/list-invoice.component";
 import { StockComponent } from './product/stock/stock.component';
 import {DialogStockOverview} from "./product/stock/stock.component";
 import {CreateEmployeComponent} from "./employe/create-employe/createEmploye.component";
@@ -65,7 +66,6 @@ import {
   DetailServiceContractComponent,
   DialogDetailServiceContractOverview
 } from "./service-contract/detail-service-contract/detail-service-contract.component";
-
 
 @NgModule({
   declarations: [
@@ -98,7 +98,8 @@ import {
     DetailQuotationComponent,
     ListQuotationComponent,
     ExportOrderComponent,
-    DialogExportOrderOverview,
+    //DialogExportOrderOverview,
+    DialogListInvoiceOverview,
     StockComponent,
     DialogStockOverview,
     CreateEmployeComponent,
@@ -158,12 +159,13 @@ import {
     DialogDetailQuotationOverview,
     DialogDetailOrderOverview,
     DialogListOrderOverview,
-    DialogExportOrderOverview,
+    //DialogExportOrderOverview,
+    DialogListInvoiceOverview,
     DialogListServiceContractOverview,
     DialogDetailServiceContractOverview,
     DialogStockOverview,
     DialogCreateEmployeOverview,
     DialogDetailEmployeOverview,
-    DialogListEmployeOverview,]
+    DialogListEmployeOverview,],
 })
 export class AppModule { }

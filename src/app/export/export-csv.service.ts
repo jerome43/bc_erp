@@ -78,21 +78,12 @@ export class ExportCsvService {
     rentalDiscountAmount:"Remise en € sur location",
     saleDiscountAmount:"Remise en € sur vente",
     discountPrice: "Prix total remisé"
-    //immoDateFrom: "Début date immobilisation",
-    //immoDateTo: "Fin date d'immobilisation",
-    //quotationComment: "Commentaire devis",
-    //quotationDate: "Date devis",
-    //relaunchClientDate: "Date relance client",
-    //orderDate: "Date commande",
-    //scanOrder: "scan devis signé",
-    //orderComment: "Commentaire facture",
-    //deliveryComment: "Commentaire bon de livraison",
   };
 
 
   private invoicesTable = [];
 
-  public wantExportOrderCsv(advanceInvoiceData, balanceInvoiceData) {
+  public wantExportOrderCsvFromPageExport(advanceInvoiceData, balanceInvoiceData) {
     this.invoicesTable = [];
 
     advanceInvoiceData.forEach((invoiceData) => { // ligne de facture d'acompte
@@ -103,20 +94,28 @@ export class ExportCsvService {
       this.pushInvoice(invoiceData, invoiceData.numerosInvoice.balance, 'balance');
     });
 
-  let fileTitle = 'orders'; // or 'my-unique-title'
+  let fileTitle = 'invoices'; // or 'my-unique-title'
 
   ExportCsvService.exportCSVFile(this.headers, this.invoicesTable, fileTitle); // call the exportCSVFile() function to process the JSON and trigger the download
   }
 
+  public wantExportOrderCsv(invoices) {
+    this.invoicesTable = [];
+    invoices.forEach((invoice) => {
+      this.pushInvoice(invoice.invoice, invoice.numeroInvoice, invoice.type);
+    });
+    let fileTitle = 'invoices'; // or 'my-unique-title'
+    ExportCsvService.exportCSVFile(this.headers, this.invoicesTable, fileTitle); // call the exportCSVFile() function to process the JSON and trigger the download
+  }
+
   private pushInvoice(invoice, numeroInvoice, invoiceType) {
     //console.log("invoice : ", invoice);
-    if (numeroInvoice != null || numeroInvoice != undefined) { // si la date de facture de solde est renseignée, on pousse la facture de solde
+    if (numeroInvoice != null || numeroInvoice != undefined) { // si le numéro de facture est renseigné, on pousse la facture
       // pour assurer la compatibilité avec les anciens devis fait avant les multiples  produits composés
       invoice = ExportCsvService.setCompositeProductsIfUndefined(invoice);
 
       let singleProductArray = [];
       if (invoice.singleProduct !== undefined) {
-
         for (let i=0; i<invoice.singleProduct.length; i++) {
             if (invoice.singleProduct[i].name != undefined && invoice.singleProductAmount[i] !== 0) {
             singleProductArray.push(invoice.singleProduct[i].name + " : "+ invoice.singleProductAmount[i]);
@@ -150,17 +149,19 @@ export class ExportCsvService {
       const specialProduct =  specialProductArray.join(' - ');
 
       const prices = this.computePriceService.computePrices(invoice);
-      let price = 0, rentalDiscountAmount = 0, saleDiscountAmount = 0, discountPrice = 0;
+      let price = 0, rentalDiscountAmount = 0, saleDiscountAmount = 0, discountPrice = 0, invoiceDate;
       if (invoiceType === "advance" ) {
         price = prices.price*Number(invoice.advanceRate)/100; // prix facture d'acompte
         rentalDiscountAmount = prices.rentalDiscountAmount*Number(invoice.advanceRate)/100;
         saleDiscountAmount = prices.saleDiscountAmount*Number(invoice.advanceRate)/100;
         discountPrice = prices.discountPrice*Number(invoice.advanceRate)/100;
+        invoiceDate = UtilServices.getDate(invoice.orderDate);
       } else if (invoiceType === "balance") {
         price = prices.price*(100-Number(invoice.advanceRate))/100;
         rentalDiscountAmount = prices.rentalDiscountAmount*(100-Number(invoice.advanceRate))/100;
         saleDiscountAmount = prices.saleDiscountAmount*(100-Number(invoice.advanceRate))/100;
-        discountPrice = prices.discountPrice*(100-Number(invoice.advanceRate))/100
+        discountPrice = prices.discountPrice*(100-Number(invoice.advanceRate))/100;
+        invoiceDate = UtilServices.getDate(invoice.balanceInvoiceDate);
       }
 
       this.invoicesTable.push({
@@ -180,21 +181,11 @@ export class ExportCsvService {
         specialProduct: specialProduct.toString().replace(/;/g, ' '),
         rentDateFrom: UtilServices.getDate(invoice.rentDateFrom),
         rentDateTo: UtilServices.getDate(invoice.rentDateTo),
-        invoiceDate: UtilServices.getDate(invoice.balanceInvoiceDate),
+        invoiceDate: invoiceDate,
         price: UtilServices.formatToTwoDecimal(price).toString().replace('.',','),
         rentalDiscountAmount: UtilServices.formatToTwoDecimal(rentalDiscountAmount).toString().replace('.',','),
         saleDiscountAmount : UtilServices.formatToTwoDecimal(saleDiscountAmount).toString().replace('.',','),
         discountPrice : UtilServices.formatToTwoDecimal(discountPrice).toString().replace('.',','),
-        //immoDateFrom: UtilServices.getDate(invoice.immoDateFrom),
-        //immoDateTo: UtilServices.getDate(invoice.immoDateTo),
-        //quotationComment: invoice.quotationComment.replace(/;/g, ' '),
-        //quotationDate: UtilServices.getDate(invoice.quotationDate),
-        //relaunchClientDate: UtilServices.getDate(invoice.relaunchClientDate),
-        //orderDate: UtilServices.getDate(invoice.orderDate),
-        //scanOrder: invoice.scanOrder.replace(/;/g, ' '),
-        //orderComment: invoice.orderComment.replace(/;/g, ' '),
-        //deliveryComment: invoice.deliveryComment.replace(/;/g, ' '),
-        // prix facture de solde spécifiques
       });
     }
   }

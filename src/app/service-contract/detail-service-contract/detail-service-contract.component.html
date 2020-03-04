@@ -250,6 +250,33 @@
       <input type="text" matInput formControlName="clientOrderNumber" placeholder="Numéro de commande du client">
     </label>
   </mat-form-field>
+
+  <h4>Tickets et interventions</h4>
+  <div>
+    <div formArrayName="tickets">
+      <ng-container *ngFor="let ticket of tickets.controls; index as idxTicket" class="form-array-container">
+        <h5>Ticket {{idxTicket+1}}</h5>
+        <div [formGroupName]="idxTicket">
+          <div formArrayName="ticketElements">
+            <ng-container *ngFor="let ticketElement of ticket.get('ticketElements').controls; index as idxElt" class="form-array-container">
+              <div>
+                <span *ngIf="ticket.value.ticketElements[idxElt].date">Le {{ticket.value.ticketElements[idxElt].date.toDate() | date:'dd/MM/yyyy - hh:mm' }} par </span>
+                <span *ngIf="ticket.value.ticketElements[idxElt].author">{{ticket.value.ticketElements[idxElt].author}}</span>
+              </div>
+              <mat-form-field class="width70 margin-right" >
+                <textarea placeholder="Commentaires" [(ngModel)]="ticket.value.ticketElements[idxElt].comment" [ngModelOptions]="{standalone: true}" (keyup)="updateTicket(idxTicket, idxElt, ticket.value.ticketElements[idxElt].comment)" matInput></textarea>
+              </mat-form-field>
+              <button mat-raised-button color="warn" type="button" *ngIf="idxElt>0" (click)="rmTicketElement(idxTicket, idxElt)" class="suppr-button">- commentaire</button>
+            </ng-container>
+            <button mat-raised-button color="accent" type="button" (click)="addTicketElement(idxTicket)" class="margin-bottom-1">+ commentaire</button>
+          </div>
+        </div>
+        <button mat-raised-button color="warn" type="button" *ngIf="idxTicket>0" (click)="rmTicket(idxTicket)" class="suppr-button">- Ticket</button>
+      </ng-container>
+      <button mat-raised-button color="accent" type="button" (click)="addTicket()" class="margin-bottom-1">+ ticket</button>
+    </div>
+  </div>
+
   <h4>Facturation</h4>
   <div>
     <mat-form-field class="width25 margin-right">

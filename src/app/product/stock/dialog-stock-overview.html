@@ -14,7 +14,7 @@
           <td class="tableViewDetailStock-next">{{data.detailStock.productStock}}</td>
           <td class="tableViewDetailStock-next">{{immoDates.quantity}}</td>
           <td class="tableViewDetailStock-next">
-            <button mat-button [mat-dialog-close]="'yes'" [routerLink]="['/detail-order/'+immoDates.orderId]">
+            <button mat-button [mat-dialog-close]="'yes'" (click)="clickDiplayOrderDetail(immoDates.orderId)">
               <span>{{immoDates.orderId}}&nbsp;&nbsp;</span>
               <mat-icon color="primary">edit</mat-icon>
             </button>

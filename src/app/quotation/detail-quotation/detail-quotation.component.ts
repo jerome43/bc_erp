@@ -19,7 +19,7 @@ import {ComputePriceService} from "../../price/compute-price.service";
 import { StockService } from '../../product/stock/stock.service';
 import {ProductType} from "../../product/ProductType";
 import {FirebaseServices} from "../../common-services/firebaseServices";
-import {QuotationFormManger} from "../../forms/quotationFormManger";
+import {QuotationFormManager} from "../../forms/quotation-form-manager.service";
 import {PricesFormManager} from "../../forms/pricesFormManager";
 
 export interface ClientId extends Client { id: string; }
@@ -65,14 +65,14 @@ export class DetailQuotationComponent implements OnInit {
   // stock gestion
   private productsImmoSubscription : Subscription; // subscription au tableau des stocks des produits de la commande
 
-  private quotationFormManager : QuotationFormManger;
+  private quotationFormManager : QuotationFormManager;
   private pricesFormManager : PricesFormManager;
 
   constructor( private router: Router, private route: ActivatedRoute, private db: AngularFirestore,
                private fb: FormBuilder, private dialog: MatDialog, private pdfService: PdfService,
                private computePriceService: ComputePriceService, private stockService: StockService,
                private firebaseServices : FirebaseServices ) {
-    this.quotationFormManager = new QuotationFormManger();
+    this.quotationFormManager = new QuotationFormManager();
     this.pricesFormManager = new PricesFormManager();
     this.setQuotationTypeParams();
   }

@@ -213,6 +213,8 @@ export class DetailOrderComponent implements OnInit {
           // vérification des stocks (devrait être fait automatiquement par le subscribe du form : bug ?
           this.stockService.verifyStock(this.orderForm.value.singleProduct, this.orderForm.value.compositeProducts, this.orderForm.value.immoDateFrom, this.orderForm.value.immoDateTo, this.orderId);
           //console.log("observe order orderForm after patchValue  ", this.orderForm.value)
+        } else {
+          //console.log("no order at this index");
         }
       })
     );

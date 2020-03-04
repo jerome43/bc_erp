@@ -1,11 +1,14 @@
-import { Component} from '@angular/core';
+import {Component, Injectable} from '@angular/core';
 import { AuthService } from './auth/auth.service';
-
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.less']
+})
+
+@Injectable({
+  providedIn: 'root'
 })
 export class AppComponent {
 
@@ -17,11 +20,10 @@ export class AppComponent {
     this.authorized=false;
   }
 
-
   login() {
     this.message = 'Tentative de connexion ...';
     this.authService.login().then(data=> {
-      console.log (data);
+      //console.log (data);
       this.user = data.user;
       const authorizedUser = this.authService.authorizedUser;
       if (authorizedUser.includes(data.user.email)) {
@@ -39,5 +41,4 @@ export class AppComponent {
     console.log("authorizedEventEmitter receive");
     this.authorized=false;
   }
-
 }

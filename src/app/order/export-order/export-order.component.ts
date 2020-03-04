@@ -5,10 +5,13 @@ import { map } from 'rxjs/operators';
 import { FormBuilder } from '@angular/forms';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
 
+/*
 export interface DialogExportOrderData {
   message: string;
   displayNoButton:boolean;
 }
+ */
+
 
 @Component({
   selector: 'app-export-order',
@@ -44,7 +47,7 @@ export class ExportOrderComponent implements OnInit {
 
   selectOrderByDate(dateFrom, dateTo) {
     if (dateFrom===undefined || dateFrom==='' || dateFrom===null || dateTo===undefined || dateTo==='' || dateTo===null) {
-      this.openDialogMessage("Vous devez spécifier des dates d'export !");
+      //this.openDialogMessage("Vous devez spécifier des dates d'export !");
     } else {
       dateTo.setDate(dateTo.getDate() + 1);   // on rajoute 24h car la date de fin est les jour à 0h00 et non à 23h59h59
       //console.log("dateFrom : ", dateFrom, ' / dateTo : ', dateTo);
@@ -128,7 +131,7 @@ export class ExportOrderComponent implements OnInit {
                                         const allBalanceServiceContracts = balanceServiceContracts.concat(archivedBalanceServiceContracts);
                                         const allAdvanceOrdersAndServiceContracts = allAdvanceOrders.concat(allAdvanceServiceContracts);
                                         const allBalanceOrdersAndServiceContracts = allBalanceOrders.concat(allBalanceServiceContracts);
-                                        this.exportCsvService.wantExportOrderCsv(allAdvanceOrdersAndServiceContracts, allBalanceOrdersAndServiceContracts);
+                                        this.exportCsvService.wantExportOrderCsvFromPageExport(allAdvanceOrdersAndServiceContracts, allBalanceOrdersAndServiceContracts);
                                       });
                                     });
                                   });
@@ -140,7 +143,8 @@ export class ExportOrderComponent implements OnInit {
         }
   }
 
-  openDialogMessage(message): void {
+  /*
+   openDialogMessage(message): void {
     const dialogRef = this.dialog.open(DialogExportOrderOverview, {
       width: '450px',
       data: {
@@ -150,11 +154,13 @@ export class ExportOrderComponent implements OnInit {
     });
     dialogRef.afterClosed().subscribe();
   }
-}
+   */
 
+}
+/*
 @Component({
   selector: 'dialog-export-order-overview',
-  templateUrl: 'dialog-export-order-overview.html',
+  templateUrl: 'dialog-list-invoice-overview.html',
 })
 export class DialogExportOrderOverview {
   constructor(
@@ -165,4 +171,6 @@ export class DialogExportOrderOverview {
     this.dialogRef.close();
   }
 }
+ */
+
 

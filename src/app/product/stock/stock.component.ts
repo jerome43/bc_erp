@@ -7,7 +7,8 @@ import { AngularFirestore } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import {Subscription} from "rxjs";
 import {MatSort, MatPaginator, MatTableDataSource} from '@angular/material';
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Route, Router} from "@angular/router";
+import {tap} from "rxjs/operators";
 
 export interface DialogStockData {
   message: string;
@@ -46,7 +47,7 @@ export class StockComponent implements OnInit {
   ngOnInit() {
     // subscribe to the parameters observable
     this.route.paramMap.subscribe(params => {
-      console.log(params.get('isLongRental'));
+      //console.log(params.get('isLongRental'));
       this.route.snapshot.paramMap.get('isLongRental')==="true" ? this.stockTypeParams.isLongRental = true : this.stockTypeParams.isLongRental = false;
       this.setStockTypeParams(this.stockTypeParams.isLongRental);
       this.initForm();
@@ -64,7 +65,7 @@ export class StockComponent implements OnInit {
   }
 
   viewDetailStock(eventTargetId) {
-    console.log("viewDetailStock ");
+    //console.log("viewDetailStock ");
     if (this.stockDatesForm.value.dateFrom === undefined || this.stockDatesForm.value.dateFrom === '' || this.stockDatesForm.value.dateFrom === null || this.stockDatesForm.value.dateTo === undefined || this.stockDatesForm.value.dateTo === '' || this.stockDatesForm.value.dateTo === null) {
       this.openDialogMessage("Vous devez spécifier des dates");
     }
@@ -83,7 +84,7 @@ export class StockComponent implements OnInit {
       dateTo: [new Date(), Validators.required],
     });
     this.stockDatesForm.valueChanges.subscribe(data => {
-      console.log('stockDatesForm changes', data);
+      //.log('stockDatesForm changes', data);
       this.selectStockByDate();
     });
   }
@@ -93,7 +94,7 @@ export class StockComponent implements OnInit {
     this.fbStockProducts = this.db.collection(this.stockTypeParams.path).valueChanges();
     // Call subscribe() to start listening for updates.
     this.fbStockProductsSubscription = this.fbStockProducts.subscribe((stockProducts)=>{
-      console.log("fbStockProductsSubscription ", this.stockTypeParams.path, ' - ', stockProducts);
+      //console.log("fbStockProductsSubscription ", this.stockTypeParams.path, ' - ', stockProducts);
       this.stockProductsData = [];
       stockProducts.forEach(stockProduct=> {
         const immoDates = stockProduct.immoDates;
@@ -170,7 +171,7 @@ export class StockComponent implements OnInit {
   }
 
   private setStockTypeParams(isLongRental: boolean) {
-    console.log("isLongRental :" + isLongRental);
+    //console.log("isLongRental :" + isLongRental);
     if (isLongRental) {
       this.stockTypeParams.path='stockProducts-longRental';
       this.stockTypeParams.isLongRental = true;
@@ -193,9 +194,21 @@ export class StockComponent implements OnInit {
 export class DialogStockOverview {
   constructor(
     public dialogRef: MatDialogRef<DialogStockOverview>,
-    @Inject(MAT_DIALOG_DATA) public data: DialogStockData) {}
+    @Inject(MAT_DIALOG_DATA) public data: DialogStockData,
+    private db: AngularFirestore,
+    private router:Router) {}
 
   onNoClick(): void {
     this.dialogRef.close();
+  }
+
+  clickDiplayOrderDetail(orderId) {
+    const detailOrderSsubsription = this.db.doc<any>("orders/"+orderId).valueChanges().pipe(
+      tap(order => {
+        let archived;
+        order != undefined ? archived = false : archived = true;
+        detailOrderSsubsription.unsubscribe();
+        this.router.navigate(['detail-order/'+orderId, {archived: archived}]).then();
+      })).subscribe(()=>{});
   }
 }
