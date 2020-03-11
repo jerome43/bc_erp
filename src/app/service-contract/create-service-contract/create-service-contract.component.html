@@ -248,22 +248,10 @@
       <input type="text" matInput formControlName="clientOrderNumber" placeholder="Numéro de commande du client">
     </label>
   </mat-form-field>
-  <h4>Facturation</h4>
-  <div>
-    <mat-form-field class="width25 margin-right">
-      <label>
-        <input type="number" matInput formControlName="advanceRate" placeholder="Taux facture acompte en %">
-      </label>
-    </mat-form-field>
-    <mat-form-field class="width50 margin-right">
-      <label>
-        <input type="number" matInput formControlName="credit" placeholder="Acompte en € TTC versé par le client sur devis (sans facture d'acompte)">
-      </label>
-    </mat-form-field>
-  </div>
 </form>
 
 <form [formGroup]="pricesForm" class="main-container">
+  <h4>Prix HT</h4>
   <div>
     <mat-form-field class="width20 margin-right">
       <label>
@@ -286,63 +274,6 @@
       </label>
     </mat-form-field>
   </div>
-</form>
-
-<form [formGroup]="serviceContractForm" class="main-container">
-  <div>
-    <mat-form-field class="width30 margin-right">
-      <label>
-        <input type="number" matInput placeholder="Montant HT facture acompte" disabled  [value]="serviceContractForm.value.paymentInvoice.advance.amount">
-      </label>
-    </mat-form-field>
-    <mat-form-field class="width30 margin-right">
-      <label>
-        <input matInput type="text" disabled placeholder="Référence facture acompte " [value]="serviceContractForm.value.numerosInvoice.advance !== null ? serviceContractForm.value.numerosInvoice.advance.toString() : 'non générée'">
-      </label>
-    </mat-form-field>
-    <mat-form-field class="width30 margin-right">
-      <label>
-        <input matInput [matDatepicker]="paymentAdvanceDate" [(ngModel)]="serviceContractForm.value.paymentInvoice.advance.date" [ngModelOptions]="{standalone: true}" placeholder="Date paiement facture d'acompte">
-      </label>
-      <mat-datepicker-toggle matSuffix [for]="paymentAdvanceDate"></mat-datepicker-toggle>
-      <mat-datepicker #paymentAdvanceDate></mat-datepicker>
-    </mat-form-field>
-    <mat-form-field class="width30 margin-right">
-      <label>
-        <input type="number" matInput placeholder="Montant HT facture solde" disabled [value]="serviceContractForm.value.paymentInvoice.balance.amount">
-      </label>
-    </mat-form-field>
-    <mat-form-field class="width30 margin-right">
-      <label>
-        <input matInput type="text" disabled placeholder="Référence facture solde " [value]="serviceContractForm.value.numerosInvoice.balance !== null ? serviceContractForm.value.numerosInvoice.balance.toString() : 'non générée'">
-      </label>
-    </mat-form-field>
-    <mat-form-field class="width30 margin-right">
-      <label>
-        <input matInput [matDatepicker]="paymentBalanceDate" [(ngModel)]="serviceContractForm.value.paymentInvoice.balance.date" [ngModelOptions]="{standalone: true}" placeholder="Date paiement facture de solde">
-      </label>
-      <mat-datepicker-toggle matSuffix [for]="paymentBalanceDate"></mat-datepicker-toggle>
-      <mat-datepicker #paymentBalanceDate></mat-datepicker>
-    </mat-form-field>
-  </div>
-
-  <h4>Coûts externes</h4>
-  <div formArrayName="externalCosts">
-    <div *ngFor="let externalCost of externalCosts.controls; let i=index" class="form-array-container">
-      <!-- The repeated alias template -->
-      <mat-form-field class="width70 margin-right">
-        <input matInput type="text" placeholder="Intitulé coût externe" aria-label="Coût externes" [(ngModel)]="this.serviceContractForm.value.externalCosts[i].name" [ngModelOptions]="{standalone: true}">
-      </mat-form-field>
-      <mat-form-field class="width15 margin-right">
-        <label>
-          <input type="number" matInput placeholder="Prix coût externe" [(ngModel)]="this.serviceContractForm.value.externalCosts[i].amount" [ngModelOptions]="{standalone: true}">
-        </label>
-      </mat-form-field>
-      <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmExternalCost(i)" class="suppr-button margin-right">Supprimer</button>
-    </div>
-    <button mat-raised-button color="accent" type="button" *ngIf="serviceContractForm.value.externalCosts[serviceContractForm.value.externalCosts.length-1].name !== '' && serviceContractForm.value.externalCosts[serviceContractForm.value.externalCosts.length-1].amount !== ''" (click)="addExternalCost()" class="margin-bottom-1">Ajouter coût externe</button>
-  </div>
-
 </form>
 
 <div class="button-container">

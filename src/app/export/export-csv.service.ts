@@ -77,7 +77,8 @@ export class ExportCsvService {
     price: "prix total ht",
     rentalDiscountAmount:"Remise en € sur location",
     saleDiscountAmount:"Remise en € sur vente",
-    discountPrice: "Prix total remisé"
+    discountPrice: "Prix total remisé",
+    credit: "avance perçue"
   };
 
 
@@ -149,19 +150,20 @@ export class ExportCsvService {
       const specialProduct =  specialProductArray.join(' - ');
 
       const prices = this.computePriceService.computePrices(invoice);
-      let price = 0, rentalDiscountAmount = 0, saleDiscountAmount = 0, discountPrice = 0, invoiceDate;
+      let price = 0, rentalDiscountAmount = 0, saleDiscountAmount = 0, discountPrice = 0, invoiceDate, credit = 0;
       if (invoiceType === "advance" ) {
         price = prices.price*Number(invoice.advanceRate)/100; // prix facture d'acompte
         rentalDiscountAmount = prices.rentalDiscountAmount*Number(invoice.advanceRate)/100;
         saleDiscountAmount = prices.saleDiscountAmount*Number(invoice.advanceRate)/100;
         discountPrice = prices.discountPrice*Number(invoice.advanceRate)/100;
-        invoiceDate = UtilServices.getDate(invoice.orderDate);
+        invoiceDate = UtilServices.getDate(invoice.advanceInvoiceDate);
       } else if (invoiceType === "balance") {
         price = prices.price*(100-Number(invoice.advanceRate))/100;
         rentalDiscountAmount = prices.rentalDiscountAmount*(100-Number(invoice.advanceRate))/100;
         saleDiscountAmount = prices.saleDiscountAmount*(100-Number(invoice.advanceRate))/100;
-        discountPrice = prices.discountPrice*(100-Number(invoice.advanceRate))/100;
+        discountPrice = (prices.discountPrice*(100-Number(invoice.advanceRate))/100)-(invoice.credit/1.2);
         invoiceDate = UtilServices.getDate(invoice.balanceInvoiceDate);
+        credit = invoice.credit;
       }
 
       this.invoicesTable.push({
@@ -186,6 +188,7 @@ export class ExportCsvService {
         rentalDiscountAmount: UtilServices.formatToTwoDecimal(rentalDiscountAmount).toString().replace('.',','),
         saleDiscountAmount : UtilServices.formatToTwoDecimal(saleDiscountAmount).toString().replace('.',','),
         discountPrice : UtilServices.formatToTwoDecimal(discountPrice).toString().replace('.',','),
+        credit : UtilServices.formatToTwoDecimal(credit).toString().replace('.',',')
       });
     }
   }

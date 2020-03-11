@@ -190,15 +190,6 @@
         <mat-datepicker #relaunchClientDate></mat-datepicker>
       </mat-form-field>
     </div>
-    <div class="display-inline-block width25">
-      <mat-form-field class="width80 margin-auto">
-        <label>
-          <input matInput [matDatepicker]="balanceInvoiceDate" formControlName="balanceInvoiceDate" placeholder="Date facture solde">
-        </label>
-        <mat-datepicker-toggle matSuffix [for]="balanceInvoiceDate"></mat-datepicker-toggle>
-        <mat-datepicker #balanceInvoiceDate></mat-datepicker>
-      </mat-form-field>
-    </div>
   </div>
 
   <h4>Dates et lieu d'installation</h4>
@@ -274,18 +265,6 @@
     </label>
   </mat-form-field>
   <h4>Facturation</h4>
-  <div>
-    <mat-form-field class="width25 margin-right">
-      <label>
-        <input type="number" matInput formControlName="advanceRate" placeholder="Taux facture acompte en %">
-      </label>
-    </mat-form-field>
-    <mat-form-field class="width50 margin-right">
-      <label>
-        <input type="number" matInput formControlName="credit" placeholder="Acompte en € TTC versé par le client sur devis (sans facture d'acompte)">
-      </label>
-    </mat-form-field>
-  </div>
 </form>
 
 <form [formGroup]="pricesForm" class="main-container">
@@ -315,34 +294,63 @@
 
 <form [formGroup]="orderForm" class="main-container">
   <div>
-    <mat-form-field class="width30 margin-right">
+    <mat-form-field class="width20 margin-right">
+      <label>
+        <input type="number" matInput formControlName="advanceRate" placeholder="Taux facture acompte en %">
+      </label>
+    </mat-form-field>
+    <mat-form-field class="width20 margin-right">
+      <label>
+        <input type="number" matInput formControlName="credit" placeholder="Acompte en € TTC versé par le client sur devis (sans facture d'acompte)">
+      </label>
+    </mat-form-field>
+  </div>
+  <div>
+    <mat-form-field class="width20 margin-right">
       <label>
         <input type="number" matInput placeholder="Montant HT facture acompte" disabled  [value]="orderForm.value.paymentInvoice.advance.amount">
       </label>
     </mat-form-field>
-    <mat-form-field class="width30 margin-right">
+    <mat-form-field class="width20 margin-right">
       <label>
         <input matInput type="text" disabled placeholder="Référence facture acompte " [value]="orderForm.value.numerosInvoice.advance !== null ? orderForm.value.numerosInvoice.advance.toString() : 'non générée'">
       </label>
     </mat-form-field>
-    <mat-form-field class="width30 margin-right">
+    <mat-form-field class="width20 margin-right">
+      <label>
+        <input matInput [matDatepicker]="advanceInvoiceDate" formControlName="advanceInvoiceDate" placeholder="Date facture accompte">
+      </label>
+      <mat-datepicker-toggle matSuffix [for]="advanceInvoiceDate"></mat-datepicker-toggle>
+      <mat-datepicker #advanceInvoiceDate></mat-datepicker>
+    </mat-form-field>
+    <mat-form-field class="width20 margin-right">
       <label>
         <input matInput [matDatepicker]="paymentAdvanceDate" [(ngModel)]="orderForm.value.paymentInvoice.advance.date" [ngModelOptions]="{standalone: true}" placeholder="Date paiement facture d'acompte">
       </label>
       <mat-datepicker-toggle matSuffix [for]="paymentAdvanceDate"></mat-datepicker-toggle>
       <mat-datepicker #paymentAdvanceDate></mat-datepicker>
     </mat-form-field>
-    <mat-form-field class="width30 margin-right">
+  </div>
+
+  <div>
+    <mat-form-field class="width20 margin-right">
       <label>
         <input type="number" matInput placeholder="Montant HT facture solde" disabled [value]="orderForm.value.paymentInvoice.balance.amount">
       </label>
     </mat-form-field>
-    <mat-form-field class="width30 margin-right">
+    <mat-form-field class="width20 margin-right">
       <label>
         <input matInput type="text" disabled placeholder="Référence facture solde " [value]="orderForm.value.numerosInvoice.balance !== null ? orderForm.value.numerosInvoice.balance.toString() : 'non générée'">
       </label>
     </mat-form-field>
-    <mat-form-field class="width30 margin-right">
+    <mat-form-field class="width20 margin-right">
+      <label>
+        <input matInput [matDatepicker]="balanceInvoiceDate" formControlName="balanceInvoiceDate" placeholder="Date facture solde">
+      </label>
+      <mat-datepicker-toggle matSuffix [for]="balanceInvoiceDate"></mat-datepicker-toggle>
+      <mat-datepicker #balanceInvoiceDate></mat-datepicker>
+    </mat-form-field>
+    <mat-form-field class="width20 margin-right">
       <label>
         <input matInput [matDatepicker]="paymentBalanceDate" [(ngModel)]="orderForm.value.paymentInvoice.balance.date" [ngModelOptions]="{standalone: true}" placeholder="Date paiement facture de solde">
       </label>

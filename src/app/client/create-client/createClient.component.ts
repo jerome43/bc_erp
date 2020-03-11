@@ -4,6 +4,7 @@ import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/fire
 import { FormBuilder, FormArray } from '@angular/forms';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
 import {ClientFormManager} from "../../forms/clientFormManager";
+import {Router} from "@angular/router";
 
 export interface DialogCreateClientData {
   id: string;
@@ -23,7 +24,7 @@ export class CreateClientComponent implements OnInit {
 
   private clientFormManager : ClientFormManager;
 
-  constructor(db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog) {
+  constructor(private router: Router, db: AngularFirestore, private fb: FormBuilder, private dialog: MatDialog) {
     this.clientsCollection = db.collection('clients');
     this.clientFormManager = new ClientFormManager();
   }
@@ -69,7 +70,7 @@ export class CreateClientComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(() => {
-      this.initForm();
+      this.router.navigate(['detail-client/' + id]).then();
     });
   }
 

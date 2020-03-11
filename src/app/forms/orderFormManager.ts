@@ -73,6 +73,7 @@ export class OrderFormManager {
       installationContactPhone: [''],
       orderDate: ['', Validators.required],
       scanOrder: [''],
+      advanceInvoiceDate: [''],
       balanceInvoiceDate: [''],
       orderComment: [''],
       deliveryComment: [''],
@@ -100,6 +101,7 @@ export class OrderFormManager {
     if (order.orderDate instanceof Timestamp) {this.form.controls['orderDate'].patchValue(order.orderDate.toDate())}
     if (order.relaunchClientDate instanceof Timestamp) {this.form.controls['relaunchClientDate'].patchValue(order.relaunchClientDate.toDate())}
     if (order.installationDate instanceof Timestamp) {this.form.controls['installationDate'].patchValue(order.installationDate.toDate())}
+    if (order.advanceInvoiceDate instanceof Timestamp) {this.form.controls['advanceInvoiceDate'].patchValue(order.advanceInvoiceDate.toDate())}
     if (order.balanceInvoiceDate instanceof Timestamp) {this.form.controls['balanceInvoiceDate'].patchValue(order.balanceInvoiceDate.toDate())}
     if (order.paymentInvoice) { // pour assurer rétrocompatibilité données avant janvier 2020
       if (order.paymentInvoice.advance.date instanceof Timestamp) {

@@ -332,7 +332,7 @@ export class PdfService {
     switch (pdfType) {
       case PdfType.advanceInvoice:
         metaDatas = {
-          date: formValue.orderDate.toLocaleDateString("fr-FR"),
+          date: formValue.advanceInvoiceDate.toLocaleDateString("fr-FR"),
           title: 'facture-acompte',
           fileName: 'facture-acompte',
           fileNumber: formValue.numerosInvoice.advance

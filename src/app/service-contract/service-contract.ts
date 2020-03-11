@@ -34,6 +34,7 @@ export class ServiceContract {
   installationContactPhone: string;
   orderDate: Timestamp;
   scanOrder: string;
+  advanceInvoiceDate:Timestamp; // introduce in mars 2020
   balanceInvoiceDate:Timestamp;
   orderComment: string;
   deliveryComment: string;

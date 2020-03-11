@@ -31,10 +31,11 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
   private fbOrders: Observable<any>; // orders in Firebase
   private fbOrdersSubscription : Subscription;
   public formDates;
-  public displayedColumns: string[] = ['numeroInvoice', 'dateInvoice', 'client', 'id', 'orderDate', 'type', 'totalHT', 'totalTTC', 'invoiceInfos', 'marge', 'edit']; // colones affichées par le tableau
+  public displayedColumns: string[] = ['numeroInvoice', 'dateInvoice', 'client', 'id', 'orderDate', 'type', 'totalHT', 'totalTTC', 'invoiceInfos', 'marge', 'credit', 'edit']; // colones affichées par le tableau
   private ordersData : Array<any>; // tableau qui va récupérer les données adéquates de fbOrders pour être ensuite affectées au tableau de sources de données
   public dataSource : MatTableDataSource<OrderId>; // source de données du tableau
   public listInvoiceTitle = "Factures Commandes en cours";
+  public stats = {totalTTC : 0, totalHT:0, totalMarge:0, totalDu:0, credit:0}; // principaux totaux des factures sélectionnées de date à date
 
   @ViewChild(MatPaginator) paginator: MatPaginator; // pagination du tableau
   @ViewChild(MatSort) sort: MatSort; // tri sur le tableau
@@ -80,12 +81,12 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
         }))).subscribe(serviceContracts => {
         fbServiceContracts.unsubscribe();
           const allOrders = orders.concat(serviceContracts);
-          this.populateDataSource(allOrders);
+          this.populateDefaultDataSource(allOrders);
         });
     });
   }
 
-  populateDataSource(orders) {
+  populateDefaultDataSource(orders) {
     //console.log('Current orders: ', orders);
     this.ordersData = [];
     orders.forEach((order)=>{
@@ -98,17 +99,15 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
       } else {
         marge = ComputePriceService.calcMarge(order.externalCosts, price.discountPrice);
       }
-      if (order.advanceRate !== 0) {
-        if (order.advanceRate === 100) {
-          this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.advance, dateInvoice : order.orderDate.toDate().toLocaleDateString(), id : order.id, client : order.client.name, orderDate : order.orderDate , type : 'acompte ' + order.advanceRate + ' %', invoiceInfos: invoiceInfos.advance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal(price.discountPrice * 1.20 / 100 * order.advanceRate), totalHT: UtilServices.formatToTwoDecimal(price.discountPrice / 100 * order.advanceRate ), marge: marge});
-        } else {
-          this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.advance, dateInvoice : order.orderDate.toDate().toLocaleDateString(), id : order.id, client : order.client.name, orderDate : order.orderDate , type : 'acompte ' + order.advanceRate + ' %', invoiceInfos: invoiceInfos.advance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal(price.discountPrice * 1.20 / 100 * order.advanceRate), totalHT: UtilServices.formatToTwoDecimal(price.discountPrice / 100 * order.advanceRate ), marge: 'voir solde'});
-        }
+      if (order.advanceRate !== 0 && order.advanceRate !== null) {
+        let dateInvoice;
+        order.advanceInvoiceDate instanceof Timestamp ? dateInvoice = order.advanceInvoiceDate.toDate().toLocaleDateString() : dateInvoice ='';
+        this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.advance, dateInvoice, id : order.id, client : order.client.name, orderDate : order.orderDate , type : 'acompte ' + order.advanceRate + ' %', invoiceInfos: invoiceInfos.advance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal(price.discountPrice * 1.20 / 100 * order.advanceRate), totalHT: UtilServices.formatToTwoDecimal(price.discountPrice / 100 * order.advanceRate ), marge: UtilServices.formatToTwoDecimal(marge / 100 * order.advanceRate ), credit:order.credit});
       }
       if (order.advanceRate !== 100) {
         let dateInvoice;
         order.balanceInvoiceDate instanceof Timestamp ? dateInvoice = order.balanceInvoiceDate.toDate().toLocaleDateString() : dateInvoice ='';
-        this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.balance, dateInvoice, id : order.id, client : order.client.name, orderDate : order.orderDate , type: 'solde ' + (100-order.advanceRate) + ' %', invoiceInfos: invoiceInfos.balance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal((price.discountPrice * 1.20 / 100*(100-order.advanceRate)) - order.credit), totalHT: UtilServices.formatToTwoDecimal((price.discountPrice / 100 * ( 100 - order.advanceRate )) - order.credit), marge: marge});
+        this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.balance, dateInvoice, id : order.id, client : order.client.name, orderDate : order.orderDate , type: 'solde ' + (100-order.advanceRate) + ' %', invoiceInfos: invoiceInfos.balance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal((price.discountPrice * 1.20 / 100*(100-order.advanceRate)) - order.credit), totalHT: UtilServices.formatToTwoDecimal((price.discountPrice / 100 * ( 100 - order.advanceRate )) - order.credit), marge: UtilServices.formatToTwoDecimal(marge / 100 * ( 100 - order.advanceRate )), credit:order.credit});
       }
     });
     this.dataSource = new MatTableDataSource<any>(this.ordersData);
@@ -120,6 +119,7 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
   populateInvoiceDataSource(orders, dateFrom, dateTo) {
     //console.log('Current orders: ', orders);
     this.ordersData = [];
+    this.stats = {totalTTC : 0, totalHT:0, totalMarge:0, totalDu:0, credit:0};
     orders.forEach((order)=>{
       let invoiceInfos;
       order.paymentInvoice !== undefined ? invoiceInfos = {advance: {numero: order.numerosInvoice.advance, date: order.paymentInvoice.advance.date}, balance: { numero: order.numerosInvoice.balance, date: order.paymentInvoice.balance.date}} : invoiceInfos = {advance: {numero: order.numerosInvoice.advance, date: null}, balance: { numero: order.numerosInvoice.balance, date: null}};
@@ -131,13 +131,13 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
         marge = ComputePriceService.calcMarge(order.externalCosts, price.discountPrice);
       }
       // if the rate is not equal to zero, then we have a advance invoice and we can push it in the array
-      if (order.advanceRate !== 0 && order.orderDate instanceof Timestamp && typeof (order.numerosInvoice.advance) === "number") {
-        if (order.orderDate.toDate() >= dateFrom && order.orderDate.toDate() <= dateTo) {
-          if (order.advanceRate === 100) {
-            this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.advance, dateInvoice : order.orderDate.toDate().toLocaleDateString(), id : order.id, client : order.client.name, orderDate : order.orderDate , type : 'acompte ' + order.advanceRate + ' %', invoiceInfos: invoiceInfos.advance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal(price.discountPrice * 1.20 / 100 * order.advanceRate), totalHT: UtilServices.formatToTwoDecimal(price.discountPrice / 100 * order.advanceRate ), marge: marge});
-          } else {
-            this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.advance, dateInvoice : order.orderDate.toDate().toLocaleDateString(), id : order.id, client : order.client.name, orderDate : order.orderDate , type : 'acompte ' + order.advanceRate + ' %', invoiceInfos: invoiceInfos.advance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal(price.discountPrice * 1.20 / 100 * order.advanceRate), totalHT: UtilServices.formatToTwoDecimal(price.discountPrice / 100 * order.advanceRate ), marge: 'voir solde'});
-          }
+      if (order.advanceRate !== 0 && order.advanceRate !== null && order.advanceInvoiceDate instanceof Timestamp && typeof (order.numerosInvoice.advance) === "number") {
+        if (order.advanceInvoiceDate.toDate() >= dateFrom && order.advanceInvoiceDate.toDate() <= dateTo) {
+          this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.advance, dateInvoice : order.advanceInvoiceDate.toDate().toLocaleDateString(), id : order.id, client : order.client.name, orderDate : order.orderDate, type : 'acompte ' + order.advanceRate + ' %', invoiceInfos: invoiceInfos.advance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal(price.discountPrice * 1.20 / 100 * order.advanceRate), totalHT: UtilServices.formatToTwoDecimal(price.discountPrice / 100 * order.advanceRate ), marge: UtilServices.formatToTwoDecimal(marge / 100 * order.advanceRate), credit:order.credit});
+          this.stats.totalMarge = this.stats.totalMarge + (marge / 100 * order.advanceRate);
+          this.stats.totalTTC += price.discountPrice * 1.20 / 100 * order.advanceRate;
+          this.stats.totalHT += price.discountPrice / 100 * order.advanceRate;
+          if (invoiceInfos.advance.date === null) {this.stats.totalDu += price.discountPrice * 1.20 / 100 * order.advanceRate}
         }
       }
       // if the rate is not equal to hundred, then we have a balance invoice and we can push it in the array
@@ -146,10 +146,21 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
             //console.log(order.balanceInvoiceDate.toDate() + '  / ' + dateFrom + ' / ' + order.balanceInvoiceDate.toDate() + ' ' + dateTo);
             let dateInvoice;
             order.balanceInvoiceDate instanceof Timestamp ? dateInvoice = order.balanceInvoiceDate.toDate().toLocaleDateString() : dateInvoice ='';
-            this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.balance, dateInvoice, id : order.id, client : order.client.name, orderDate : order.orderDate , type: 'solde ' + (100-order.advanceRate) + ' %', invoiceInfos: invoiceInfos.balance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal((price.discountPrice * 1.20 / 100*(100-order.advanceRate)) - order.credit), totalHT: UtilServices.formatToTwoDecimal((price.discountPrice / 100 * ( 100 - order.advanceRate )) - order.credit), marge: marge});
+            this.ordersData.push({route : order.route, numeroInvoice : order.numerosInvoice.balance, dateInvoice, id : order.id, client : order.client.name, orderDate : order.orderDate , type: 'solde ' + (100-order.advanceRate) + ' %', invoiceInfos: invoiceInfos.balance, isArchived: order.isArchived, totalTTC : UtilServices.formatToTwoDecimal((price.discountPrice * 1.20 / 100*(100-order.advanceRate)) - order.credit), totalHT: UtilServices.formatToTwoDecimal((price.discountPrice / 100 * ( 100 - order.advanceRate )) - (order.credit/1.2)), marge: UtilServices.formatToTwoDecimal(marge / 100 * ( 100 - order.advanceRate )), credit:order.credit});
+            this.stats.totalMarge = this.stats.totalMarge + (marge / 100 * ( 100 - order.advanceRate ));
+            this.stats.totalTTC += ((price.discountPrice * 1.20 / 100*(100-order.advanceRate)) - order.credit);
+            this.stats.totalHT += ((price.discountPrice / 100 * ( 100 - order.advanceRate )) - (order.credit/1.2));
+            this.stats.credit += order.credit;
+            if (invoiceInfos.balance.date === null) {this.stats.totalDu += ((price.discountPrice * 1.20 / 100*(100-order.advanceRate)) - order.credit)}
           }
          }
     });
+
+    this.stats.totalTTC = Number(UtilServices.formatToTwoDecimal(this.stats.totalTTC));
+    this.stats.totalHT = Number(UtilServices.formatToTwoDecimal(this.stats.totalHT));
+    this.stats.totalMarge = Number(UtilServices.formatToTwoDecimal(this.stats.totalMarge));
+    this.stats.totalDu = Number(UtilServices.formatToTwoDecimal(this.stats.totalDu));
+    this.stats.credit = Number(UtilServices.formatToTwoDecimal(this.stats.credit));
 
     this.dataSource = new MatTableDataSource<any>(this.ordersData);
     this.dataSource.paginator = this.paginator; // pagination du tableau
@@ -162,8 +173,8 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
     let exportInvoices = [];
     invoices.forEach((invoice)=>{
       // if the rate is not equal to zero, then we have a advance invoice and we can push it in the array
-      if (invoice.advanceRate !== 0 && invoice.orderDate instanceof Timestamp && typeof (invoice.numerosInvoice.advance) === "number") {
-        if (invoice.orderDate.toDate() >= dateFrom && invoice.orderDate.toDate() <= dateTo) {
+      if (invoice.advanceRate !== 0 && invoice.advanceInvoiceDate instanceof Timestamp && typeof (invoice.numerosInvoice.advance) === "number") {
+        if (invoice.advanceInvoiceDate.toDate() >= dateFrom && invoice.advanceInvoiceDate.toDate() <= dateTo) {
           if (invoice.advanceRate === 100) {
             exportInvoices.push({invoice : invoice, numeroInvoice : invoice.numerosInvoice.advance, type: 'advance'});
           } else {
@@ -226,9 +237,9 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
       dateTo.setDate(dateTo.getDate() + 1);   // on rajoute 24h car la date de fin est les jour à 0h00 et non à 23h59h59
       //console.log("dateFrom : ", dateFrom, ' / dateTo : ', dateTo);
 
-      // first we fetch by orderDate
+      // first we fetch by advanceInvoiceDate
       const fbOrders = this.db.collection('orders', ref => ref
-        .orderBy('orderDate')
+        .orderBy('advanceInvoiceDate')
         .startAt(dateFrom)
         .endAt(dateTo))
         .snapshotChanges()
@@ -237,9 +248,9 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
           return { route : 'detail-order/', id : a.payload.doc.id, isArchived : false, ...data };
         }))).subscribe(orders => {
           fbOrders.unsubscribe();
-          //console.log("orders by orderDate", orders);
+          //console.log("orders by advanceInvoiceDate", orders);
           const fbArchivedOrders = this.db.collection('archived-orders', ref => ref
-            .orderBy('orderDate')
+            .orderBy('advanceInvoiceDate')
             .startAt(dateFrom)
             .endAt(dateTo))
             .snapshotChanges()
@@ -250,7 +261,7 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
               fbArchivedOrders.unsubscribe();
               const allOrders = orders.concat(archivedOrders);
               const fbServiceContracts = this.db.collection('service-contracts', ref => ref
-                .orderBy('orderDate')
+                .orderBy('advanceInvoiceDate')
                 .startAt(dateFrom)
                 .endAt(dateTo))
                 .snapshotChanges()
@@ -261,7 +272,7 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
                   fbServiceContracts.unsubscribe();
                   //console.log("orders", orders);
                   const fbArchivedServiceContracts = this.db.collection('archived-service-contracts', ref => ref
-                    .orderBy('orderDate')
+                    .orderBy('advanceInvoiceDate')
                     .startAt(dateFrom)
                     .endAt(dateTo))
                     .snapshotChanges()

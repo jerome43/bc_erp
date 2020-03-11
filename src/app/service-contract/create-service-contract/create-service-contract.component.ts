@@ -125,11 +125,17 @@ export class CreateServiceContractComponent implements OnInit {
     this.clientFilteredOptions = fromArray([this._filterClient(clientP)]);
     this.clientFilteredOptions.subscribe((client)=> {
         let contacts:[Contact];
-        if (client[0]!=undefined && client[0].contacts !=undefined && client.length==1) {// si longueur >1, c'est qu'il y a plusieurs résultats de clients possible, donc on ne charge pas de contacts
-          //console.log("client[0].contacts", client[0].contacts);
+        if (client[0]!=undefined && client[0].contacts !=undefined && client.length==1) {
           contacts = client[0].contacts;
-        }
-        else {contacts=[{contactEmail: "", contactName: "", contactFunction: "", contactPhone: "", contactCellPhone: ""}]}
+        } else if (client[0]!=undefined && client[0].contacts !=undefined && client.length>1 && clientP.length>2) {
+          for (let i=0; i<client.length; i++) {
+            console.log("client[i].name", client[i].name);
+            if (client[i].name === clientP) {
+              contacts = client[0].contacts;
+              break;
+            } else {contacts=[{contactEmail: "", contactName: "", contactFunction: "", contactPhone: "", contactCellPhone: ""}]}
+          }
+        } else {contacts=[{contactEmail: "", contactName: "", contactFunction: "", contactPhone: "", contactCellPhone: ""}]}
         this.contactOptions = fromArray([contacts]);
         this.contactOptions.subscribe();
         //console.log("contactOption : " , this.contactOptions);

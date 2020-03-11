@@ -44,8 +44,6 @@ import {DialogListQuotationOverview} from "./quotation/list-quotation/list-quota
 import {DialogDetailQuotationOverview} from "./quotation/detail-quotation/detail-quotation.component";
 import {DialogDetailOrderOverview} from "./order/detail-order/detail-order.component";
 import {DialogListOrderOverview} from "./order/list-order/list-order.component";
-import { ExportOrderComponent } from './order/export-order/export-order.component';
-//import {DialogExportOrderOverview} from "./order/export-order/export-order.component";
 import {DialogListInvoiceOverview} from "./order/list-invoice/list-invoice.component";
 import { StockComponent } from './product/stock/stock.component';
 import {DialogStockOverview} from "./product/stock/stock.component";
@@ -97,8 +95,6 @@ import {
     CreateQuotationComponent,
     DetailQuotationComponent,
     ListQuotationComponent,
-    ExportOrderComponent,
-    //DialogExportOrderOverview,
     DialogListInvoiceOverview,
     StockComponent,
     DialogStockOverview,
@@ -159,7 +155,6 @@ import {
     DialogDetailQuotationOverview,
     DialogDetailOrderOverview,
     DialogListOrderOverview,
-    //DialogExportOrderOverview,
     DialogListInvoiceOverview,
     DialogListServiceContractOverview,
     DialogDetailServiceContractOverview,

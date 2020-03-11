@@ -269,7 +269,7 @@ export class PdfServiceWithPhoto {
             dateLabel:'Date facture : ',
           },
           data : {
-            date: formValue.orderDate.toLocaleDateString("fr-FR"),
+            date: formValue.advanceInvoiceDate.toLocaleDateString("fr-FR"),
             title:'facture-acompte',
             fileName:'facture-acompte',
           }

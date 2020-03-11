@@ -56,10 +56,6 @@
           <mat-icon>credit_card</mat-icon>
           <span>Factures</span>
         </a>
-        <!--a mat-menu-item routerLink="/export-orders" routerLinkActive="active">
-          <mat-icon>save_alt</mat-icon>
-          <span>Export factures</span>
-        </a-->
       </mat-menu>
       <button mat-button [matMenuTriggerFor]="clientMenu"><mat-icon>people_outline</mat-icon><span class="top-menu-item">Clients</span></button>
       <mat-menu #clientMenu="matMenu">
@@ -98,10 +94,10 @@
           <mat-icon>sort</mat-icon><mat-icon>face</mat-icon>
           <span>Liste employé</span>
         </a>
-        <!--a mat-menu-item routerLink="/maintenance" routerLinkActive="active">
+        <a mat-menu-item routerLink="/maintenance" routerLinkActive="active">
           <mat-icon>build</mat-icon>
           <span>Maintenance</span>
-        </a-->
+        </a>
       </mat-menu>
     </div>
   </mat-toolbar>

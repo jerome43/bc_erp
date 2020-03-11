@@ -52,6 +52,7 @@ export class CreateEmployeComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(() => {
+      this.employeFormManager = new EmployeFormManager();
       this.initForm();
     });
   }

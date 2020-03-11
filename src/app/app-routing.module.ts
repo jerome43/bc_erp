@@ -12,7 +12,6 @@ import {DetailOrderComponent} from "./order/detail-order/detail-order.component"
 import {CreateQuotationComponent} from "./quotation/create-quotation/create-quotation.component";
 import {ListQuotationComponent} from "./quotation/list-quotation/list-quotation.component";
 import {DetailQuotationComponent} from "./quotation/detail-quotation/detail-quotation.component";
-import {ExportOrderComponent } from"./order/export-order/export-order.component";
 import {StockComponent} from "./product/stock/stock.component";
 import {CreateEmployeComponent} from "./employe/create-employe/createEmploye.component";
 import {ListEmployeComponent} from "./employe/list-employe/list-employe.component";
@@ -34,7 +33,6 @@ const routes: Routes = [
   {path: 'list-products', canActivate: [AuthGuard], component: ListProductComponent},
   { path: 'list-orders', canActivate: [AuthGuard], component: ListOrderComponent},
   { path: 'detail-order/:orderId', canActivate: [AuthGuard], component: DetailOrderComponent},
-  { path: 'export-orders', canActivate: [AuthGuard], component: ExportOrderComponent},
   { path : 'list-invoices', canActivate: [AuthGuard], component: ListInvoiceComponent},
   { path : 'detail-service-contract/:serviceContractId', canActivate : [AuthGuard], component : DetailServiceContractComponent},
   { path : 'create-service-contract', canActivate : [AuthGuard], component : CreateServiceContractComponent},
