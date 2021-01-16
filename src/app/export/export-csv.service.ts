@@ -161,7 +161,8 @@ export class ExportCsvService {
         price = prices.price*(100-Number(invoice.advanceRate))/100;
         rentalDiscountAmount = prices.rentalDiscountAmount*(100-Number(invoice.advanceRate))/100;
         saleDiscountAmount = prices.saleDiscountAmount*(100-Number(invoice.advanceRate))/100;
-        discountPrice = (prices.discountPrice*(100-Number(invoice.advanceRate))/100)-(invoice.credit/1.2);
+        // discountPrice = (prices.discountPrice*(100-Number(invoice.advanceRate))/100)-(invoice.credit/1.2);
+        discountPrice = (prices.discountPrice*(100-Number(invoice.advanceRate))/100);
         invoiceDate = UtilServices.getDate(invoice.balanceInvoiceDate);
         credit = invoice.credit;
       }

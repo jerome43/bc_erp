@@ -81,7 +81,7 @@ export class MaintenanceComponent implements OnInit {
    */
 
   updateOrders() { // modification des commandes, ajoute le champ advanceInvoiceDate
-    this.fbOrders = this.db.collection('archived-orders').snapshotChanges().pipe(
+    this.fbOrders = this.db.collection('orders').snapshotChanges().pipe(
       map(actions => actions.map(a => {
         const data = a.payload.doc.data() as Order;
         const id = a.payload.doc.id;
@@ -106,14 +106,40 @@ export class MaintenanceComponent implements OnInit {
   updateOrder(i, id, orderData) {
     //console.log('updateOrder :', id, ' / ', orderData);
     //console.log(i, ' - updateClient :', id);
-    let order = this.db.doc<Order>('archived-orders/' + id );
+    let order = this.db.doc<Order>('orders/' + id );
     order.set(orderData).then( () => {
       console.log(i, " - Le order "+id+" a été mis à jour.")});
   }
 
-  wantUpdate() {
-    //this.updateClients();
-    this.updateOrders();
+  updateArchivedOrders() { // modification des commandes, ajoute le champ advanceInvoiceDate
+    this.fbOrders = this.db.collection('archived-orders').snapshotChanges().pipe(
+      map(actions => actions.map(a => {
+        const data = a.payload.doc.data() as Order;
+        const id = a.payload.doc.id;
+        return {id : id, order : data};
+      })));
+    if (this.fbOrdersSubscription instanceof Subscription) {
+      this.fbOrdersSubscription.unsubscribe()
+    }
+    this.fbOrdersSubscription = this.fbOrders.subscribe((orders)=> {
+      //console.log('Current orders: ', orders);
+      this.fbOrdersSubscription.unsubscribe(); // évite de partir dans une boucle infinie car après on change des valeurs donc le subscribe repart en boucle
+
+      for (let i=0; i<orders.length; i++) {
+        if (orders[i].order.advanceInvoiceDate == undefined) {orders[i].order.advanceInvoiceDate = orders[i].order.orderDate}
+        const id = orders[i].id;
+        console.log(orders[i].id, ' : ', orders[i].order);
+        this.updateArchivedOrder(i, id, orders[i].order);
+      }
+    });
+  }
+
+  updateArchivedOrder(i, id, orderData) {
+    //console.log('updateOrder :', id, ' / ', orderData);
+    //console.log(i, ' - updateClient :', id);
+    let order = this.db.doc<Order>('archived-orders/' + id );
+    order.set(orderData).then( () => {
+      console.log(i, " - Le order "+id+" a été mis à jour.")});
   }
 
 }
