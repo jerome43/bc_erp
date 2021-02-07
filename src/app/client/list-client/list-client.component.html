@@ -5,6 +5,10 @@
     <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Rechercher">
   </mat-form-field>
 
+  <div class="display-inline-block width25 margin-bottom-1">
+    <button mat-raised-button color="primary" type="button" (click)="exportClientCsv()"><mat-icon>save_alt</mat-icon> export csv</button>
+  </div>
+
   <table mat-table [dataSource]="dataSource" matSort matSortActive="name" matSortDirection="asc" matSortDisableClear class="mat-elevation-z8">
 
     <!-- Name Column -->

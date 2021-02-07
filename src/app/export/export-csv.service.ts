@@ -26,7 +26,7 @@ export class ExportCsvService {
     return str;
   }
 
-  private static exportCSVFile(headers, invoicesTable, fileTitle) {
+  public static exportCSVFile(headers, invoicesTable, fileTitle) {
     if (headers) {
       invoicesTable.unshift(headers);
     }
