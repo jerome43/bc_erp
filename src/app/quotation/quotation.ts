@@ -35,4 +35,5 @@ export class Quotation {
   installationHours: string;
   installationContactName: string;
   installationContactPhone: string;
+  dismountingDate: Timestamp;
 }

@@ -44,8 +44,9 @@ export class PdfService {
           formValue.deliveryComment,
           {
             table: {
+              headerRows: 2,
               widths: [100, 100, '*'],
-              heights: [14, 70],
+              heights: ['*', 70],
               body: [
                 ['Date', 'Signature client', 'Observations'],
                 ['', '', '']
@@ -87,7 +88,8 @@ export class PdfService {
       'Heure de livraison : ' + formValue.installationHours,
       'Nom du contact sur place: ' + formValue.installationContactName,
       'Téléphone du contact sur place: ' + formValue.installationContactPhone,
-    ];
+      this.tolocaleDateString(formValue.dismountingDate)!=''? 'Date de démontage : ' + this.tolocaleDateString(formValue.dismountingDate): '',
+  ];
 
     // tableau des produits
     let tableProducts:Array<any>;
@@ -118,7 +120,7 @@ export class PdfService {
     for (let i = 0; i < formValue.singleProduct.length; i++) {
       if (formValue.singleProduct[i].type !== "service") { // on ne fait pas apparaître les prestations de service dans les bons de prépararion ou de livraions
         let singleProductRow = [], immobilisation = '', location = '', numberOfRentDays = 1, productInfos = {stack: []};
-        if (formValue.singleProduct[i].type === "rental") {
+        if (formValue.singleProduct[i].type === "rental" || formValue.singleProduct[i].type === "longRental") {
           numberOfRentDays = formValue.numberOfRentDays;
         }
         formValue.singleProduct[i].name != undefined ? productInfos.stack.push({
@@ -130,16 +132,16 @@ export class PdfService {
           italics: true,
           fontSize: 8
         }) : productInfos.stack.push('');
-        numberOfRentDays != undefined && formValue.singleProduct[i].type === "rental" ? productInfos.stack.push('Location ' + numberOfRentDays + ' j') : productInfos.stack.push('');
+        numberOfRentDays != undefined && (formValue.singleProduct[i].type === "rental" || formValue.singleProduct[i].type === "longRental") ? productInfos.stack.push('Location ' + numberOfRentDays + ' j') : productInfos.stack.push('');
         singleProductRow.push(productInfos);
         (formValue.singleProductAmount[i] != undefined && formValue.singleProduct[i].name != undefined && formValue.singleProduct[i].name != '') ? singleProductRow.push({
           alignment: 'center',
           text: formValue.singleProductAmount[i]
         }) : singleProductRow.push('');
-        if (formValue.singleProduct[i].type === "rental" && formValue.rentDateFrom !== undefined && formValue.rentDateFrom !== '' && formValue.rentDateFrom != null && formValue.rentDateTo !== undefined && formValue.rentDateTo !== '' && formValue.rentDateTo != null) {
+        if ((formValue.singleProduct[i].type === "rental" || formValue.singleProduct[i].type === "longRental") && formValue.rentDateFrom !== undefined && formValue.rentDateFrom !== '' && formValue.rentDateFrom != null && formValue.rentDateTo !== undefined && formValue.rentDateTo !== '' && formValue.rentDateTo != null) {
           location = 'Du ' + formValue.rentDateFrom.toLocaleDateString('fr-FR') + ' au ' + formValue.rentDateTo.toLocaleDateString('fr-FR');
         }
-        if (formValue.singleProduct[i].type === "rental" && formValue.immoDateFrom !== undefined && formValue.immoDateFrom !== '' && formValue.immoDateFrom != null && formValue.immoDateTo !== undefined && formValue.immoDateTo !== '' && formValue.immoDateTo != null) {
+        if ((formValue.singleProduct[i].type === "rental" || formValue.singleProduct[i].type === "longRental") && formValue.immoDateFrom !== undefined && formValue.immoDateFrom !== '' && formValue.immoDateFrom != null && formValue.immoDateTo !== undefined && formValue.immoDateTo !== '' && formValue.immoDateTo != null) {
           immobilisation = 'Du ' + formValue.immoDateFrom.toLocaleDateString('fr-FR') + ' au ' + formValue.immoDateTo.toLocaleDateString('fr-FR');
         }
         if (!isSaleDeliveryReceipt) {
@@ -154,7 +156,7 @@ export class PdfService {
       for (let i = 0; i < formValue.compositeProducts[idxPdt].compositeProductElements.length; i++) {
         if (formValue.compositeProducts[idxPdt].compositeProductElements[i].type !== "service") {// on ne fait pas apparaître les prestations de service dans les bons de prépararion ou de livraions
           let compositeProductRow = [], immobilisation = '', location = '', numberOfRentDays = 1, productInfos = {stack: []};
-          if (formValue.compositeProducts[idxPdt].compositeProductElements[i].type === "rental") {
+          if (formValue.compositeProducts[idxPdt].compositeProductElements[i].type === "rental" || formValue.compositeProducts[idxPdt].compositeProductElements[i].type === "longRental") {
             numberOfRentDays = formValue.numberOfRentDays;
           }
           formValue.compositeProducts[idxPdt].compositeProductElements[i].name != undefined ? productInfos.stack.push({
@@ -166,16 +168,16 @@ export class PdfService {
             italics: true,
             fontSize: 8
           }) : productInfos.stack.push('');
-          numberOfRentDays != undefined && formValue.compositeProducts[idxPdt].compositeProductElements[i].type === "rental" ? productInfos.stack.push('Location ' + numberOfRentDays + ' j') : productInfos.stack.push('');
+          numberOfRentDays != undefined && (formValue.compositeProducts[idxPdt].compositeProductElements[i].type === "rental" || formValue.compositeProducts[idxPdt].compositeProductElements[i].type === "longRental") ? productInfos.stack.push('Location ' + numberOfRentDays + ' j') : productInfos.stack.push('');
           compositeProductRow.push(productInfos);
           (formValue.compositeProductAmount[idxPdt] != undefined && formValue.compositeProducts[idxPdt].compositeProductElements[i].name != undefined && formValue.compositeProducts[idxPdt].compositeProductElements[i].name != '') ? compositeProductRow.push({
             alignment: 'center',
             text: formValue.compositeProductAmount[idxPdt]
           }) : compositeProductRow.push('');
-          if (formValue.compositeProducts[idxPdt].compositeProductElements[i].type === "rental" && formValue.rentDateFrom !== undefined && formValue.rentDateFrom !== '' && formValue.rentDateFrom != null && formValue.rentDateTo !== undefined && formValue.rentDateTo !== '' && formValue.rentDateTo != null) {
+          if ((formValue.compositeProducts[idxPdt].compositeProductElements[i].type === "rental" || formValue.compositeProducts[idxPdt].compositeProductElements[i].type === "longRental") && formValue.rentDateFrom !== undefined && formValue.rentDateFrom !== '' && formValue.rentDateFrom != null && formValue.rentDateTo !== undefined && formValue.rentDateTo !== '' && formValue.rentDateTo != null) {
             location = 'Du ' + formValue.rentDateFrom.toLocaleDateString('fr-FR') + ' au ' + formValue.rentDateTo.toLocaleDateString('fr-FR');
           }
-          if (formValue.compositeProducts[idxPdt].compositeProductElements[i].type === "rental" && formValue.immoDateFrom !== undefined && formValue.immoDateFrom !== '' && formValue.immoDateFrom != null && formValue.immoDateTo !== undefined && formValue.immoDateTo !== '' && formValue.immoDateTo != null) {
+          if ((formValue.compositeProducts[idxPdt].compositeProductElements[i].type === "rental" || formValue.compositeProducts[idxPdt].compositeProductElements[i].type === "longRental") && formValue.immoDateFrom !== undefined && formValue.immoDateFrom !== '' && formValue.immoDateFrom != null && formValue.immoDateTo !== undefined && formValue.immoDateTo !== '' && formValue.immoDateTo != null) {
             immobilisation = 'Du ' + formValue.immoDateFrom.toLocaleDateString('fr-FR') + ' au ' + formValue.immoDateTo.toLocaleDateString('fr-FR');
           }
           if (!isSaleDeliveryReceipt) {
@@ -446,16 +448,18 @@ export class PdfService {
         conditionsStack = [
           formValue.quotationComment,
           this.getRentDateAndPlace(formValue).livraison,
+          this.getRentDateAndPlace(formValue).dismounting,
           'Pour confirmer votre commande, il vous suffit de nous faire parvenir par mail à ' + formValue.employe.email + ' ce devis daté et signé avec le cachet de votre société',
           {
-            table: {
-              widths: [120, 80, '*'],
-              heights: [14, 70],
-              body: [
-                ['Bon pour accord', 'date', 'Cachet de la société'],
-                ['signature', '', '']
-              ]
-            }, margin: [0, 14]
+              table: {
+                headerRows: 2,
+                widths: [120, 80, '*'],
+                heights: ['*', 70],
+                body: [
+                  ['Bon pour accord', 'date', 'Cachet de la société'],
+                  ['signature', '', '']
+                ]
+              }, margin: [0, 14]
           },
           // 'La société Borne Concept met à présent tout en œuvre pour la réussite de votre manifestation en vous accompagnant en amont de votre événement dans la préparation, la configuration, la livraison, l\'installation, la hot line, l\'intervention sur site et la reprise en fin d\'événement.',
           'Assurance bris et vol à la charge du client',
@@ -486,6 +490,11 @@ export class PdfService {
               price = formValue.optionalProduct[i].rent_price;
               numberOfRentDays = formValue.numberOfRentDays;
               formValue.optionalProduct[i].apply_degressivity === "true" ? degressivity = 1 + numberOfRentDays / 10 : degressivity = numberOfRentDays;
+            }
+            else if (formValue.optionalProduct[i].type === "longRental") {
+              price = formValue.optionalProduct[i].rent_price;
+              numberOfRentDays = formValue.numberOfRentDays;
+              if (numberOfRentDays > 0) {degressivity = Math.ceil(numberOfRentDays / 31)}
             }
             else {
               price = formValue.optionalProduct[i].sell_price;
@@ -567,9 +576,15 @@ export class PdfService {
         let price = ComputePriceService.getCompositeProductElementPrice(formValue.compositeProducts[idxPdt].compositeProductElements);
         let numberOfRentDays = 1;
         let degressivity = 1;
+        // attention si le produit composé comporte à la fois des produits de location longue durée et de location courte durée => l'affichage des prix ne sera pas bon
+        // l'utilisateur ne doit pas mixer ce genre de produits
         if (formValue.compositeProducts[idxPdt].compositeProductElements[0].type === "rental") {
           numberOfRentDays = Number(formValue.numberOfRentDays);
           formValue.compositeProducts[idxPdt].compositeProductElements[0].apply_degressivity === "true" ? degressivity = 1 + numberOfRentDays / 10 : degressivity = numberOfRentDays;
+        }
+        else if (formValue.compositeProducts[idxPdt].compositeProductElements[0].type === "longRental") {
+          numberOfRentDays = Number(formValue.numberOfRentDays);
+          if (numberOfRentDays > 0) {degressivity = Math.ceil(numberOfRentDays / 31)}
         }
 
         let productInfos = {stack: []};
@@ -636,10 +651,15 @@ export class PdfService {
         let price;
         let numberOfRentDays=1;
         let degressivity=1;
-        if (formValue.singleProduct[i].type ==="rental" ) {
+        if (formValue.singleProduct[i].type ==="rental") {
           price = formValue.singleProduct[i].rent_price;
           numberOfRentDays = formValue.numberOfRentDays;
           formValue.singleProduct[i].apply_degressivity==="true" ? degressivity = 1+numberOfRentDays/10 : degressivity = numberOfRentDays;
+        }
+        else if (formValue.singleProduct[i].type ==="longRental") {
+          price = formValue.singleProduct[i].rent_price;
+          numberOfRentDays = formValue.numberOfRentDays;
+          if (numberOfRentDays > 0) {degressivity = Math.ceil(numberOfRentDays / 31)}
         }
         else {
           price = formValue.singleProduct[i].sell_price;
@@ -666,12 +686,12 @@ export class PdfService {
     // PRODUITS SPECIAUX
     if (formValue.specialProduct !== undefined) {
       for(let i = 0; i < formValue.specialProduct.length; i++) {
-        if (formValue.specialProduct[i]!='' && formValue.specialProduct[i]!=undefined && formValue.specialProductPrice[i]!=null && formValue.specialProductPrice[i]!=undefined && formValue.specialProductPrice[i]>0) {
+        if (formValue.specialProduct[i]!='' && formValue.specialProduct[i]!=undefined && formValue.specialProductPrice[i]!=null && formValue.specialProductPrice[i]!=undefined && formValue.specialProductPrice[i]>=0) {
           let tableProductsRow = [];
           tableProductsRow.push({text: formValue.specialProduct[i], bold:true});
           tableProductsRow.push('');
           tableProductsRow.push('');
-          tableProductsRow.push({alignment:'right', text: UtilServices.formatToTwoDecimal(formValue.specialProductPrice[i])+' €HT'});
+          tableProductsRow.push(formValue.specialProductPrice[i] == 0 ? {alignment:'right', text: 'Offert'} : {alignment:'right', text: UtilServices.formatToTwoDecimal(formValue.specialProductPrice[i])+' €HT'});
           tableProducts.push(tableProductsRow);
         }
       }
@@ -681,8 +701,8 @@ export class PdfService {
 
     let pricesStack = [];
     pricesStack .push({columns: [{width:'65%', text: 'Total HT '}, {width:'35%', alignment: 'right', text: UtilServices.formatToTwoDecimal(formValue.price)+' €'}]});
-    formValue.rentalDiscountAmount>0? pricesStack.push({columns: [{width:'65%', text: 'Remise sur location '+formValue.rentalDiscount+'% '}, {width:'35%', alignment: 'right', text: UtilServices.formatToTwoDecimal(formValue.rentalDiscountAmount)+' €'}]}) : console.log("pas de remise affichée");
-    formValue.saleDiscountAmount>0? pricesStack.push({columns: [{width:'65%', text: 'Remise sur vente '+formValue.saleDiscount+'% '}, {width:'35%', alignment: 'right', text: UtilServices.formatToTwoDecimal(formValue.saleDiscountAmount)+' €'}]}) : console.log("pas de remise affichée");
+    formValue.rentalDiscountAmount>0? pricesStack.push({columns: [{width:'65%', color: '#F77700', bold: true, text: 'Remise sur location '+formValue.rentalDiscount+'% '}, {width:'35%', alignment: 'right', color: '#F77700', bold: true, text: UtilServices.formatToTwoDecimal(formValue.rentalDiscountAmount)+' €'}]}) : console.log("pas de remise affichée");
+    formValue.saleDiscountAmount>0? pricesStack.push({columns: [{width:'65%', color: '#F77700', bold: true, text: 'Remise sur vente '+formValue.saleDiscount+'% '}, {width:'35%', alignment: 'right', color: '#F77700', bold: true, text: UtilServices.formatToTwoDecimal(formValue.saleDiscountAmount)+' €'}]}) : console.log("pas de remise affichée");
     (formValue.rentalDiscountAmount>0 || formValue.saleDiscountAmount>0) ?  pricesStack.push({columns: [{width:'65%', text: 'Total HT remisé '}, {width:'35%', alignment: 'right', text: UtilServices.formatToTwoDecimal(formValue.discountPrice)+' €'}]}): console.log("pas de remise affichée");
     switch (pdfType) {
       case PdfType.quotation:
@@ -883,10 +903,12 @@ export class PdfService {
     if (formValue.numberOfRentDays>=1) {
       let installation;
       this.tolocaleDateString(formValue.installationDate)!=''? installation = 'Installation le ' +this.tolocaleDateString(formValue.installationDate) : installation = '';
-      return {rentDateAndPlace : 'Location du ' + this.tolocaleDateString(formValue.rentDateFrom)+ ' au ' + this.tolocaleDateString(formValue.rentDateTo)+ ' à ' + formValue.installationTown, livraison : installation};
+      let dismounting;
+      this.tolocaleDateString(formValue.dismountingDate)!=''? dismounting = 'Démontage le ' +this.tolocaleDateString(formValue.dismountingDate) : dismounting = '';
+      return {rentDateAndPlace : 'Location du ' + this.tolocaleDateString(formValue.rentDateFrom)+ ' au ' + this.tolocaleDateString(formValue.rentDateTo)+ ' à ' + formValue.installationTown, livraison : installation, dismounting};
     }
     else {
-      return {rentDateAndPlace: '', livraison: ''}
+      return {rentDateAndPlace: '', livraison: '', dismounting: ''}
     }
   }
 

@@ -34,6 +34,7 @@ export class Order {
   installationHours: string;
   installationContactName: string;
   installationContactPhone: string;
+  dismountingDate: Timestamp;
   orderDate: Timestamp;
   scanOrder: string;
   advanceInvoiceDate:Timestamp; // introduce in mars 2020

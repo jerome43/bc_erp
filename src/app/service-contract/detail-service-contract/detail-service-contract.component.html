@@ -187,6 +187,13 @@
         </label>
       </mat-form-field>
     </div>
+    <div class="display-inline-block width25">
+      <mat-form-field class="width80 margin-auto">
+        <input matInput [matDatepicker]="dismountingDate" formControlName="dismountingDate" placeholder="Date de démontage">
+        <mat-datepicker-toggle matSuffix [for]="dismountingDate"></mat-datepicker-toggle>
+        <mat-datepicker #dismountingDate></mat-datepicker>
+      </mat-form-field>
+    </div>
     <mat-form-field class="width60 margin-right">
       <label>
         <input type="text" matInput formControlName="installationContactName" placeholder="Nom du contact sur place">

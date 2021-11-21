@@ -64,6 +64,7 @@ export class ServiceContractFormManager {
       installationZipcode: [''],
       installationTown: [''],
       installationDate: [''],
+      dismountingDate: [''],
       installationHours: [''],
       installationContactName: [''],
       installationContactPhone: [''],
@@ -73,7 +74,7 @@ export class ServiceContractFormManager {
       balanceInvoiceDate: [''],
       orderComment: [''],
       deliveryComment: [''],
-      advanceRate:[40],
+      advanceRate:[0],
       numerosInvoice: [{advance :null, balance : null}],
       credit: [0],
       paymentInvoice: [{advance: {amount: null, date: null}, balance: { amount: null, date: null}}], // introduce in january 2020
@@ -101,6 +102,7 @@ export class ServiceContractFormManager {
     if (serviceContract.orderDate instanceof Timestamp) {this.form.controls['orderDate'].patchValue(serviceContract.orderDate.toDate())}
     if (serviceContract.relaunchClientDate instanceof Timestamp) {this.form.controls['relaunchClientDate'].patchValue(serviceContract.relaunchClientDate.toDate())}
     if (serviceContract.installationDate instanceof Timestamp) {this.form.controls['installationDate'].patchValue(serviceContract.installationDate.toDate())}
+    if (serviceContract.dismountingDate instanceof Timestamp) {this.form.controls['dismountingDate'].patchValue(serviceContract.dismountingDate.toDate())}
     if (serviceContract.advanceInvoiceDate instanceof Timestamp) {this.form.controls['advanceInvoiceDate'].patchValue(serviceContract.advanceInvoiceDate.toDate())}
     if (serviceContract.balanceInvoiceDate instanceof Timestamp) {this.form.controls['balanceInvoiceDate'].patchValue(serviceContract.balanceInvoiceDate.toDate())}
     if (serviceContract.paymentInvoice) { // pour assurer rétrocompatibilité données avant janvier 2020

@@ -36,7 +36,13 @@
     <!-- Date Column -->
     <ng-container matColumnDef="dates">
       <th mat-header-cell *matHeaderCellDef mat-sort-header> Immobilisation en cours ou prochaine</th>
-      <td mat-cell *matCellDef="let element"> {{element.immosFromDateToDate}} </td>
+      <td mat-cell *matCellDef="let element"> {{element.immosFromDateToDateDate}} </td>
+    </ng-container>
+
+    <!-- Stats Column -->
+    <ng-container matColumnDef="stats">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Stocks immobilisés sur la période.</th>
+      <td mat-cell *matCellDef="let element"> {{element.stats}} </td>
     </ng-container>
 
     <!-- View Column -->

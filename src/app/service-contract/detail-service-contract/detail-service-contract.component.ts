@@ -45,7 +45,7 @@ export class DetailServiceContractComponent implements OnInit {
   public clientFilteredOptions: Observable<ClientId[]>; // used by autocomplete client form
 
   // for contact
-  public contactOptions:Observable<[Contact]>;// used by select contact form
+  public contactOptions:Observable<Contact[]>;// used by select contact form
 
   // for product
   private fbProductsSubscription : Subscription; // then we can unsubscribe after having subscribe
@@ -185,7 +185,7 @@ export class DetailServiceContractComponent implements OnInit {
     //console.log("filterClient", " / ", clientP);
     this.clientFilteredOptions = fromArray([this._filterClient(clientP)]);
     this.clientFilteredOptions.subscribe((client)=> {
-        let contacts:[Contact];
+        let contacts:Contact[];
         if (client[0]!=undefined && client[0].contacts !=undefined && client.length==1) {
           contacts = client[0].contacts;
         } else if (client[0]!=undefined && client[0].contacts !=undefined && client.length>1 && clientP.length>2) {

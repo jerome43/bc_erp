@@ -71,13 +71,14 @@ export class OrderFormManager {
       installationHours: [''],
       installationContactName: [''],
       installationContactPhone: [''],
+      dismountingDate: [''],
       orderDate: ['', Validators.required],
       scanOrder: [''],
       advanceInvoiceDate: [''],
       balanceInvoiceDate: [''],
       orderComment: [''],
       deliveryComment: [''],
-      advanceRate:[40],
+      advanceRate:[0],
       numerosInvoice: [{advance :null, balance : null}],
       credit: [0],
       paymentInvoice: [{advance: {amount: null, date: null}, balance: { amount: null, date: null}}], // introduce in january 2020
@@ -101,6 +102,7 @@ export class OrderFormManager {
     if (order.orderDate instanceof Timestamp) {this.form.controls['orderDate'].patchValue(order.orderDate.toDate())}
     if (order.relaunchClientDate instanceof Timestamp) {this.form.controls['relaunchClientDate'].patchValue(order.relaunchClientDate.toDate())}
     if (order.installationDate instanceof Timestamp) {this.form.controls['installationDate'].patchValue(order.installationDate.toDate())}
+    if (order.dismountingDate instanceof Timestamp) {this.form.controls['dismountingDate'].patchValue(order.dismountingDate.toDate())}
     if (order.advanceInvoiceDate instanceof Timestamp) {this.form.controls['advanceInvoiceDate'].patchValue(order.advanceInvoiceDate.toDate())}
     if (order.balanceInvoiceDate instanceof Timestamp) {this.form.controls['balanceInvoiceDate'].patchValue(order.balanceInvoiceDate.toDate())}
     if (order.paymentInvoice) { // pour assurer rétrocompatibilité données avant janvier 2020

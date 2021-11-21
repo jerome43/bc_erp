@@ -5,11 +5,11 @@ import { Product } from '../../product/product';
 import { Order } from '../order';
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/firestore';
 import { Observable } from 'rxjs'
-import { tap, finalize } from 'rxjs/operators';
+import {tap, finalize, startWith, map} from 'rxjs/operators';
 import {fromArray} from "rxjs/internal/observable/fromArray";
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormArray  } from '@angular/forms';
+import {FormBuilder, FormArray, FormControl} from '@angular/forms';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
 import {Subscription} from "rxjs";
 import { AngularFireStorage } from '@angular/fire/storage';
@@ -38,15 +38,30 @@ export class DetailOrderComponent implements OnInit {
   // for client
   private fbClientsSubscription : Subscription; // then we can unsubscribe after having subscribe
   private clientFormOptions =[]; // used by autoocmplete client form
-  public clientFilteredOptions: Observable<ClientId[]>; // used by autocomplete client form
+  // formulaire utilisé pour la recherche de client, pas pour le stockage des valeurs
+  public searchClientFormControl = new FormControl();
+  // tableau qui contient l'ensemble des noms des clients non filtrés, utilisé par le formulaire de recherche client
+  private _searchClientFormControlData: string[] = [];
+  // tableaux qui contiennent le nom des clients filtrés en fonction de la recherche
+  public searchClientFormControlDataFiltered: Observable<string[]>;
 
   // for contact
-  public contactOptions:Observable<[Contact]>;// used by select contact form
+  public contactOptions:Observable<Contact[]>;// used by select contact form
 
   // for product
   private fbProductsSubscription : Subscription; // then we can unsubscribe after having subscribe
   private productFormOptions =[]; // used by autocomplete product form
-  private productFormOptionsFiltered: Observable<ProductId[]>; // used by autocomplete product form
+
+  // formulaires de recherche des produits (simple, composés, optionnels), utilisés pour la recherche de produit, pas pour le stockage des valeurs
+  public searchCompositeProductFormControls = this.fb.array( [this.fb.group({compositeProductSearchElements: this.fb.array([this.fb.control('')])})]);
+  public searchSingleProductFormControls = this.fb.array([this.fb.control('')]);
+  public searchOptionalProductFormControls = this.fb.array([this.fb.control('')]);
+  // tableau qui contient le nom de l'ensemble des produits non filtrés
+  private _searchProductFormControlData: string[] = [];
+  // tableaux qui contiennent le nom des produits filtrés en fonction de la recherche
+  public searchSingleProductFormControlDataFiltered: Observable<string[]>[] = [];
+  public searchCompositeProductFormControlDataFiltered: Observable<string[]>[][] = [[]];
+  public searchOptionalProductFormControlDataFiltered: Observable<string[]>[] = [];
 
   // for employe
   public fbEmployes: Observable<EmployeId[]>; // employes on firebase
@@ -84,6 +99,10 @@ export class DetailOrderComponent implements OnInit {
 
   ngOnInit() {
     this.orderId = this.route.snapshot.paramMap.get('orderId');
+    this._setSearchClientFormControlDataFiltered();
+    this._setSearchSingleProductFormControlDataFiltered(0);
+    this._setSearchCompositeProductFormControlDataFiltered(0, 0);
+    this._setSearchOptionalProductFormControlDataFiltered(0);
     this.initForm();
     this.observeOrder(this.orderId);
     this.observeIndexNumeroInvoice();
@@ -91,12 +110,23 @@ export class DetailOrderComponent implements OnInit {
     this.fbClientsSubscription = this.firebaseServices.getClients()
       .subscribe((clients) => {
         this.clientFormOptions = Array.from(clients);
-        this.orderForm.value.client.name !== undefined ? this.filterClients(this.orderForm.value.client.name) : this.filterClients(this.orderForm.value.client);
+        //this.orderForm.value.client.name !== undefined ? this.filterClients(this.orderForm.value.client.name) : this.filterClients(this.orderForm.value.client);
+        this._subscribeContactFromClient(this.orderForm.value.client);
+        // on stocke le nom de l'ensemble des clients (utilisé dans le formulaire de recherche de client)
+        this._searchClientFormControlData = [];
+        for (let client of clients) {
+          this._searchClientFormControlData.push(client.name);
+        }
       });
 
     this.fbProductsSubscription = this.firebaseServices.getProducts()
       .subscribe( (products) => {
         this.productFormOptions = Array.from(products);
+        // on stocke le nom de l'ensemble de nos produits (utilé dans les formulaires de recherche)
+        this._searchProductFormControlData = [];
+        for (let product of products) {
+          this._searchProductFormControlData.push(product.name);
+        }
       });
 
     this.fbEmployes = this.firebaseServices.getEmployes();
@@ -203,6 +233,10 @@ export class DetailOrderComponent implements OnInit {
           //console.log("order.orderDate (TimeStamp) : ", order.orderDate);
           this.orderForm.patchValue(order);
           this.orderFormManager.patchDates(order);
+          this.setSearchClientFromOrder(order.client);
+          this.setSearchSingleProductFromOrder(order.singleProduct);
+          this.setSearchCompositeProductFromOrder(order.compositeProducts);
+          this.setSearchOptionalProductFromOrder(order.optionalProduct);
           if (order.scanOrder!='') {
             //console.log("observeOrder : scanOrder exist");
             this.downloadScanOrderURL = this.storage.ref(order.scanOrder).getDownloadURL();
@@ -221,22 +255,61 @@ export class DetailOrderComponent implements OnInit {
     this.orderSubscription = this.order.subscribe( () => {});
   }
 
-  /**
-   * for autocomplete client form
-   * fonction qui permet d'afficher dans le formulaire que le nom alors que c'est l'objet complet qui est sauvegardé
-   */
-  public displayClientFn(client?: ClientId): string | undefined {
-    return client ? client.name : undefined;
+  private _subscribeContactFromClient(client: Client) {
+    //console.log("setContactFromClient", client);
+    let contacts: Contact[] = client.contacts as Contact[];
+    if (client.contacts === undefined || client.contacts.length < 1) {
+      {
+        contacts = [{
+          contactEmail: "",
+          contactName: "",
+          contactFunction: "",
+          contactPhone: "",
+          contactCellPhone: ""
+        }];
+      }
+    }
+    this.contactOptions = fromArray([contacts]);
+    this.contactOptions.subscribe();
   }
 
-  /**
-   * for autocomplete, filtre le client
-   */
+
+
+  // fonctions qui active le filtre des clients dans les formulaires de recherche de client
+  private _setSearchClientFormControlDataFiltered() {
+    this.searchClientFormControlDataFiltered = this.searchClientFormControl
+      .valueChanges.pipe( startWith(''), map(value => this._filterSearchClientFormControlData(value)));
+  }
+
+  private _filterSearchClientFormControlData(value: string): string[] {
+    const filterValue = value.toLowerCase();
+    return this._searchClientFormControlData.filter(option => option.toLowerCase().includes(filterValue));
+  }
+
+  // affecte le client dans le formulaire de devis en fonction du nom du client sélectionné dans les formulaires de recherche
+  setClientFromSearchClientFormControl() {
+    fromArray([this._filterClient(this.searchClientFormControl.value)]).subscribe((data: Client[])=>{
+      this.orderForm.controls.client.patchValue(data[0]);
+      this._subscribeContactFromClient(data[0]);
+    });
+  }
+
+  // affecte le client dans le formulaire de recherche de client en fonction du nom du client enregistré dans la commande
+  setSearchClientFromOrder(i_client: Client) {
+    this.searchClientFormControl.patchValue(i_client.name);
+  }
+
+  private _filterClient(name: string): ClientId[] {
+    const filterValue = name.toLowerCase();
+    return this.clientFormOptions.filter(clientOption => clientOption.name.toLowerCase().indexOf(filterValue) === 0);
+  }
+  /*
+  //for autocomplete, filtre le client
   private filterClients(clientP) {
     //console.log("filterClient", " / ", clientP);
     this.clientFilteredOptions = fromArray([this._filterClient(clientP)]);
     this.clientFilteredOptions.subscribe((client)=> {
-        let contacts:[Contact];
+        let contacts:Contact[];
       if (client[0]!=undefined && client[0].contacts !=undefined && client.length==1) {
         contacts = client[0].contacts;
       } else if (client[0]!=undefined && client[0].contacts !=undefined && client.length>1 && clientP.length>2) {
@@ -256,11 +329,9 @@ export class DetailOrderComponent implements OnInit {
       }
     )
   }
+   */
 
-  private _filterClient(name: string): ClientId[] {
-    const filterValue = name.toLowerCase();
-    return this.clientFormOptions.filter(clientOption => clientOption.name.toLowerCase().indexOf(filterValue) === 0);
-  }
+
 
   /* nécessaire pour mettre à jour dans le template au chargement de la page  le contact (car sinon angular ne siat pas sur quel champs comparer les objets) */
   public compareContactOptionFn(x: any, y: any): boolean {
@@ -272,22 +343,113 @@ export class DetailOrderComponent implements OnInit {
     return x && y ? x.name === y.name : x === y;
   }
 
-  /* for automplete product form */
+  /*
+  //for automplete product form
   public displayProductFn(product?: ProductId): string | undefined {
     return product ? product.name : undefined;
   }
 
-  /* used for filter product*/
+
+  //used for filter product
   public filterProducts(i, event: Event) {
     //console.log("filterProduct", i, " / ", (<HTMLInputElement>event.target).value);
     //console.log(this._filterProducts((<HTMLInputElement>event.target).value));
     this.productFormOptionsFiltered = fromArray([this._filterProducts((<HTMLInputElement>event.target).value)]);
+  }
+   */
+
+
+  /**
+   * fonctions qui activent le filtre des produits dans les formulaires de recherche de produits simples, composés et optionnels
+   * doivent être appelées à l'initialisation de la page et à chaque fois que l'on veut rajouter ou supprimer un produit
+   */
+
+  private _setSearchSingleProductFormControlDataFiltered(i_index: number) {
+    this.searchSingleProductFormControlDataFiltered[i_index] = this.searchSingleProductFormControls.controls[i_index]
+      .valueChanges.pipe( startWith(''), map(value => this._filterSearchProductFormControlData(value)));
+    /*
+    this.searchSingleProductFormControlDataFiltered = merge(...this.searchSingleProductFormControls.controls.map((control: AbstractControl, index: number) =>
+      control.valueChanges.pipe( startWith(''), map(value => this._filterSearchProductFormControlData(value, index)))));
+     */
+  }
+
+  private _setSearchCompositeProductFormControlDataFiltered(i_indexPdt: number, i_indexElement: number) {
+    if (this.searchCompositeProductFormControlDataFiltered[i_indexPdt] === undefined) { this.searchCompositeProductFormControlDataFiltered[i_indexPdt] = [];}
+    let compositeProductSearchElements = this.searchCompositeProductFormControls.controls[i_indexPdt].get('compositeProductSearchElements') as FormArray;
+    //console.log(this.searchCompositeProductFormControls.controls);
+    if (compositeProductSearchElements.controls[i_indexElement]) {
+      this.searchCompositeProductFormControlDataFiltered[i_indexPdt].push(compositeProductSearchElements.controls[i_indexElement]
+        .valueChanges.pipe( startWith(''), map(value => this._filterSearchProductFormControlData(value))));
+    } else {
+      console.error("compositeProductSearchElements.controls[i_indexElement] undefined")
+    }
+  }
+
+  private _setSearchOptionalProductFormControlDataFiltered(i_index: number) {
+    this.searchOptionalProductFormControlDataFiltered[i_index] = this.searchOptionalProductFormControls.controls[i_index]
+      .valueChanges.pipe( startWith(''), map(value => this._filterSearchProductFormControlData(value)));
+  }
+
+  private _filterSearchProductFormControlData(value: string): string[] {
+    const filterValue = value.toLowerCase();
+    return this._searchProductFormControlData.filter(option => option.toLowerCase().includes(filterValue));
+  }
+
+  // affecte le produit simple dans le formulaire de devis en fonction du nom de produit simple sélectionné dans les formulaires de recherche
+  setSingleProductFromSearchProductFormControl(i: number) {
+    fromArray([this._filterProducts(this.searchSingleProductFormControls.controls[i].value)]).subscribe((data)=>{
+      this.orderForm.controls.singleProduct.controls[i].patchValue(data[0]);
+    });
+  }
+  // affecte le produit composé dans le formulaire de devis en fonction du nom de produit composé sélectionné dans les formulaires de recherche
+  setCompositeProductFromSearchProductFormControl(i: number, idxPdt: number) {
+    let compositeProductSearchElements = this.searchCompositeProductFormControls.controls[idxPdt].get('compositeProductSearchElements') as FormArray;
+    fromArray([this._filterProducts(compositeProductSearchElements.controls[i].value)]).subscribe((data)=>{
+      this.orderForm.controls.compositeProducts.controls[idxPdt].controls.compositeProductElements.controls[i].patchValue(data[0]);
+    });
+  }
+  // affecte le produit optionnel dans le formulaire de devis en fonction du nom de produit optionnel sélectionné dans les formulaires de recherche
+  setOptionalProductFromSearchProductFormControl(i: number) {
+    fromArray([this._filterProducts(this.searchOptionalProductFormControls.controls[i].value)]).subscribe((data)=>{
+      this.orderForm.controls.optionalProduct.controls[i].patchValue(data[0]);
+    });
   }
 
   private _filterProducts(value: string): ProductId[] {
     //console.log("value", value);
     const filterValue = value.toLowerCase();
     return this.productFormOptions.filter(productOption => productOption.name.toLowerCase().indexOf(filterValue) === 0);
+  }
+
+  // affecte le nom du produit dans les formulaires de recherche de produit simple en fonction du nom du produit enregistré dans le devis
+  setSearchSingleProductFromOrder(i_product: Product[]) {
+    for (let i: number = 0; i< this.searchSingleProductFormControls.controls.length; i++) {
+      if (i_product[i] && i_product[i].name) {
+        this.searchSingleProductFormControls.controls[i].patchValue(i_product[i].name);
+      }
+    }
+  }
+  // affecte le nom du produit dans les formulaires de recherche de produit composite en fonction du nom du produit enregistré dans le devis
+  setSearchCompositeProductFromOrder(i_product: {compositeProductElements:Product[]}[]) {
+    //console.log("i_product", i_product);
+    for (let i: number = 0; i < i_product.length; i++) {
+      let compositeProductSearchElements = this.searchCompositeProductFormControls.controls[i].get('compositeProductSearchElements') as FormArray;
+      if (i_product[i] !== undefined) {
+        for (let ii: number = 0; ii< i_product[i].compositeProductElements.length; ii++) {
+          if (i_product[i] && i_product[i].compositeProductElements[ii] && i_product[i].compositeProductElements[ii].name) {
+            compositeProductSearchElements.controls[ii].patchValue(i_product[i].compositeProductElements[ii].name);
+          }
+        }
+      }
+    }
+  }
+  // affecte le nom du produit dans les formulaires de recherche de produit optionnel en fonction du nom du produit enregistré dans le devis
+  setSearchOptionalProductFromOrder(i_product: Product) {
+    for (let i: number = 0; i< this.searchOptionalProductFormControls.controls.length; i++) {
+      if (i_product[i] && i_product[i].name) {
+        this.searchOptionalProductFormControls.controls[i].patchValue(i_product[i].name);
+      }
+    }
   }
 
   /* used for add or remove single, composite and optionnal product*/
@@ -308,12 +470,16 @@ export class DetailOrderComponent implements OnInit {
   public addSingleProduct() {
     this.singleProduct.push(this.fb.control(''));
     this.orderForm.value.singleProductAmount.push(1);
+    this.searchSingleProductFormControls.push(this.fb.control(''));
+    this._setSearchSingleProductFormControlDataFiltered(this.searchSingleProductFormControls.controls.length-1);
   }
 
   public rmSingleProduct(i) {
     //console.log("rmSingleProduct : "+i);
     this.singleProduct.removeAt(Number(i));
     this.orderForm.value.singleProductAmount.splice(Number(i),1);
+    this.searchSingleProductFormControls.removeAt(Number(i));
+    this.searchSingleProductFormControlDataFiltered.splice(i, 1);
   }
 
   private setSingleProductAmount(index: number, value: string) {
@@ -333,10 +499,12 @@ export class DetailOrderComponent implements OnInit {
 
   public addSpecialProduct() {
     this.specialProduct.push(this.fb.control(''));
+    this.orderForm.value.specialProductPrice.push(0);
   }
 
   public rmSpecialProduct(i) {
     this.specialProduct.removeAt(Number(i));
+    this.orderForm.value.specialProductPrice.splice(i,1);
   }
 
   private setSpecialProductPrice(index: number, value: string) {
@@ -378,12 +546,17 @@ export class DetailOrderComponent implements OnInit {
     let element = this.fb.group({compositeProductElements: this.fb.array([this.fb.control('')])});
     this.compositeProducts.push(element);
     this.orderForm.value.compositeProductAmount.push(1);
+    let searchElement = this.fb.group({compositeProductSearchElements: this.fb.array([this.fb.control('')])});
+    this.searchCompositeProductFormControls.push(searchElement);
+    this._setSearchCompositeProductFormControlDataFiltered(this.searchCompositeProductFormControls.controls.length - 1, 0);
   }
 
   public rmCompositeProduct(i) {
     //console.log("rmCompositeProduct : "+i);
     this.compositeProducts.removeAt(Number(i));
     this.orderForm.value.compositeProductAmount.splice(Number(i),1);
+    this.searchCompositeProductFormControls.removeAt(Number(i));
+    this.searchCompositeProductFormControlDataFiltered.splice(i, 1);
   }
 
   private setCompositeProductAmount(index: number, value: string) {
@@ -397,13 +570,18 @@ export class DetailOrderComponent implements OnInit {
     //console.log('compositeProductElements before ', this.compositeProducts);
     let compositePdts = this.compositeProducts.controls[idxPdt].get('compositeProductElements') as FormArray;
     this.compositeProducts.value[idxPdt] = compositePdts.push(this.fb.control(''));
-    //console.log('compositeProductElements after ', this.compositeProducts);
+    let searchCompositePdts = this.searchCompositeProductFormControls.controls[idxPdt].get('compositeProductSearchElements') as FormArray;
+    this.searchCompositeProductFormControls.value[idxPdt] = searchCompositePdts.push(this.fb.control(''));
+    this._setSearchCompositeProductFormControlDataFiltered(idxPdt, searchCompositePdts.controls.length -1 );
   }
 
   public rmCompositeProductElement(idxPdt,i) {
     //console.log("rmCompositeProductElement : "+i);
     let compositePdts = this.compositeProducts.controls[idxPdt].get('compositeProductElements') as FormArray;
     this.compositeProducts.value[idxPdt] = compositePdts.removeAt(Number(i));
+    let searchCompositePdts = this.searchCompositeProductFormControls.controls[idxPdt].get('compositeProductSearchElements') as FormArray;
+    this.searchCompositeProductFormControls.value[idxPdt] = searchCompositePdts.removeAt(Number(i));
+    this.searchCompositeProductFormControlDataFiltered[idxPdt].splice(i, 1);
   }
 
   /* used for add or remove external costs*/
@@ -436,7 +614,8 @@ export class DetailOrderComponent implements OnInit {
       this.pricesFormManager.setPrices(prices);
       this.orderFormManager.setPaymentInvoice(prices);
       //console.log('Form order changes', data);
-      data.client.name!=undefined ? this.filterClients(data.client.name) : this.filterClients(data.client);
+      //data.client.name!=undefined ? this.filterClients(data.client.name) : this.filterClients(data.client);
+      this._subscribeContactFromClient(data.client);
 
     });
     this.pricesForm = this.pricesFormManager.getForm();

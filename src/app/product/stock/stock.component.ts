@@ -32,7 +32,7 @@ export class StockComponent implements OnInit {
   stockDatesForm;
   private fbStockProducts: Observable<any>; // stocks on Firebase
   private fbStockProductsSubscription : Subscription;
-  displayedColumns: string[] = ['name', 'dates', 'view', 'id']; // colones affichées par le tableau
+  displayedColumns: string[] = ['name', 'dates', 'stats', 'view', 'id']; // colones affichées par le tableau
   private stockProductsData : Array<any>; // tableau qui va récupérer les données adéquates de fbStockProducts pour être ensuite affectées au tableau de sources de données
   dataSource : MatTableDataSource<StockId>; // source de données du tableau
   public stockTypeParams={path : "stockProducts", isLongRental:false, templateTitle:"Stocks Location produits courte durée ", templateButton:" voir stock longue durée"}; // les paramètres liés au type de stock (produits en location courte durée ou longue durée)
@@ -102,10 +102,12 @@ export class StockComponent implements OnInit {
           return a.immoDateFrom.seconds<b.immoDateFrom.seconds ? -1 : a.immoDateFrom.seconds>b.immoDateFrom.seconds ? 1 : 0;
         });
         const immosFromDateToDate = this.immosFromDateToDate(stockProduct);
+        const immosFromDateToDateDate = immosFromDateToDate.date;
         const id = stockProduct.productId;
         const name = stockProduct.productName;
         const productStock = stockProduct.productStock;
-        this.stockProductsData.push({id, name, productStock, immosFromDateToDate, immoDates})}
+        const stats = immosFromDateToDate.quantity + ' / ' + stockProduct.productStock;
+        this.stockProductsData.push({id, name, productStock, immosFromDateToDateDate, immoDates, stats})}
       );
       this.dataSource = new MatTableDataSource<StockId>(this.stockProductsData);
       this.dataSource.paginator = this.paginator; // pagination du tableau
@@ -113,12 +115,13 @@ export class StockComponent implements OnInit {
     });
   }
 
-  immosFromDateToDate(stockProduct): string { // récupère juste la prochaine immobilisation la plus proche de la date de début rentrée dans la formulaire
-    let immosFromDateToDate="aucunes futures immobilisations trouvées";
+  immosFromDateToDate(stockProduct): {date: string, quantity: number} { // récupère juste la prochaine immobilisation la plus proche de la date de début rentrée dans la formulaire
+    let immosFromDateToDate= {date: "aucunes futures immobilisations trouvées", quantity: 0};
     for (let i=0; i< stockProduct.immoDates.length; i++) {
       if ( stockProduct.immoDates[i].immoDateFrom.seconds>=this.stockDatesForm.value.dateFrom.getTime() / 1000
       || stockProduct.immoDates[i].immoDateTo.seconds>=this.stockDatesForm.value.dateFrom.getTime() / 1000) {
-        immosFromDateToDate = 'du ' +  stockProduct.immoDates[i].immoDateFrom.toDate().toLocaleDateString() + ' au ' +  stockProduct.immoDates[i].immoDateTo.toDate().toLocaleDateString();
+        immosFromDateToDate.date = 'du ' +  stockProduct.immoDates[i].immoDateFrom.toDate().toLocaleDateString() + ' au ' +  stockProduct.immoDates[i].immoDateTo.toDate().toLocaleDateString();
+        immosFromDateToDate.quantity = stockProduct.immoDates[i].quantity;
         break;
       }
     }

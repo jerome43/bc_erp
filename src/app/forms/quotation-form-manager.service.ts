@@ -75,6 +75,7 @@ export class QuotationFormManager {
       installationHours: [''],
       installationContactName: [''],
       installationContactPhone: [''],
+      dismountingDate: [''],
     });
   };
 
@@ -87,6 +88,7 @@ export class QuotationFormManager {
     if (quotation.quotationDate instanceof Timestamp) {this.form.controls['quotationDate'].patchValue(quotation.quotationDate.toDate())}
     if (quotation.relaunchClientDate instanceof Timestamp) {this.form.controls['relaunchClientDate'].patchValue(quotation.relaunchClientDate.toDate())}
     if (quotation.installationDate instanceof Timestamp) {this.form.controls['installationDate'].patchValue(quotation.installationDate.toDate())}
+    if (quotation.dismountingDate instanceof Timestamp) {this.form.controls['dismountingDate'].patchValue(quotation.dismountingDate.toDate())}
     // alternative solution
     //const timestamp = quotation.quotationDate.seconds*1000;
     //quotation.quotationDate = new Date(timestamp);

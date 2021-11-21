@@ -1,14 +1,16 @@
 <form [formGroup]="quotationForm" class="main-container">
   <h2>{{quotationTypeParams.templateTitle}} {{quotationId}}</h2>
-  <mat-form-field >
-    <input type="text" placeholder="Client" aria-label="Client" matInput formControlName="client" [matAutocomplete]="autoCompleteClient" required>
-    <mat-autocomplete #autoCompleteClient="matAutocomplete" [displayWith]="displayClientFn">
-      <mat-option *ngFor="let clientOption of clientFilteredOptions | async" [value]="clientOption">
-        {{clientOption.name}}
+  <mat-form-field>
+    <input type="text" placeholder="Client" aria-label="Client" matInput [formControl]="searchClientFormControl" [matAutocomplete]="autoCompleteClient" required>
+    <mat-autocomplete #autoCompleteClient="matAutocomplete" (optionSelected)="setClientFromSearchClientFormControl()">
+      <mat-option *ngFor="let client of searchClientFormControlDataFiltered | async" [value]="client">
+        {{client}}
       </mat-option>
     </mat-autocomplete>
   </mat-form-field>
-
+  <mat-form-field class="display-none">
+    <input type="text" aria-label="client" formControlName="client" matInput>
+  </mat-form-field>
   <mat-form-field>
     <mat-select placeholder="Contact client" formControlName="contact" [compareWith]="compareContactOptionFn">
       <mat-option *ngFor="let contactOption of contactOptions | async" [value]="contactOption">
@@ -33,14 +35,16 @@
   <div>
     <div formArrayName="singleProduct">
       <div *ngFor="let product of singleProduct.controls; let i=index" class="form-array-container">
-        <!-- The repeated alias template -->
         <mat-form-field class="width70 margin-right">
-          <input type="text" placeholder="Produit Simple" aria-label="Produit simple" [formControlName]="i" matInput [matAutocomplete]="autoCompleteSingleProduct" (click)="filterProducts(i, $event)" (keyup)="filterProducts(i, $event)">
-          <mat-autocomplete #autoCompleteSingleProduct="matAutocomplete" [displayWith]="displayProductFn">
-            <mat-option *ngFor="let productOption of productFormOptionsFiltered | async" [value]="productOption">
-              {{productOption.name}}
+          <input type="text" placeholder="Produit Simple" aria-label="Produit simple" [formControl]="searchSingleProductFormControls.controls[i]" matInput [matAutocomplete]="autoCompleteSingleProduct">
+          <mat-autocomplete #autoCompleteSingleProduct="matAutocomplete" (optionSelected)="setSingleProductFromSearchProductFormControl(i)">
+            <mat-option *ngFor="let productFiltered of searchSingleProductFormControlDataFiltered[i] | async" [value]="productFiltered">
+              {{productFiltered}}
             </mat-option>
           </mat-autocomplete>
+        </mat-form-field>
+        <mat-form-field class="display-none">
+          <input type="text" placeholder="Produit Simple" aria-label="Produit simple" [formControlName]="i" matInput>
         </mat-form-field>
         <mat-form-field class="width15 margin-right">
           <input type="number" matInput placeholder="Quantité produit simple" #inputSingleProductAmount (click)="setSingleProductAmount(i, inputSingleProductAmount.value)" (keyup)="setSingleProductAmount(i, inputSingleProductAmount.value)" [value]="this.quotationForm.value.singleProductAmount[i]">
@@ -49,10 +53,7 @@
       </div>
       <button mat-raised-button color="accent" type="button" *ngIf="quotationForm.value.singleProduct[quotationForm.value.singleProduct.length-1]!=''" (click)="addSingleProduct()" class="margin-bottom-1">Ajouter produit simple</button>
     </div>
-    <div class="display-inline-block">
-    </div>
   </div>
-
 
   <h4 class="margin-bottom-0-5">Produits composés</h4>
   <p class="info">Le premier élément de la liste est celui dont le nom et la photo apparaîtront dans les devis et factures.</p>
@@ -65,12 +66,15 @@
           <div formArrayName="compositeProductElements">
             <ng-container *ngFor="let product of compositeProduct.get('compositeProductElements').controls; index as i" class="form-array-container">
               <mat-form-field class="width70 margin-right">
-                <input type="text" placeholder="Elément de produit composé" aria-label="Elément de produit composé"  [formControlName]="i" matInput [matAutocomplete]="autoCompleteCompositeProduct" (click)="filterProducts(i, $event)" (keyup)="filterProducts(i, $event)">
-                <mat-autocomplete #autoCompleteCompositeProduct="matAutocomplete" [displayWith]="displayProductFn">
-                  <mat-option *ngFor="let productOption of productFormOptionsFiltered | async" [value]="productOption">
-                    {{productOption.name}}
+                <input type="text" placeholder="Elément de produit composé" aria-label="Elément de produit composé" [formControl]="searchCompositeProductFormControls.controls[idxPdt].get('compositeProductSearchElements').controls[i]" matInput [matAutocomplete]="autoCompleteCompositeProduct">
+                <mat-autocomplete #autoCompleteCompositeProduct="matAutocomplete" (optionSelected)="setCompositeProductFromSearchProductFormControl(i, idxPdt)">
+                  <mat-option *ngFor="let productFiltered of searchCompositeProductFormControlDataFiltered[idxPdt][i] | async" [value]="productFiltered">
+                    {{productFiltered}}
                   </mat-option>
                 </mat-autocomplete>
+              </mat-form-field>
+              <mat-form-field class="display-none">
+                <input type="text" placeholder="Elément de produit composé" aria-label="Elément de produit composé"  [formControlName]="i" matInput>
               </mat-form-field>
               <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmCompositeProductElement(idxPdt, i)" class="suppr-button">- élt pdt composé</button>
             </ng-container>
@@ -87,14 +91,6 @@
   </div>
 
   <h4 class="margin-bottom-0-5">Prestation particulière</h4>
-  <!--div>
-    <mat-form-field class="width60 margin-right">
-      <input type="text" matInput formControlName="specialProductName" placeholder="Intitulé prestation (frais kilométriques...)">
-    </mat-form-field>
-    <mat-form-field class="width30 margin-auto">
-      <input type="number" matInput formControlName="specialProductPrice" placeholder="Prix prestation particulière">
-    </mat-form-field>
-  </div-->
   <div formArrayName="specialProduct">
     <div *ngFor="let product of specialProduct.controls; let i=index" class="form-array-container">
       <!-- The repeated alias template -->
@@ -113,14 +109,16 @@
   <div>
     <div formArrayName="optionalProduct">
       <div *ngFor="let product of optionalProduct.controls; let i=index" class="form-array-container">
-        <!-- The repeated alias template -->
         <mat-form-field class="width70 margin-right">
-          <input type="text" placeholder="Produit optionnel" aria-label="Produit optionnel" [formControlName]="i" matInput [matAutocomplete]="autoCompleteOptionalProduct" (click)="filterProducts(i, $event)" (keyup)="filterProducts(i, $event)">
-          <mat-autocomplete #autoCompleteOptionalProduct="matAutocomplete" [displayWith]="displayProductFn">
-            <mat-option *ngFor="let productOption of productFormOptionsFiltered | async" [value]="productOption">
-              {{productOption.name}}
+          <input type="text" placeholder="Produit optionnel" aria-label="Produit optionnel" [formControl]="searchOptionalProductFormControls.controls[i]" matInput [matAutocomplete]="autoCompleteOptionalProduct">
+          <mat-autocomplete #autoCompleteOptionalProduct="matAutocomplete" (optionSelected)="setOptionalProductFromSearchProductFormControl(i)">
+            <mat-option *ngFor="let productFiltered of searchOptionalProductFormControlDataFiltered[i] | async" [value]="productFiltered">
+              {{productFiltered}}
             </mat-option>
           </mat-autocomplete>
+        </mat-form-field>
+        <mat-form-field class="display-none">
+          <input type="text" placeholder="Produit optionnel" aria-label="Produit optionnel" [formControlName]="i" matInput>
         </mat-form-field>
         <mat-form-field class="width15 margin-right">
           <input type="number" matInput placeholder="Quantité produit optionnel" #inputOptionalProductAmount (click)="setOptionalProductAmount(i, inputOptionalProductAmount.value)" (keyup)="setOptionalProductAmount(i, inputOptionalProductAmount.value)" [value]="this.quotationForm.value.optionalProductAmount[i]">
@@ -191,6 +189,15 @@
         <input type="text" matInput formControlName="installationHours" placeholder="Horaires d'installation">
       </mat-form-field>
     </div>
+    <div class="display-inline-block width25">
+      <mat-form-field class="width80 margin-auto">
+        <input matInput [matDatepicker]="dismountingDate" formControlName="dismountingDate" placeholder="Date de démontage">
+        <mat-datepicker-toggle matSuffix [for]="dismountingDate"></mat-datepicker-toggle>
+        <mat-datepicker #dismountingDate></mat-datepicker>
+      </mat-form-field>
+    </div>
+  </div>
+  <div>
     <div class="display-inline-block width25">
       <mat-form-field class="width80 margin-auto">
         <input matInput [matDatepicker]="quotationDate" formControlName="quotationDate" placeholder="Date devis" required>

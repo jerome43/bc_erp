@@ -8,7 +8,7 @@ export class Client {
   country: string;
   phone: string;
   //email: string;
-  contacts: [Contact];
+  contacts: Contact[];
   comment: string;
   rentalDiscount: number;
   saleDiscount: number;

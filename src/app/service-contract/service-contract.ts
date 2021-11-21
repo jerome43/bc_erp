@@ -29,6 +29,7 @@ export class ServiceContract {
   installationZipcode: number;
   installationTown: string;
   installationDate: Timestamp;
+  dismountingDate: Timestamp;
   installationHours: string;
   installationContactName: string;
   installationContactPhone: string;
