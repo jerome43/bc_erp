@@ -47,6 +47,7 @@ export class DetailQuotationComponent implements OnInit {
 
   // for contact
   public contactOptions:Observable<Contact[]>;// used by select contact form
+  private contactOptionsSubscribtion: Subscription;
 
   // for product
   private fbProductsSubscription : Subscription; // then we can unsubscribe after having subscribe
@@ -140,6 +141,9 @@ export class DetailQuotationComponent implements OnInit {
     this.quotationSubscription.unsubscribe();
     this.productsImmoSubscription.unsubscribe();
     this.fbEmployesSubscription.unsubscribe();
+    if (this.contactOptionsSubscribtion) {
+      this.contactOptionsSubscribtion.unsubscribe();
+    }
   }
 
   /**
@@ -235,22 +239,32 @@ export class DetailQuotationComponent implements OnInit {
     this.quotationSubscription = this.quotation.subscribe();
   }
 
+
   private _subscribeContactFromClient(client: Client) {
-    //console.log("setContactFromClient", client);
     let contacts: Contact[] = client.contacts as Contact[];
-    if (client.contacts === undefined || client.contacts.length < 1) {
-      {
-        contacts = [{
-          contactEmail: "",
-          contactName: "",
-          contactFunction: "",
-          contactPhone: "",
-          contactCellPhone: ""
-        }];
-      }
+    if (client.contacts === undefined || client.contacts.length === 0) {
+      contacts = [{
+        contactEmail: "",
+        contactName: "",
+        contactFunction: "",
+        contactPhone: "",
+        contactCellPhone: ""
+      }];
+    }
+    if (this.contactOptionsSubscribtion) {
+      this.contactOptionsSubscribtion.unsubscribe();
     }
     this.contactOptions = fromArray([contacts]);
-    this.contactOptions.subscribe();
+    this.contactOptionsSubscribtion = this.contactOptions.subscribe(()=> {
+      // si le nom d'un contact est renseigné en base et qu'aucun nom est renseigné dans le formulaire, on affecte par défaut le premier contact
+      if (client.contacts !== undefined && client.contacts.length > 0 && client.contacts[0].contactName !== "" && this.quotationForm.controls.contact.value.contactName === "") {
+        this.quotationForm.controls.contact.patchValue(client.contacts[0]);
+      }
+      // si aucun contact n'existe en base ou qu'il existe mais que son nom n'est pas défini, on charge par défaut un objet contact vide
+      else if ((client.contacts === undefined || client.contacts.length === 0 || (client.contacts.length > 0 && client.contacts[0].contactName === "")) && (this.quotationForm.controls.contact.value.contactName === undefined || this.quotationForm.controls.contact.value.contactName === null)) {
+        this.quotationForm.controls.contact.patchValue(contacts[0]);
+      }
+    });
   }
 
   // recherche de clients
@@ -270,6 +284,13 @@ export class DetailQuotationComponent implements OnInit {
   setClientFromSearchClientFormControl() {
     fromArray([this._filterClient(this.searchClientFormControl.value)]).subscribe((data: Client[])=>{
       this.quotationForm.controls.client.patchValue(data[0]);
+      this.quotationForm.controls.contact.patchValue({
+        contactEmail: "",
+        contactName: "",
+        contactFunction: "",
+        contactPhone: "",
+        contactCellPhone: ""
+      });
       this._subscribeContactFromClient(data[0]);
     });
   }

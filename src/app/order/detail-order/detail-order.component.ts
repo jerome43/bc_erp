@@ -47,6 +47,7 @@ export class DetailOrderComponent implements OnInit {
 
   // for contact
   public contactOptions:Observable<Contact[]>;// used by select contact form
+  private contactOptionsSubscribtion: Subscription;
 
   // for product
   private fbProductsSubscription : Subscription; // then we can unsubscribe after having subscribe
@@ -146,6 +147,9 @@ export class DetailOrderComponent implements OnInit {
     this.orderSubscription.unsubscribe();
     this.productsImmoSubscription.unsubscribe();
     this.fbEmployesSubscription.unsubscribe();
+    if (this.contactOptionsSubscribtion) {
+      this.contactOptionsSubscribtion.unsubscribe();
+    }
   }
 
   private observeIndexNumeroInvoice() {
@@ -256,21 +260,30 @@ export class DetailOrderComponent implements OnInit {
   }
 
   private _subscribeContactFromClient(client: Client) {
-    //console.log("setContactFromClient", client);
     let contacts: Contact[] = client.contacts as Contact[];
-    if (client.contacts === undefined || client.contacts.length < 1) {
-      {
-        contacts = [{
-          contactEmail: "",
-          contactName: "",
-          contactFunction: "",
-          contactPhone: "",
-          contactCellPhone: ""
-        }];
-      }
+    if (client.contacts === undefined || client.contacts.length === 0) {
+      contacts = [{
+        contactEmail: "",
+        contactName: "",
+        contactFunction: "",
+        contactPhone: "",
+        contactCellPhone: ""
+      }];
+    }
+    if (this.contactOptionsSubscribtion) {
+      this.contactOptionsSubscribtion.unsubscribe();
     }
     this.contactOptions = fromArray([contacts]);
-    this.contactOptions.subscribe();
+    this.contactOptionsSubscribtion = this.contactOptions.subscribe(()=> {
+      // si le nom d'un contact est renseigné en base et qu'aucun nom est renseigné dans le formulaire, on affecte par défaut le premier contact
+      if (client.contacts !== undefined && client.contacts.length > 0 && client.contacts[0].contactName !== "" && this.orderForm.controls.contact.value.contactName === "") {
+        this.orderForm.controls.contact.patchValue(client.contacts[0]);
+      }
+      // si aucun contact n'existe en base ou qu'il existe mais que son nom n'est pas défini, on charge par défaut un objet contact vide
+      else if ((client.contacts === undefined || client.contacts.length === 0 || (client.contacts.length > 0 && client.contacts[0].contactName === "")) && (this.orderForm.controls.contact.value.contactName === undefined || this.orderForm.controls.contact.value.contactName === null)) {
+        this.orderForm.controls.contact.patchValue(contacts[0]);
+      }
+    });
   }
 
 
@@ -290,6 +303,13 @@ export class DetailOrderComponent implements OnInit {
   setClientFromSearchClientFormControl() {
     fromArray([this._filterClient(this.searchClientFormControl.value)]).subscribe((data: Client[])=>{
       this.orderForm.controls.client.patchValue(data[0]);
+      this.orderForm.controls.contact.patchValue({
+        contactEmail: "",
+        contactName: "",
+        contactFunction: "",
+        contactPhone: "",
+        contactCellPhone: ""
+      });
       this._subscribeContactFromClient(data[0]);
     });
   }
