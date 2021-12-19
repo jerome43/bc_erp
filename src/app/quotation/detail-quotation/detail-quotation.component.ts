@@ -432,11 +432,16 @@ export class DetailQuotationComponent implements OnInit {
   }
 
   rmSingleProduct(i) {
-    //console.log("rmContact : "+i);
-    this.singleProduct.removeAt(Number(i));
-    this.quotationForm.value.singleProductAmount.splice(Number(i),1);
-    this.searchSingleProductFormControls.removeAt(Number(i));
-    this.searchSingleProductFormControlDataFiltered.splice(i, 1);
+    if (i > 0) {
+      this.singleProduct.removeAt(Number(i));
+      this.quotationForm.value.singleProductAmount.splice(Number(i),1);
+      this.searchSingleProductFormControls.removeAt(Number(i));
+      this.searchSingleProductFormControlDataFiltered.splice(i, 1);
+    } else if (i === 0) {
+      this.quotationForm.controls.singleProduct.controls[0].patchValue("");
+      this.searchSingleProductFormControls.controls[0].patchValue("");
+      this._setSearchSingleProductFormControlDataFiltered(0);
+    }
   }
 
   private setSingleProductAmount(index: number, value: string) {
@@ -503,10 +508,16 @@ export class DetailQuotationComponent implements OnInit {
 
   rmOptionalProduct(i) {
     //console.log("rmOptionalProduct : "+i);
-    this.optionalProduct.removeAt(Number(i));
-    this.quotationForm.value.optionalProductAmount.splice(Number(i),1);
-    this.searchOptionalProductFormControls.removeAt(Number(i));
-    this.searchOptionalProductFormControlDataFiltered.splice(i, 1);
+    if (i > 0) {
+      this.optionalProduct.removeAt(Number(i));
+      this.quotationForm.value.optionalProductAmount.splice(Number(i),1);
+      this.searchOptionalProductFormControls.removeAt(Number(i));
+      this.searchOptionalProductFormControlDataFiltered.splice(i, 1);
+    } else if (i === 0) {
+      this.quotationForm.controls.optionalProduct.controls[0].patchValue("");
+      this.searchOptionalProductFormControls.controls[0].patchValue("");
+      this._setSearchOptionalProductFormControlDataFiltered(0);
+    }
   }
 
   private setOptionalProductAmount(index: number, value: string) {
@@ -569,14 +580,18 @@ export class DetailQuotationComponent implements OnInit {
   }
 
   rmCompositeProductElement(idxPdt,i) {
-    //console.log("rmCompositeProductElement : "+i);
     let compositePdts = this.compositeProducts.controls[idxPdt].get('compositeProductElements') as FormArray;
-    this.compositeProducts.value[idxPdt] = compositePdts.removeAt(Number(i));
     let searchCompositePdts = this.searchCompositeProductFormControls.controls[idxPdt].get('compositeProductSearchElements') as FormArray;
-    this.searchCompositeProductFormControls.value[idxPdt] = searchCompositePdts.removeAt(Number(i));
-    this.searchCompositeProductFormControlDataFiltered[idxPdt].splice(i, 1);
+    if (i > 0) {
+      this.compositeProducts.value[idxPdt] = compositePdts.removeAt(Number(i));
+      this.searchCompositeProductFormControls.value[idxPdt] = searchCompositePdts.removeAt(Number(i));
+      this.searchCompositeProductFormControlDataFiltered[idxPdt].splice(i, 1);
+    } else if (i === 0) {
+      this.compositeProducts.value[idxPdt] = compositePdts.controls[0].patchValue("");
+      this.searchCompositeProductFormControls.value[idxPdt] = searchCompositePdts.controls[0].patchValue("");
+      this._setSearchCompositeProductFormControlDataFiltered(idxPdt, 0);
+    }
   }
-
 
 
   initForm() {

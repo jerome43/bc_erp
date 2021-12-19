@@ -275,10 +275,18 @@ export class CreateQuotationComponent implements OnInit {
 
   rmSingleProduct(i) {
     //console.log("rmSingleProduct : "+i);
-    this.singleProduct.removeAt(Number(i));
-    this.quotationForm.value.singleProductAmount.splice(Number(i),1);
-    this.searchSingleProductFormControls.removeAt(Number(i));
-    this.searchSingleProductFormControlDataFiltered.splice(i, 1);
+    if (i > 0) {
+      this.singleProduct.removeAt(Number(i));
+      this.quotationForm.value.singleProductAmount.splice(Number(i),1);
+      this.searchSingleProductFormControls.removeAt(Number(i));
+      this.searchSingleProductFormControlDataFiltered.splice(i, 1);
+    }
+    else if (i === 0) {
+      this.quotationForm.controls.singleProduct.controls[0].patchValue("");
+      this.searchSingleProductFormControls.controls[0].patchValue("");
+      this._setSearchSingleProductFormControlDataFiltered(0);
+    }
+
   }
 
   private setSingleProductAmount(index: number, value: string) {
@@ -323,11 +331,16 @@ export class CreateQuotationComponent implements OnInit {
   }
 
   rmOptionalProduct(i) {
-    //console.log("rmOptionalProduct : "+i);
-    this.optionalProduct.removeAt(Number(i));
-    this.quotationForm.value.optionalProductAmount.splice(Number(i),1);
-    this.searchOptionalProductFormControls.removeAt(Number(i));
-    this.searchOptionalProductFormControlDataFiltered.splice(i, 1);
+    if (i > 0 ) {
+      this.optionalProduct.removeAt(Number(i));
+      this.quotationForm.value.optionalProductAmount.splice(Number(i),1);
+      this.searchOptionalProductFormControls.removeAt(Number(i));
+      this.searchOptionalProductFormControlDataFiltered.splice(i, 1);
+    } else if (i === 0) {
+      this.quotationForm.controls.optionalProduct.controls[0].patchValue("");
+      this.searchOptionalProductFormControls.controls[0].patchValue("");
+      this._setSearchOptionalProductFormControlDataFiltered(0);
+    }
   }
 
   private setOptionalProductAmount(index: number, value: string) {
@@ -352,20 +365,19 @@ export class CreateQuotationComponent implements OnInit {
 
 
   rmCompositeProduct(i) {
-    //console.log("rmCompositeProduct : "+i);
-    this.compositeProducts.removeAt(Number(i));
-    this.quotationForm.value.compositeProductAmount.splice(Number(i),1);
-    this.searchCompositeProductFormControls.removeAt(Number(i));
-    this.searchCompositeProductFormControlDataFiltered.splice(i, 1);
+    if (i> 0) {
+      this.compositeProducts.removeAt(Number(i));
+      this.quotationForm.value.compositeProductAmount.splice(Number(i),1);
+      this.searchCompositeProductFormControls.removeAt(Number(i));
+      this.searchCompositeProductFormControlDataFiltered.splice(i, 1);
+    }
   }
-
 
   private setCompositeProductAmount(index: number, value: string) {
     //console.log("createQuotationForm.compositeProductAmount :", this.createQuotationForm.value);
     this.quotationForm.value.compositeProductAmount[index] = Number(value);
     this.pricesFormManager.setPrices(this.computePriceService.computePrices(this.quotationForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
   }
-
 
   addCompositeProductElement(idxPdt) {
     //console.log('compositeProductElements before ', this.compositeProducts);
@@ -379,11 +391,17 @@ export class CreateQuotationComponent implements OnInit {
   rmCompositeProductElement(idxPdt,i) {
     //console.log("rmCompositeProductElement : "+i);
     let compositePdts = this.compositeProducts.controls[idxPdt].get('compositeProductElements') as FormArray;
-    this.compositeProducts.value[idxPdt] = compositePdts.removeAt(Number(i));
     let searchCompositePdts = this.searchCompositeProductFormControls.controls[idxPdt].get('compositeProductSearchElements') as FormArray;
-    this.searchCompositeProductFormControls.value[idxPdt] = searchCompositePdts.removeAt(Number(i));
-    this.searchCompositeProductFormControlDataFiltered[idxPdt].splice(i, 1);
-    //console.log(this.searchCompositeProductFormControls.controls);
+    if (i>0) {
+      this.compositeProducts.value[idxPdt] = compositePdts.removeAt(Number(i));
+      this.searchCompositeProductFormControls.value[idxPdt] = searchCompositePdts.removeAt(Number(i));
+      this.searchCompositeProductFormControlDataFiltered[idxPdt].splice(i, 1);
+      //console.log(this.searchCompositeProductFormControls.controls);
+    } else if (i === 0) {
+      this.compositeProducts.value[idxPdt] = compositePdts.controls[0].patchValue("");
+      this.searchCompositeProductFormControls.value[idxPdt] = searchCompositePdts.controls[0].patchValue("");
+      this._setSearchCompositeProductFormControlDataFiltered(idxPdt, 0);
+    }
   }
 
 

@@ -50,6 +50,7 @@
           <input type="number" matInput placeholder="Quantité produit simple" #inputSingleProductAmount (click)="setSingleProductAmount(i, inputSingleProductAmount.value)" (keyup)="setSingleProductAmount(i, inputSingleProductAmount.value)" [value]="this.quotationForm.value.singleProductAmount[i]">
         </mat-form-field>
         <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmSingleProduct(i)" class="suppr-button margin-right">Supprimer</button>
+        <button mat-raised-button color="warn" type="button" *ngIf="i===0 && quotationForm.controls.singleProduct.controls[0].value !==''" (click)="rmSingleProduct(i)" class="suppr-button margin-right">Vider</button>
       </div>
       <button mat-raised-button color="accent" type="button" *ngIf="quotationForm.value.singleProduct[quotationForm.value.singleProduct.length-1]!=''" (click)="addSingleProduct()" class="margin-bottom-1">Ajouter produit simple</button>
     </div>
@@ -76,7 +77,7 @@
               <mat-form-field class="display-none">
                 <input type="text" placeholder="Elément de produit composé" aria-label="Elément de produit composé"  [formControlName]="i" matInput>
               </mat-form-field>
-              <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmCompositeProductElement(idxPdt, i)" class="suppr-button">- élt pdt composé</button>
+              <button mat-raised-button color="warn" type="button" *ngIf="i>0 || (i === 0 && quotationForm.controls.compositeProducts.controls[idxPdt].controls.compositeProductElements.controls[0].value !=='')" (click)="rmCompositeProductElement(idxPdt, i)" class="suppr-button">- élt pdt composé</button>
             </ng-container>
             <button mat-raised-button color="accent" type="button" (click)="addCompositeProductElement(idxPdt)" class="margin-bottom-1">+ élt pdt composé</button>
             <mat-form-field class="width100">
@@ -124,6 +125,7 @@
           <input type="number" matInput placeholder="Quantité produit optionnel" #inputOptionalProductAmount (click)="setOptionalProductAmount(i, inputOptionalProductAmount.value)" (keyup)="setOptionalProductAmount(i, inputOptionalProductAmount.value)" [value]="this.quotationForm.value.optionalProductAmount[i]">
         </mat-form-field>
         <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmOptionalProduct(i)" class="suppr-button margin-right">Supprimer</button>
+        <button mat-raised-button color="warn" type="button" *ngIf="i===0  && quotationForm.controls.optionalProduct.controls[0].value !==''" (click)="rmOptionalProduct(i)" class="suppr-button margin-right">Vider</button>
       </div>
       <button mat-raised-button color="accent" type="button" *ngIf="quotationForm.value.optionalProduct[quotationForm.value.optionalProduct.length-1]!=''" (click)="addOptionalProduct()" class="margin-bottom-1">Ajouter produit optionnel</button>
     </div>

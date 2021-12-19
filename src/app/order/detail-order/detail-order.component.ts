@@ -495,11 +495,16 @@ export class DetailOrderComponent implements OnInit {
   }
 
   public rmSingleProduct(i) {
-    //console.log("rmSingleProduct : "+i);
-    this.singleProduct.removeAt(Number(i));
-    this.orderForm.value.singleProductAmount.splice(Number(i),1);
-    this.searchSingleProductFormControls.removeAt(Number(i));
-    this.searchSingleProductFormControlDataFiltered.splice(i, 1);
+    if (i > 0) {
+      this.singleProduct.removeAt(Number(i));
+      this.orderForm.value.singleProductAmount.splice(Number(i),1);
+      this.searchSingleProductFormControls.removeAt(Number(i));
+      this.searchSingleProductFormControlDataFiltered.splice(i, 1);
+    } else if (i === 0) {
+      this.orderForm.controls.singleProduct.controls[0].patchValue("");
+      this.searchSingleProductFormControls.controls[0].patchValue("");
+      this._setSearchSingleProductFormControlDataFiltered(0);
+    }
   }
 
   private setSingleProductAmount(index: number, value: string) {
@@ -598,10 +603,16 @@ export class DetailOrderComponent implements OnInit {
   public rmCompositeProductElement(idxPdt,i) {
     //console.log("rmCompositeProductElement : "+i);
     let compositePdts = this.compositeProducts.controls[idxPdt].get('compositeProductElements') as FormArray;
-    this.compositeProducts.value[idxPdt] = compositePdts.removeAt(Number(i));
     let searchCompositePdts = this.searchCompositeProductFormControls.controls[idxPdt].get('compositeProductSearchElements') as FormArray;
-    this.searchCompositeProductFormControls.value[idxPdt] = searchCompositePdts.removeAt(Number(i));
-    this.searchCompositeProductFormControlDataFiltered[idxPdt].splice(i, 1);
+    if (i>0) {
+      this.compositeProducts.value[idxPdt] = compositePdts.removeAt(Number(i));
+      this.searchCompositeProductFormControls.value[idxPdt] = searchCompositePdts.removeAt(Number(i));
+      this.searchCompositeProductFormControlDataFiltered[idxPdt].splice(i, 1);
+    } else if (i === 0) {
+      this.compositeProducts.value[idxPdt] = compositePdts.controls[0].patchValue("");
+      this.searchCompositeProductFormControls.value[idxPdt] = searchCompositePdts.controls[0].patchValue("");
+      this._setSearchCompositeProductFormControlDataFiltered(idxPdt, 0);
+    }
   }
 
   /* used for add or remove external costs*/
