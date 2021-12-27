@@ -473,7 +473,7 @@ export class PdfService {
         ];
 
         // PRODUITS OPTIONNELS
-        if (formValue.optionalProduct != undefined && formValue.optionalProduct.length > 0 && formValue.optionalProduct[0] != '') {
+        if (formValue.optionalProducts != undefined && formValue.optionalProducts[0] && formValue.optionalProducts[0].optionalProductElements[0] != '') {
           tableOptionalProducts = [];
           tableOptionalProducts.push(['', {alignment: 'center', bold: true, text: 'Quantité'}, {
             alignment: 'right',
@@ -481,65 +481,82 @@ export class PdfService {
             text: 'Prix unitaire'
           }, {alignment: 'right', bold: true, text: 'Prix HT'}]);
           options = "OPTIONS";
-        }
-        for (let i = 0; i < formValue.optionalProduct.length; i++) {
-          if (formValue.optionalProduct[i] != '' && formValue.optionalProduct[i] != undefined) {
-            let optionalProductRow = [];
-            let price, numberOfRentDays = 1, degressivity = 1;
-            if (formValue.optionalProduct[i].type === "rental") {
-              price = formValue.optionalProduct[i].rent_price;
-              numberOfRentDays = formValue.numberOfRentDays;
-              formValue.optionalProduct[i].apply_degressivity === "true" ? degressivity = 1 + numberOfRentDays / 10 : degressivity = numberOfRentDays;
-            }
-            else if (formValue.optionalProduct[i].type === "longRental") {
-              price = formValue.optionalProduct[i].rent_price;
-              numberOfRentDays = formValue.numberOfRentDays;
-              if (numberOfRentDays > 0) {degressivity = Math.ceil(numberOfRentDays / 31)}
-            }
-            else {
-              price = formValue.optionalProduct[i].sell_price;
+
+          // PREMIERE LIGNE PRODUITS OPTIONELS AVEC LE PRIX
+          for (let idxPdt = 0; idxPdt < formValue.optionalProducts.length; idxPdt++) {
+            if (formValue.optionalProducts[idxPdt] != '' && formValue.optionalProducts[idxPdt] != undefined) {
+              let optionalProductRow = [];
+              let price, numberOfRentDays = 1, degressivity = 1;
+              if (formValue.optionalProducts[idxPdt].optionalProductElements[0].type === "rental") {
+                price = formValue.optionalProducts[idxPdt].optionalProductElements[0].rent_price;
+                numberOfRentDays = formValue.numberOfRentDays;
+                formValue.optionalProducts[idxPdt].optionalProductElements[0].apply_degressivity === "true" ? degressivity = 1 + numberOfRentDays / 10 : degressivity = numberOfRentDays;
+              }
+              else if (formValue.optionalProducts[idxPdt].optionalProductElements[0].type === "longRental") {
+                price = formValue.optionalProducts[idxPdt].optionalProductElements[0].rent_price;
+                numberOfRentDays = formValue.numberOfRentDays;
+                if (numberOfRentDays > 0) {degressivity = Math.ceil(numberOfRentDays / 31)}
+              }
+              else {
+                price = formValue.optionalProducts[idxPdt].optionalProductElements[0].sell_price;
+              }
+
+              let productInfos = {stack: []};
+              formValue.optionalProducts[idxPdt].optionalProductElements[0].name != undefined ? productInfos.stack.push({
+                text: formValue.optionalProducts[idxPdt].optionalProductElements[0].name,
+                bold: true
+              }) : productInfos.stack.push('');
+              formValue.optionalProducts[idxPdt].optionalProductElements[0].description != undefined ? productInfos.stack.push({
+                text: formValue.optionalProducts[idxPdt].optionalProductElements[0].description,
+                italics: true,
+                fontSize: 8
+              }) : productInfos.stack.push('');
+              optionalProductRow.push(productInfos);
+              formValue.optionalProductAmount[idxPdt] != undefined ? optionalProductRow.push({
+                alignment: 'center',
+                text: formValue.optionalProductAmount[idxPdt]
+              }) : optionalProductRow.push('');
+              if (numberOfRentDays > 1) {
+                price != undefined ? optionalProductRow.push({
+                  alignment: 'right',
+                  text: UtilServices.formatToTwoDecimal(price * degressivity) + ' €HT'
+                }) : optionalProductRow.push('');
+                (price != undefined && formValue.optionalProductAmount[idxPdt] != undefined) ? optionalProductRow.push({
+                  alignment: 'right',
+                  text: UtilServices.formatToTwoDecimal(price * formValue.optionalProductAmount[idxPdt] * degressivity) + ' €HT'
+                }) : optionalProductRow.push('');
+              }
+              else {
+                price != undefined ? optionalProductRow.push({
+                  alignment: 'right',
+                  text: UtilServices.formatToTwoDecimal(price * numberOfRentDays) + ' €HT'
+                }) : optionalProductRow.push('');
+                (price != undefined && formValue.optionalProductAmount[idxPdt] != undefined) ? optionalProductRow.push({
+                  alignment: 'right',
+                  text: UtilServices.formatToTwoDecimal(price * formValue.optionalProductAmount[idxPdt] * numberOfRentDays) + ' €HT'
+                }) : optionalProductRow.push('');
+              }
+              tableOptionalProducts.push(optionalProductRow);
             }
 
-            let productInfos = {stack: []};
-            formValue.optionalProduct[i].name != undefined ? productInfos.stack.push({
-              text: formValue.optionalProduct[i].name,
-              bold: true
-            }) : productInfos.stack.push('');
-            formValue.optionalProduct[i].description != undefined ? productInfos.stack.push({
-              text: formValue.optionalProduct[i].description,
-              italics: true,
-              fontSize: 8
-            }) : productInfos.stack.push('');
-            optionalProductRow.push(productInfos);
-            formValue.optionalProductAmount[i] != undefined ? optionalProductRow.push({
-              alignment: 'center',
-              text: formValue.optionalProductAmount[i]
-            }) : optionalProductRow.push('');
-            if (numberOfRentDays > 1) {
-              price != undefined ? optionalProductRow.push({
-                alignment: 'right',
-                text: UtilServices.formatToTwoDecimal(price * degressivity) + ' €HT'
-              }) : optionalProductRow.push('');
-              (price != undefined && formValue.optionalProductAmount[i] != undefined) ? optionalProductRow.push({
-                alignment: 'right',
-                text: UtilServices.formatToTwoDecimal(price * formValue.optionalProductAmount[i] * degressivity) + ' €HT'
-              }) : optionalProductRow.push('');
+            // LIGNE SUIVANTE PRODUITS OPTIONELS SANS LE PRIX
+            for (let i = 1; i < formValue.optionalProducts[idxPdt].optionalProductElements.length; i++) {
+              if (formValue.optionalProducts[idxPdt].optionalProductElements[i] != '') {
+                let productInfos = {stack: []};
+                formValue.optionalProducts[idxPdt].optionalProductElements[i].description != undefined ? productInfos.stack.push({
+                  text: formValue.optionalProducts[idxPdt].optionalProductElements[i].description,
+                  italics: true,
+                  fontSize: 8
+                }) : productInfos.stack.push('');
+                let compositeProductRow = [];
+                compositeProductRow.push(productInfos, '', '','');
+                tableOptionalProducts.push(compositeProductRow);
+              }
             }
-            else {
-              price != undefined ? optionalProductRow.push({
-                alignment: 'right',
-                text: UtilServices.formatToTwoDecimal(price * numberOfRentDays) + ' €HT'
-              }) : optionalProductRow.push('');
-              (price != undefined && formValue.optionalProductAmount[i] != undefined) ? optionalProductRow.push({
-                alignment: 'right',
-                text: UtilServices.formatToTwoDecimal(price * formValue.optionalProductAmount[i] * numberOfRentDays) + ' €HT'
-              }) : optionalProductRow.push('');
-            }
-            tableOptionalProducts.push(optionalProductRow);
           }
         }
 
-        // PRODUITS OPTIONNELS
+        // OPTIONS LOCATIONS LONGUES DUREES
         let optionalLongRentalContent = '';
         if (formValue.optionalLongRentalMonth !== undefined && formValue.optionalLongRentalPrice !== undefined && formValue.optionalLongRentalAmount !== undefined
           && formValue.optionalLongRentalMonth !== '' && formValue.optionalLongRentalPrice !== '' && formValue.optionalLongRentalAmount !== ''

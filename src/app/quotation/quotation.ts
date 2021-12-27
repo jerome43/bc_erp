@@ -17,7 +17,8 @@ export class Quotation {
   specialProduct :  string[];
   specialProductPrice : number[];
   optionalProductAmount: number[];
-  optionalProduct: Product[];
+  optionalProducts: {optionalProductElements:Product[]}[];
+  optionalProduct: Product[]; // only for compatibility with quotations made before january 2022
   optionalLongRentalMonth : number;
   optionalLongRentalPrice : number;
   rentDateFrom: Timestamp;

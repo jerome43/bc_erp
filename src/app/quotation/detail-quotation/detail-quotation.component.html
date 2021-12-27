@@ -108,28 +108,34 @@
 
   <h4>Produits optionnels</h4>
   <div>
-    <div formArrayName="optionalProduct">
-      <div *ngFor="let product of optionalProduct.controls; let i=index" class="form-array-container">
-        <mat-form-field class="width70 margin-right">
-          <input type="text" placeholder="Produit optionnel" aria-label="Produit optionnel" [formControl]="searchOptionalProductFormControls.controls[i]" matInput [matAutocomplete]="autoCompleteOptionalProduct">
-          <mat-autocomplete #autoCompleteOptionalProduct="matAutocomplete" (optionSelected)="setOptionalProductFromSearchProductFormControl(i)">
-            <mat-option *ngFor="let productFiltered of searchOptionalProductFormControlDataFiltered[i] | async" [value]="productFiltered">
-              {{productFiltered}}
-            </mat-option>
-          </mat-autocomplete>
-        </mat-form-field>
-        <mat-form-field class="display-none">
-          <input type="text" placeholder="Produit optionnel" aria-label="Produit optionnel" [formControlName]="i" matInput>
-        </mat-form-field>
-        <mat-form-field class="width15 margin-right">
-          <input type="number" matInput placeholder="Quantité produit optionnel" #inputOptionalProductAmount (click)="setOptionalProductAmount(i, inputOptionalProductAmount.value)" (keyup)="setOptionalProductAmount(i, inputOptionalProductAmount.value)" [value]="this.quotationForm.value.optionalProductAmount[i]">
-        </mat-form-field>
-        <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmOptionalProduct(i)" class="suppr-button margin-right">Supprimer</button>
-        <button mat-raised-button color="warn" type="button" *ngIf="i===0  && quotationForm.controls.optionalProduct.controls[0].value !==''" (click)="rmOptionalProduct(i)" class="suppr-button margin-right">Vider</button>
-      </div>
-      <button mat-raised-button color="accent" type="button" *ngIf="quotationForm.value.optionalProduct[quotationForm.value.optionalProduct.length-1]!=''" (click)="addOptionalProduct()" class="margin-bottom-1">Ajouter produit optionnel</button>
-    </div>
-    <div class="display-inline-block">
+    <div formArrayName="optionalProducts">
+      <ng-container *ngFor="let optionalProduct of optionalProducts.controls; index as idxPdt" class="form-array-container">
+        <h5>Produit optionnel {{idxPdt+1}}</h5>
+        <div [formGroupName]="idxPdt.toString()">
+          <div formArrayName="optionalProductElements">
+            <ng-container *ngFor="let product of optionalProduct.get('optionalProductElements').controls; index as i" class="form-array-container">
+              <mat-form-field class="width70 margin-right">
+                <input type="text" placeholder="Elément de produit optionnel" aria-label="Elément de produit optionnel" [formControl]="searchOptionalProductFormControls.controls[idxPdt].get('optionalProductSearchElements').controls[i]" matInput [matAutocomplete]="autoCompleteOptionalProduct">
+                <mat-autocomplete #autoCompleteOptionalProduct="matAutocomplete" (optionSelected)="setOptionalProductFromSearchProductFormControl(i, idxPdt)">
+                  <mat-option *ngFor="let productFiltered of searchOptionalProductFormControlDataFiltered[idxPdt][i] | async" [value]="productFiltered">
+                    {{productFiltered}}
+                  </mat-option>
+                </mat-autocomplete>
+              </mat-form-field>
+              <mat-form-field class="display-none">
+                <input type="text" placeholder="Elément de produit optionnel" aria-label="Elément de produit optionnel"  [formControlName]="i" matInput>
+              </mat-form-field>
+              <button mat-raised-button color="warn" type="button" *ngIf="i>0 || (i === 0 && quotationForm.controls.optionalProducts.controls[idxPdt].controls.optionalProductElements.controls[0].value !=='')" (click)="rmOptionalProductElement(idxPdt, i)" class="suppr-button">- élt pdt optionnel</button>
+            </ng-container>
+            <button mat-raised-button color="accent" type="button" (click)="addOptionalProductElement(idxPdt)" class="margin-bottom-1">+ élt pdt optionnel</button>
+            <mat-form-field class="width100">
+              <input type="number" class="" matInput placeholder="Quantité produit optionnel {{idxPdt+1}}" #inputOptionalProductAmount (click)="setOptionalProductAmount(idxPdt, inputOptionalProductAmount.value)" (keyup)="setOptionalProductAmount(idxPdt, inputOptionalProductAmount.value)" [value]="this.quotationForm.value.optionalProductAmount[idxPdt]">
+            </mat-form-field>
+          </div>
+        </div>
+        <button mat-raised-button color="warn" type="button" *ngIf="idxPdt>0" (click)="rmOptionalProduct(idxPdt)" class="suppr-button">- produit optionnel</button>
+      </ng-container>
+      <button mat-raised-button color="accent" type="button" (click)="addOptionalProduct()" class="margin-bottom-1">+ produit optionnel</button>
     </div>
   </div>
 

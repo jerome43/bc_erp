@@ -57,13 +57,13 @@ export class DetailQuotationComponent implements OnInit {
   // formulaires de recherche des produits (simple, composés, optionnels), utilisés pour la recherche de produit, pas pour le stockage des valeurs
   public searchCompositeProductFormControls = this.fb.array( [this.fb.group({compositeProductSearchElements: this.fb.array([this.fb.control('')])})]);
   public searchSingleProductFormControls = this.fb.array([this.fb.control('')]);
-  public searchOptionalProductFormControls = this.fb.array([this.fb.control('')]);
+  public searchOptionalProductFormControls = this.fb.array( [this.fb.group({optionalProductSearchElements: this.fb.array([this.fb.control('')])})]);
   // tableau qui contient le nom de l'ensemble des produits non filtrés
   private _searchProductFormControlData: string[] = [];
   // tableaux qui contiennent le nom des produits filtrés en fonction de la recherche
   public searchSingleProductFormControlDataFiltered: Observable<string[]>[] = [];
   public searchCompositeProductFormControlDataFiltered: Observable<string[]>[][] = [[]];
-  public searchOptionalProductFormControlDataFiltered: Observable<string[]>[] = [];
+  public searchOptionalProductFormControlDataFiltered: Observable<string[]>[][] = [[]];
 
 
   // for employe
@@ -100,7 +100,7 @@ export class DetailQuotationComponent implements OnInit {
     this._setSearchClientFormControlDataFiltered();
     this._setSearchSingleProductFormControlDataFiltered(0);
     this._setSearchCompositeProductFormControlDataFiltered(0, 0);
-    this._setSearchOptionalProductFormControlDataFiltered(0);
+    this._setSearchOptionalProductFormControlDataFiltered(0, 0);
     this.initForm();
     this.observeQuotation(this.quotationId);
     this.observeNumeroOrder();
@@ -222,14 +222,25 @@ export class DetailQuotationComponent implements OnInit {
           this.setSingleProducts(quotation.singleProduct.length);
           this.setCompositeProducts(quotation.compositeProducts);
           this.setSpecialProducts(quotation.specialProduct.length);
-          if (quotation.optionalProduct!=undefined && quotation.optionalProduct.length>0) {this.setOptionalProducts(quotation.optionalProduct.length);}
-          //console.log("quotation.quotationDate (TimeStamp) : ", quotation.quotationDate);
+          // pour assurer la compatibilité avec les devis faits avant janvier 2022 (pas de produits composés sur les produits optionnels)
+          if (quotation.optionalProducts==undefined) {
+            quotation.optionalProducts=[];
+            if (quotation.optionalProduct) {
+              for (let i: number = 0; i < quotation.optionalProduct.length; i++) {
+                if (quotation.optionalProduct[i].name) {
+                  quotation.optionalProducts.push({optionalProductElements: [quotation.optionalProduct[i]]});
+                }
+
+              }
+            }
+          }
+          this.setOptionalProducts(quotation.optionalProducts);
           this.quotationForm.patchValue(quotation);
           this.quotationFormManager.patchDates(quotation);
           this.setSearchClientFromQuotation(quotation.client);
           this.setSearchSingleProductFromQuotation(quotation.singleProduct);
           this.setSearchCompositeProductFromQuotation(quotation.compositeProducts);
-          this.setSearchOptionalProductFromQuotation(quotation.optionalProduct);
+          this.setSearchOptionalProductFromQuotation(quotation.optionalProducts);
           this.pricesFormManager.setPrices(this.computePriceService.computePrices(this.quotationForm.value));
           this.stockService.verifyStock(this.quotationForm.value.singleProduct, this.quotationForm.value.compositeProducts, this.quotationForm.value.immoDateFrom, this.quotationForm.value.immoDateTo, this.quotationId);
           //console.log("observe quotation quotationForm after patchValue  ", this.quotationForm.value)
@@ -341,9 +352,15 @@ export class DetailQuotationComponent implements OnInit {
     }
   }
 
-  private _setSearchOptionalProductFormControlDataFiltered(i_index: number) {
-  this.searchOptionalProductFormControlDataFiltered[i_index] = this.searchOptionalProductFormControls.controls[i_index]
-    .valueChanges.pipe( startWith(''), map(value => this._filterSearchProductFormControlData(value)));
+  private _setSearchOptionalProductFormControlDataFiltered(i_indexPdt: number, i_indexElement: number) {
+    if (this.searchOptionalProductFormControlDataFiltered[i_indexPdt] === undefined) { this.searchOptionalProductFormControlDataFiltered[i_indexPdt] = [];}
+    let optionalProductSearchElements = this.searchOptionalProductFormControls.controls[i_indexPdt].get('optionalProductSearchElements') as FormArray;
+    if (optionalProductSearchElements.controls[i_indexElement]) {
+      this.searchOptionalProductFormControlDataFiltered[i_indexPdt].push(optionalProductSearchElements.controls[i_indexElement]
+        .valueChanges.pipe( startWith(''), map(value => this._filterSearchProductFormControlData(value))));
+    } else {
+      console.error("optionalProductSearchElements.controls[i_indexElement] undefined")
+    }
   }
 
   private _filterSearchProductFormControlData(value: string): string[] {
@@ -365,9 +382,10 @@ export class DetailQuotationComponent implements OnInit {
     });
   }
   // affecte le produit optionnel dans le formulaire de devis en fonction du nom de produit optionnel sélectionné dans les formulaires de recherche
-  setOptionalProductFromSearchProductFormControl(i: number) {
-    fromArray([this._filterProducts(this.searchOptionalProductFormControls.controls[i].value)]).subscribe((data)=>{
-      this.quotationForm.controls.optionalProduct.controls[i].patchValue(data[0]);
+  setOptionalProductFromSearchProductFormControl(i: number, idxPdt: number) {
+    let optionalProductSearchElements = this.searchOptionalProductFormControls.controls[idxPdt].get('optionalProductSearchElements') as FormArray;
+    fromArray([this._filterProducts(optionalProductSearchElements.controls[i].value)]).subscribe((data)=>{
+      this.quotationForm.controls.optionalProducts.controls[idxPdt].controls.optionalProductElements.controls[i].patchValue(data[0]);
     });
   }
 
@@ -400,10 +418,15 @@ export class DetailQuotationComponent implements OnInit {
     }
   }
   // affecte le nom du produit dans les formulaires de recherche de produit optionnel en fonction du nom du produit enregistré dans le devis
-  setSearchOptionalProductFromQuotation(i_product: Product) {
-    for (let i: number = 0; i< this.searchOptionalProductFormControls.controls.length; i++) {
-      if (i_product[i] && i_product[i].name) {
-        this.searchOptionalProductFormControls.controls[i].patchValue(i_product[i].name);
+  setSearchOptionalProductFromQuotation(i_product: {optionalProductElements:Product[]}[]) {
+    for (let i: number = 0; i < i_product.length; i++) {
+      let optionalProductSearchElements = this.searchOptionalProductFormControls.controls[i].get('optionalProductSearchElements') as FormArray;
+      if (i_product[i] !== undefined) {
+        for (let ii: number = 0; ii< i_product[i].optionalProductElements.length; ii++) {
+          if (i_product[i] && i_product[i].optionalProductElements[ii] && i_product[i].optionalProductElements[ii].name) {
+            optionalProductSearchElements.controls[ii].patchValue(i_product[i].optionalProductElements[ii].name);
+          }
+        }
       }
     }
   }
@@ -485,44 +508,66 @@ export class DetailQuotationComponent implements OnInit {
 
   /* used for add or remove optionnal product*/
 
-  setOptionalProducts(l) {
-    while (this.optionalProduct.length !== 1) {
-      this.optionalProduct.removeAt(1);
+  setOptionalProducts(cpdt) {
+    while (this.optionalProducts.length !== 0) {
+      this.optionalProducts.removeAt(0)
     }
-    this.quotationForm.value.optionalProductAmount = [1];
-    for (let i=0; i<l-1; i++) {
+    for (let idxPdt=0; idxPdt<cpdt.length; idxPdt++) {
       this.addOptionalProduct();
+      for (let i=0; i<cpdt[idxPdt].optionalProductElements.length-1; i++) {
+        this.addOptionalProductElement(idxPdt);
+      }
     }
   }
 
-  get optionalProduct() {
-    return this.quotationForm.get('optionalProduct') as FormArray;
+  get optionalProducts() {
+    return this.quotationForm.get('optionalProducts') as FormArray;
   }
 
   addOptionalProduct() {
-    this.optionalProduct.push(this.fb.control(''));
+    let element = this.fb.group({optionalProductElements: this.fb.array([this.fb.control('')])});
+    this.optionalProducts.push(element);
     this.quotationForm.value.optionalProductAmount.push(1);
-    this.searchOptionalProductFormControls.push(this.fb.control(''));
-    this._setSearchOptionalProductFormControlDataFiltered(this.searchOptionalProductFormControls.controls.length-1);
+    let searchElement = this.fb.group({optionalProductSearchElements: this.fb.array([this.fb.control('')])});
+    this.searchOptionalProductFormControls.push(searchElement);
+    this._setSearchOptionalProductFormControlDataFiltered(this.searchOptionalProductFormControls.controls.length-1, 0);
   }
 
   rmOptionalProduct(i) {
-    //console.log("rmOptionalProduct : "+i);
-    if (i > 0) {
-      this.optionalProduct.removeAt(Number(i));
+    if (i > 0 ) {
+      this.optionalProducts.removeAt(Number(i));
       this.quotationForm.value.optionalProductAmount.splice(Number(i),1);
       this.searchOptionalProductFormControls.removeAt(Number(i));
       this.searchOptionalProductFormControlDataFiltered.splice(i, 1);
-    } else if (i === 0) {
-      this.quotationForm.controls.optionalProduct.controls[0].patchValue("");
-      this.searchOptionalProductFormControls.controls[0].patchValue("");
-      this._setSearchOptionalProductFormControlDataFiltered(0);
     }
   }
 
   private setOptionalProductAmount(index: number, value: string) {
     //console.log("quotationForm.optionalProductAmount :", this.quotationForm.value);
     this.quotationForm.value.optionalProductAmount[index] = Number(value);
+    this.pricesFormManager.setPrices(this.computePriceService.computePrices(this.quotationForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
+  }
+
+  addOptionalProductElement(idxPdt: number) {
+    let optionalProductElement = this.optionalProducts.controls[idxPdt].get('optionalProductElements') as FormArray;
+    this.optionalProducts.value[idxPdt] = optionalProductElement.push(this.fb.control(''));
+    let optionalProductSearchElement = this.searchOptionalProductFormControls.controls[idxPdt].get('optionalProductSearchElements') as FormArray;
+    this.searchOptionalProductFormControls.value[idxPdt] = optionalProductSearchElement.push(this.fb.control(''));
+    this._setSearchOptionalProductFormControlDataFiltered(idxPdt, optionalProductSearchElement.controls.length -1 );
+  }
+
+  rmOptionalProductElement(idxPdt: number, idxElt: number) {
+    let optionalProductElement = this.optionalProducts.controls[idxPdt].get('optionalProductElements') as FormArray;
+    let optionalProductSearchElement = this.searchOptionalProductFormControls.controls[idxPdt].get('optionalProductSearchElements') as FormArray;
+    if (idxElt > 0) {
+      this.optionalProducts.value[idxPdt] = optionalProductElement.removeAt(Number(idxElt));
+      this.searchOptionalProductFormControls.value[idxPdt] = optionalProductSearchElement.removeAt(Number(idxElt));
+      this.searchOptionalProductFormControlDataFiltered[idxPdt].splice(idxElt, 1);
+    } else if (idxElt === 0) {
+      this.optionalProducts.value[idxPdt] = optionalProductElement.controls[0].patchValue("");
+      this.searchOptionalProductFormControls.value[idxPdt] = optionalProductSearchElement.controls[0].patchValue("");
+      this._setSearchOptionalProductFormControlDataFiltered(idxPdt, 0);
+    }
   }
 
   /* used for add or remove composite product*/
@@ -620,7 +665,11 @@ export class DetailQuotationComponent implements OnInit {
         if (this.quotationForm.value.compositeProducts[idxPdt].compositeProductElements[i]!='' && this.quotationForm.value.compositeProducts[idxPdt].compositeProductElements[i].id==undefined) {errorSource="produit composé";}
       }
     }
-    for (let i=0; i<this.quotationForm.value.optionalProduct.length; i++) {if (this.quotationForm.value.optionalProduct[i]!='' && this.quotationForm.value.optionalProduct[i].id==undefined) {errorSource="produit optionnel";}}
+    for (let idxPdt=0; idxPdt<this.quotationForm.value.optionalProducts.length; idxPdt++) {
+      for (let idxElt=0; idxElt<this.quotationForm.value.optionalProducts[idxPdt].optionalProductElements.length; idxElt++) {
+        if (this.quotationForm.value.optionalProducts[idxPdt].optionalProductElements[idxElt]!='' && this.quotationForm.value.optionalProducts[idxPdt].optionalProductElements[idxElt].id==undefined) {errorSource="produit optionnel";}
+      }
+    }
     errorSource!=undefined? this.openFormErrorDialog(errorSource) : this.updateQuotation(isAskedByPdf, pdfType);
   }
 

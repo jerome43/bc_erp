@@ -54,9 +54,7 @@ export class QuotationFormManager {
       ]),
       specialProductPrice: [[0]],
       optionalProductAmount: [[1]],
-      optionalProduct: this.fb.array([
-        this.fb.control('')
-      ]),
+      optionalProducts: this.fb.array([this.fb.group({optionalProductElements: this.fb.array([this.fb.control('')])})]),
       optionalLongRentalMonth : [0],
       optionalLongRentalPrice : [0],
       optionalLongRentalAmount : [1],

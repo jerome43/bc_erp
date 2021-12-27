@@ -53,13 +53,13 @@ export class CreateQuotationComponent implements OnInit {
   // formulaires de recherche des produits (simple, composés, optionnels), utilisés pour la recherche de produit, pas pour le stockage des valeurs
   public searchCompositeProductFormControls = this.fb.array( [this.fb.group({compositeProductSearchElements: this.fb.array([this.fb.control('')])})]);
   public searchSingleProductFormControls = this.fb.array([this.fb.control('')]);
-  public searchOptionalProductFormControls = this.fb.array([this.fb.control('')]);
+  public searchOptionalProductFormControls = this.fb.array( [this.fb.group({optionalProductSearchElements: this.fb.array([this.fb.control('')])})]);
   // tableau qui contient le nom de l'ensemble des produits non filtrés
   private _searchProductFormControlData: string[] = [];
   // tableaux qui contiennent le nom des produits filtrés en fonction de la recherche
   public searchSingleProductFormControlDataFiltered: Observable<string[]>[] = [];
   public searchCompositeProductFormControlDataFiltered: Observable<string[]>[][] = [[]];
-  public searchOptionalProductFormControlDataFiltered: Observable<string[]>[] = [];
+  public searchOptionalProductFormControlDataFiltered: Observable<string[]>[][] = [[]];
 
   // for employe
   public fbEmployes: Observable<EmployeId[]>; // employes on firebase
@@ -88,7 +88,7 @@ export class CreateQuotationComponent implements OnInit {
     this._setSearchClientFormControlDataFiltered();
     this._setSearchSingleProductFormControlDataFiltered(0);
     this._setSearchCompositeProductFormControlDataFiltered(0, 0);
-    this._setSearchOptionalProductFormControlDataFiltered(0);
+    this._setSearchOptionalProductFormControlDataFiltered(0, 0);
     this.initForm();
     this.observeNumeroQuotation();
     this.fbClientsSubscription = this.firebaseServices.getClients()
@@ -225,9 +225,15 @@ export class CreateQuotationComponent implements OnInit {
   }
 
 
-  private _setSearchOptionalProductFormControlDataFiltered(i_index: number) {
-    this.searchOptionalProductFormControlDataFiltered[i_index] = this.searchOptionalProductFormControls.controls[i_index]
-      .valueChanges.pipe( startWith(''), map(value => this._filterSearchProductFormControlData(value)));
+  private _setSearchOptionalProductFormControlDataFiltered(i_indexPdt: number, i_indexElement: number) {
+    if (this.searchOptionalProductFormControlDataFiltered[i_indexPdt] === undefined) { this.searchOptionalProductFormControlDataFiltered[i_indexPdt] = [];}
+    let optionalProductSearchElements = this.searchOptionalProductFormControls.controls[i_indexPdt].get('optionalProductSearchElements') as FormArray;
+    if (optionalProductSearchElements.controls[i_indexElement]) {
+      this.searchOptionalProductFormControlDataFiltered[i_indexPdt].push(optionalProductSearchElements.controls[i_indexElement]
+        .valueChanges.pipe( startWith(''), map(value => this._filterSearchProductFormControlData(value))));
+    } else {
+      console.error("optionalProductSearchElements.controls[i_indexElement] undefined")
+    }
   }
 
   private _filterSearchProductFormControlData(value: string): string[] {
@@ -249,9 +255,10 @@ export class CreateQuotationComponent implements OnInit {
     });
   }
   // affecte le produit optionnel dans le formulaire de devis en fonction du nom de produit optionnel sélectionné dans les formulaires de recherche
-  setOptionalProductFromSearchProductFormControl(i: number) {
-    fromArray([this._filterProducts(this.searchOptionalProductFormControls.controls[i].value)]).subscribe((data)=>{
-      this.quotationForm.controls.optionalProduct.controls[i].patchValue(data[0]);
+  setOptionalProductFromSearchProductFormControl(i: number, idxPdt: number) {
+    let optionalProductSearchElements = this.searchOptionalProductFormControls.controls[idxPdt].get('optionalProductSearchElements') as FormArray;
+    fromArray([this._filterProducts(optionalProductSearchElements.controls[i].value)]).subscribe((data)=>{
+      this.quotationForm.controls.optionalProducts.controls[idxPdt].controls.optionalProductElements.controls[i].patchValue(data[0]);
     });
   }
 
@@ -319,33 +326,54 @@ export class CreateQuotationComponent implements OnInit {
 
   /* used for add or remove optionnal product*/
 
-  get optionalProduct() {
-    return this.quotationForm.get('optionalProduct') as FormArray;
+  get optionalProducts() {
+    return this.quotationForm.get('optionalProducts') as FormArray;
   }
 
   addOptionalProduct() {
-    this.optionalProduct.push(this.fb.control(''));
+    let element = this.fb.group({optionalProductElements: this.fb.array([this.fb.control('')])});
+    this.optionalProducts.push(element);
     this.quotationForm.value.optionalProductAmount.push(1);
-    this.searchOptionalProductFormControls.push(this.fb.control(''));
-    this._setSearchOptionalProductFormControlDataFiltered(this.searchOptionalProductFormControls.controls.length-1);
+    let searchElement = this.fb.group({optionalProductSearchElements: this.fb.array([this.fb.control('')])});
+    this.searchOptionalProductFormControls.push(searchElement);
+    this._setSearchOptionalProductFormControlDataFiltered(this.searchOptionalProductFormControls.controls.length-1, 0);
   }
 
   rmOptionalProduct(i) {
     if (i > 0 ) {
-      this.optionalProduct.removeAt(Number(i));
+      this.optionalProducts.removeAt(Number(i));
       this.quotationForm.value.optionalProductAmount.splice(Number(i),1);
       this.searchOptionalProductFormControls.removeAt(Number(i));
       this.searchOptionalProductFormControlDataFiltered.splice(i, 1);
-    } else if (i === 0) {
-      this.quotationForm.controls.optionalProduct.controls[0].patchValue("");
-      this.searchOptionalProductFormControls.controls[0].patchValue("");
-      this._setSearchOptionalProductFormControlDataFiltered(0);
     }
   }
 
   private setOptionalProductAmount(index: number, value: string) {
     //console.log("createQuotationForm.optionalProductAmount :", this.createQuotationForm.value);
     this.quotationForm.value.optionalProductAmount[index] = Number(value);
+    this.pricesFormManager.setPrices(this.computePriceService.computePrices(this.quotationForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
+  }
+
+  addOptionalProductElement(idxPdt: number) {
+    let optionalProductElement = this.optionalProducts.controls[idxPdt].get('optionalProductElements') as FormArray;
+    this.optionalProducts.value[idxPdt] = optionalProductElement.push(this.fb.control(''));
+    let optionalProductSearchElement = this.searchOptionalProductFormControls.controls[idxPdt].get('optionalProductSearchElements') as FormArray;
+    this.searchOptionalProductFormControls.value[idxPdt] = optionalProductSearchElement.push(this.fb.control(''));
+    this._setSearchOptionalProductFormControlDataFiltered(idxPdt, optionalProductSearchElement.controls.length -1 );
+  }
+
+  rmOptionalProductElement(idxPdt: number, idxElt: number) {
+    let optionalProductElement = this.optionalProducts.controls[idxPdt].get('optionalProductElements') as FormArray;
+    let optionalProductSearchElement = this.searchOptionalProductFormControls.controls[idxPdt].get('optionalProductSearchElements') as FormArray;
+    if (idxElt > 0) {
+      this.optionalProducts.value[idxPdt] = optionalProductElement.removeAt(Number(idxElt));
+      this.searchOptionalProductFormControls.value[idxPdt] = optionalProductSearchElement.removeAt(Number(idxElt));
+      this.searchOptionalProductFormControlDataFiltered[idxPdt].splice(idxElt, 1);
+    } else if (idxElt === 0) {
+      this.optionalProducts.value[idxPdt] = optionalProductElement.controls[0].patchValue("");
+      this.searchOptionalProductFormControls.value[idxPdt] = optionalProductSearchElement.controls[0].patchValue("");
+      this._setSearchOptionalProductFormControlDataFiltered(idxPdt, 0);
+    }
   }
 
   /* used for add or remove composite product*/
@@ -374,7 +402,6 @@ export class CreateQuotationComponent implements OnInit {
   }
 
   private setCompositeProductAmount(index: number, value: string) {
-    //console.log("createQuotationForm.compositeProductAmount :", this.createQuotationForm.value);
     this.quotationForm.value.compositeProductAmount[index] = Number(value);
     this.pricesFormManager.setPrices(this.computePriceService.computePrices(this.quotationForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
   }
@@ -424,13 +451,19 @@ export class CreateQuotationComponent implements OnInit {
   controlForm() {
     let errorSource:string;
     if (this.quotationForm.value.client.id==undefined) {errorSource="client"}
-    for (let i=0; i<this.quotationForm.value.singleProduct.length; i++) {if (this.quotationForm.value.singleProduct[i]!='' && this.quotationForm.value.singleProduct[i].id==undefined) {errorSource = "produit simple"}}
+    for (let i=0; i<this.quotationForm.value.singleProduct.length; i++) {
+      if (this.quotationForm.value.singleProduct[i]!='' && this.quotationForm.value.singleProduct[i].id==undefined) {errorSource = "produit simple"}
+    }
     for (let idxPdt=0; idxPdt<this.quotationForm.value.compositeProducts.length; idxPdt++) {
       for (let i=0; i<this.quotationForm.value.compositeProducts[idxPdt].compositeProductElements.length; i++) {
         if (this.quotationForm.value.compositeProducts[idxPdt].compositeProductElements[i]!='' && this.quotationForm.value.compositeProducts[idxPdt].compositeProductElements[i].id==undefined) {errorSource="produit composé";}
       }
     }
-    for (let i=0; i<this.quotationForm.value.optionalProduct.length; i++) {if (this.quotationForm.value.optionalProduct[i]!='' && this.quotationForm.value.optionalProduct[i].id==undefined) {errorSource="produit optionnel";}}
+    for (let idxPdt=0; idxPdt<this.quotationForm.value.optionalProducts.length; idxPdt++) {
+      for (let idxElt=0; idxElt<this.quotationForm.value.optionalProducts[idxPdt].optionalProductElements.length; idxElt++) {
+        if (this.quotationForm.value.optionalProducts[idxPdt].optionalProductElements[idxElt]!='' && this.quotationForm.value.optionalProducts[idxPdt].optionalProductElements[idxElt].id==undefined) {errorSource="produit optionnel";}
+      }
+    }
     errorSource!=undefined? this.openFormErrorDialog(errorSource) : this.addQuotation();
   }
 

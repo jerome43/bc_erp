@@ -56,13 +56,11 @@ export class DetailOrderComponent implements OnInit {
   // formulaires de recherche des produits (simple, composés, optionnels), utilisés pour la recherche de produit, pas pour le stockage des valeurs
   public searchCompositeProductFormControls = this.fb.array( [this.fb.group({compositeProductSearchElements: this.fb.array([this.fb.control('')])})]);
   public searchSingleProductFormControls = this.fb.array([this.fb.control('')]);
-  public searchOptionalProductFormControls = this.fb.array([this.fb.control('')]);
   // tableau qui contient le nom de l'ensemble des produits non filtrés
   private _searchProductFormControlData: string[] = [];
   // tableaux qui contiennent le nom des produits filtrés en fonction de la recherche
   public searchSingleProductFormControlDataFiltered: Observable<string[]>[] = [];
   public searchCompositeProductFormControlDataFiltered: Observable<string[]>[][] = [[]];
-  public searchOptionalProductFormControlDataFiltered: Observable<string[]>[] = [];
 
   // for employe
   public fbEmployes: Observable<EmployeId[]>; // employes on firebase
@@ -103,7 +101,6 @@ export class DetailOrderComponent implements OnInit {
     this._setSearchClientFormControlDataFiltered();
     this._setSearchSingleProductFormControlDataFiltered(0);
     this._setSearchCompositeProductFormControlDataFiltered(0, 0);
-    this._setSearchOptionalProductFormControlDataFiltered(0);
     this.initForm();
     this.observeOrder(this.orderId);
     this.observeIndexNumeroInvoice();
@@ -240,7 +237,6 @@ export class DetailOrderComponent implements OnInit {
           this.setSearchClientFromOrder(order.client);
           this.setSearchSingleProductFromOrder(order.singleProduct);
           this.setSearchCompositeProductFromOrder(order.compositeProducts);
-          this.setSearchOptionalProductFromOrder(order.optionalProduct);
           if (order.scanOrder!='') {
             //console.log("observeOrder : scanOrder exist");
             this.downloadScanOrderURL = this.storage.ref(order.scanOrder).getDownloadURL();
@@ -405,11 +401,6 @@ export class DetailOrderComponent implements OnInit {
     }
   }
 
-  private _setSearchOptionalProductFormControlDataFiltered(i_index: number) {
-    this.searchOptionalProductFormControlDataFiltered[i_index] = this.searchOptionalProductFormControls.controls[i_index]
-      .valueChanges.pipe( startWith(''), map(value => this._filterSearchProductFormControlData(value)));
-  }
-
   private _filterSearchProductFormControlData(value: string): string[] {
     const filterValue = value.toLowerCase();
     return this._searchProductFormControlData.filter(option => option.toLowerCase().includes(filterValue));
@@ -426,12 +417,6 @@ export class DetailOrderComponent implements OnInit {
     let compositeProductSearchElements = this.searchCompositeProductFormControls.controls[idxPdt].get('compositeProductSearchElements') as FormArray;
     fromArray([this._filterProducts(compositeProductSearchElements.controls[i].value)]).subscribe((data)=>{
       this.orderForm.controls.compositeProducts.controls[idxPdt].controls.compositeProductElements.controls[i].patchValue(data[0]);
-    });
-  }
-  // affecte le produit optionnel dans le formulaire de devis en fonction du nom de produit optionnel sélectionné dans les formulaires de recherche
-  setOptionalProductFromSearchProductFormControl(i: number) {
-    fromArray([this._filterProducts(this.searchOptionalProductFormControls.controls[i].value)]).subscribe((data)=>{
-      this.orderForm.controls.optionalProduct.controls[i].patchValue(data[0]);
     });
   }
 
@@ -460,14 +445,6 @@ export class DetailOrderComponent implements OnInit {
             compositeProductSearchElements.controls[ii].patchValue(i_product[i].compositeProductElements[ii].name);
           }
         }
-      }
-    }
-  }
-  // affecte le nom du produit dans les formulaires de recherche de produit optionnel en fonction du nom du produit enregistré dans le devis
-  setSearchOptionalProductFromOrder(i_product: Product) {
-    for (let i: number = 0; i< this.searchOptionalProductFormControls.controls.length; i++) {
-      if (i_product[i] && i_product[i].name) {
-        this.searchOptionalProductFormControls.controls[i].patchValue(i_product[i].name);
       }
     }
   }
