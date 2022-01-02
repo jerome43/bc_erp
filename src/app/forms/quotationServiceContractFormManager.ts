@@ -8,7 +8,7 @@ import Timestamp = firestore.Timestamp;
   providedIn: 'root'
 })
 
-export class ServiceContractFormManager {
+export class QuotationServiceContractFormManager {
 
   private readonly form;
 
@@ -61,10 +61,6 @@ export class ServiceContractFormManager {
       quotationComment: [''],
       privateQuotationComment: [''],
       quotationDate: [''],
-      fromQuotationId: [''],
-      forQuotationId: [''],
-      fromServiceContractId: [''],
-      forServiceContractId:  [''],
       clientOrderNumber : [''],
       relaunchClientDate:[''],
       installationAddress: [''],
@@ -75,30 +71,9 @@ export class ServiceContractFormManager {
       installationHours: [''],
       installationContactName: [''],
       installationContactPhone: [''],
-      orderDate: ['', Validators.required],
-      scanOrder: [''],
-      advanceInvoiceDate: [''],
-      balanceInvoiceDate: [''],
-      orderComment: [''],
-      deliveryComment: [''],
-      advanceRate:[0],
-      numerosInvoice: [{advance :null, balance : null}],
-      credit: [0],
-      paymentInvoice: [{advance: {amount: null, date: null}, balance: { amount: null, date: null}}], // introduce in january 2020
-      externalCosts : this.fb.array([
-        this.fb.control({ name : '', amount : 0 }) // introduce in january 2020
-      ]),
-      tickets : this.fb.array([this.fb.group({
-        ticketElements: this.fb.array([this.fb.control( {comment : "", date : null, author: null})]),
-        }
-      )]),
+      fromServiceContractId: [''],
     });
   };
-
-  public setPaymentInvoice(prices) {
-    this.form.value.paymentInvoice.advance.amount = UtilServices.formatToTwoDecimal(prices.discountPrice / 100 * this.form.value.advanceRate);
-    this.form.value.paymentInvoice.balance.amount = UtilServices.formatToTwoDecimal((prices.discountPrice / 100 * ( 100 - this.form.value.advanceRate )) - this.form.value.credit);
-  }
 
   public patchDates(serviceContract) {
     // convert from TimeStamp (saved in firebase) to Date (used by angular DatePicker)
@@ -106,21 +81,9 @@ export class ServiceContractFormManager {
     if (serviceContract.rentDateTo instanceof Timestamp) {this.form.controls['rentDateTo'].patchValue(serviceContract.rentDateTo.toDate())}
     if (serviceContract.immoDateFrom instanceof Timestamp) {this.form.controls['immoDateFrom'].patchValue(serviceContract.immoDateFrom.toDate())}
     if (serviceContract.immoDateTo instanceof Timestamp) {this.form.controls['immoDateTo'].patchValue(serviceContract.immoDateTo.toDate())}
-    if (serviceContract.orderDate instanceof Timestamp) {this.form.controls['orderDate'].patchValue(serviceContract.orderDate.toDate())}
+    if (serviceContract.quotationDate instanceof Timestamp) {this.form.controls['quotationDate'].patchValue(serviceContract.quotationDate.toDate())}
     if (serviceContract.relaunchClientDate instanceof Timestamp) {this.form.controls['relaunchClientDate'].patchValue(serviceContract.relaunchClientDate.toDate())}
     if (serviceContract.installationDate instanceof Timestamp) {this.form.controls['installationDate'].patchValue(serviceContract.installationDate.toDate())}
     if (serviceContract.dismountingDate instanceof Timestamp) {this.form.controls['dismountingDate'].patchValue(serviceContract.dismountingDate.toDate())}
-    if (serviceContract.advanceInvoiceDate instanceof Timestamp) {this.form.controls['advanceInvoiceDate'].patchValue(serviceContract.advanceInvoiceDate.toDate())}
-    if (serviceContract.balanceInvoiceDate instanceof Timestamp) {this.form.controls['balanceInvoiceDate'].patchValue(serviceContract.balanceInvoiceDate.toDate())}
-    if (serviceContract.paymentInvoice) { // pour assurer rétrocompatibilité données avant janvier 2020
-      if (serviceContract.paymentInvoice.advance.date instanceof Timestamp) {
-        const paymentInvoice = {advance: {amount: serviceContract.paymentInvoice.advance.amount, date: serviceContract.paymentInvoice.advance.date.toDate()}, balance: { amount: serviceContract.paymentInvoice.balance.amount, date: serviceContract.paymentInvoice.balance.date}};
-        this.form.controls['paymentInvoice'].patchValue(paymentInvoice)
-      }
-      if (serviceContract.paymentInvoice.balance.date instanceof Timestamp) {
-        const paymentInvoice = {advance: {amount: serviceContract.paymentInvoice.advance.amount, date: this.form.controls['paymentInvoice'].value.advance.date}, balance: { amount: serviceContract.paymentInvoice.balance.amount, date: serviceContract.paymentInvoice.balance.date.toDate()}};
-        this.form.controls['paymentInvoice'].patchValue(paymentInvoice)
-      }
-    }
   }
 }

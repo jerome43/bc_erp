@@ -24,6 +24,9 @@ import {firestore} from 'firebase/app';
 import Timestamp = firestore.Timestamp;
 import {AuthService} from "../../auth/auth.service";
 import {AppComponent} from "../../app.component";
+import {DialogQuotationServiceContractOverview} from "../quotation-service-contract/quotation-service-contract.component";
+import {Quotation} from "../../quotation/quotation";
+import {DialogDetailQuotationOverview} from "../../quotation/detail-quotation/detail-quotation.component";
 
 export interface ClientId extends Client { id: string; }
 export interface ProductId extends Product { id: string; }
@@ -65,6 +68,7 @@ export class DetailServiceContractComponent implements OnInit {
   private serviceContractSubscription : Subscription;
   public serviceContractTypeParams = {path : "service-contracts", isArchived:'false', templateTitle:"Editer contrat en cours n° ", templateButton:"  archiver"}; // les paramètres liés au type de commande (archivées ou courantes)
   private indexNumeroInvoice:number;
+  private indexQuotationServiceContract: number;
 
   // scanOrder File gestion
   downloadScanServiceContractURL: Observable<string>; // l'url de la photo sur firestorage (! ce n'est pas la référence)
@@ -73,21 +77,23 @@ export class DetailServiceContractComponent implements OnInit {
   private bug:boolean = false;
   private serviceContractFormManager : ServiceContractFormManager;
   private pricesFormManager : PricesFormManager;
+
   constructor(private router: Router, private route: ActivatedRoute, private db: AngularFirestore, private fb: FormBuilder,
               private dialog: MatDialog, private storage: AngularFireStorage, private pdfService: PdfService,
               private computePriceService: ComputePriceService, private firebaseServices : FirebaseServices,
               private appComponent : AppComponent) {
-    this.serviceContractFormManager = new ServiceContractFormManager();
-    this.pricesFormManager = new PricesFormManager();
-    this.setserviceContractTypeParams();
     this.user = this.appComponent.user;
   }
 
   ngOnInit() {
+    this.serviceContractFormManager = new ServiceContractFormManager();
+    this.pricesFormManager = new PricesFormManager();
+    this.setserviceContractTypeParams();
     this.serviceContractId = this.route.snapshot.paramMap.get('serviceContractId');
     this.initForm();
     this.observeServiceContract(this.serviceContractId);
     this.observeIndexNumeroInvoice();
+    this._observeNumeroQuotationServiceContract();
 
     this.fbClientsSubscription = this.firebaseServices.getClients()
       .subscribe((clients) => {
@@ -121,6 +127,13 @@ export class DetailServiceContractComponent implements OnInit {
       });
   }
 
+  private _observeNumeroQuotationServiceContract() {
+    this.db.doc<any>('parameters/numeroQuotationServiceContract').valueChanges().subscribe(
+      numeroQuotationServiceContract => {
+        this.indexQuotationServiceContract = numeroQuotationServiceContract.index;
+      });
+  }
+
   private setserviceContractTypeParams() {
     //console.log("setserviceContractTypeParams");
     if (this.route.snapshot.paramMap.get('archived')==="true") {
@@ -150,6 +163,9 @@ export class DetailServiceContractComponent implements OnInit {
           }
           this.setSingleProducts(serviceContract.singleProduct.length);
           this.setCompositeProducts(serviceContract.compositeProducts);
+          if (serviceContract.specialProduct) {
+            this.setSpecialProducts(serviceContract.specialProduct.length);
+          }
           this.setTickets(serviceContract.tickets);
           if (serviceContract.externalCosts !== undefined) { // pour assurer compatibilité commandes faites avant implémentation coûts externes
             this.setExternalCosts(serviceContract.externalCosts);
@@ -157,13 +173,9 @@ export class DetailServiceContractComponent implements OnInit {
           //console.log("serviceContract.orderDate (TimeStamp) : ", serviceContract.orderDate);
           this.serviceContractForm.patchValue(serviceContract);
           this.serviceContractFormManager.patchDates(serviceContract);
-
           if (serviceContract.scanOrder!='') {
-            //console.log("observeServiceContract : scanOrder exist");
             this.downloadScanServiceContractURL = this.storage.ref(serviceContract.scanOrder).getDownloadURL();} else {this.downloadScanServiceContractURL = undefined}
           this.setPrices();
-          // vérification des stocks (devrait être fait automatiquement par le subscribe du form : bug ?
-          //console.log("observe serviceContract serviceContractForm after patchValue  ", this.serviceContractForm.value)
         }
       })
     );
@@ -267,6 +279,37 @@ export class DetailServiceContractComponent implements OnInit {
     //console.log("serviceContractForm.singleProductAmount :", this.serviceContractForm.value);
     this.serviceContractForm.value.singleProductAmount[index] = Number(value);
     this.setPrices(); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
+  }
+
+  /* used for add or remove special product*/
+
+  get specialProduct() {
+    return this.serviceContractForm.get('specialProduct') as FormArray;
+  }
+
+  addSpecialProduct() {
+    this.specialProduct.push(this.fb.control(''));
+    this.serviceContractForm.value.specialProductPrice.push(0);
+  }
+
+  rmSpecialProduct(i) {
+    this.specialProduct.removeAt(Number(i));
+    this.serviceContractForm.value.specialProductPrice.splice(i, 1);
+  }
+  private setSpecialProductPrice(index: number, value: string) {
+    //console.log("quotationForm.specialProductPrice:", this.quotationForm.value);
+    this.serviceContractForm.value.specialProductPrice[index] = Number(value);
+    this.pricesFormManager.setPrices(this.computePriceService.computePrices(this.serviceContractForm.value)); // maj du prix (devrait être fait automatiquement par le subscribe du form : bug ?
+  }
+
+  setSpecialProducts(l) {
+    while (this.specialProduct.length !== 1) {
+      this.specialProduct.removeAt(1)
+    }
+    this.serviceContractForm.value.specialProductPrice = [0];
+    for (let i=0; i<l-1; i++) {
+      this.addSpecialProduct();
+    }
   }
 
 
@@ -662,9 +705,113 @@ export class DetailServiceContractComponent implements OnInit {
    * END scanOrder FILE GESTION
    */
 
-  static formatToTwoDecimal(x) {
-    return Number.parseFloat(x).toFixed(2);
+
+  public wantDisplayOrGenerateQuotation() {
+    if (this.serviceContractForm.value.forQuotationId !== undefined && this.serviceContractForm.value.forQuotationId !== '' && (this.serviceContractForm.value.forServiceContractId === '' || this.serviceContractForm.value.forServiceContractId === undefined)) {
+      this.router.navigate(['quotation-service-contract/'+this.serviceContractForm.value.forQuotationId, {archived: this.serviceContractTypeParams.isArchived}]).then(()=>{});
+    } else if (this.serviceContractForm.value.forServiceContractId !== undefined && this.serviceContractForm.value.forServiceContractId !== '') {
+      this.router.navigate(['detail-service-contract/' + this.serviceContractForm.value.forServiceContractId, {archived: false}]).then(()=>{
+        this.ngOnInit();
+      });
+    } else {
+      let errorSource:string;
+      if (this.serviceContractForm.value.client.id==undefined) {errorSource="client"}
+      for (let i=0; i<this.serviceContractForm.value.singleProduct.length; i++) {if (this.serviceContractForm.value.singleProduct[i]!='' && this.serviceContractForm.value.singleProduct[i].id==undefined) {errorSource = "produit simple"}}
+      for (let idxPdt=0; idxPdt<this.serviceContractForm.value.compositeProducts.length; idxPdt++) {
+        for (let i=0; i<this.serviceContractForm.value.compositeProducts[idxPdt].compositeProductElements.length; i++) {
+          if (this.serviceContractForm.value.compositeProducts[idxPdt].compositeProductElements[i]!='' && this.serviceContractForm.value.compositeProducts[idxPdt].compositeProductElements[i].id==undefined) {errorSource="produit composé";}
+        }
+      }
+      errorSource!=undefined? this.openFormErrorDialog(errorSource) : this._wantGenerateQuotation();
+    }
+
   }
+
+  private _wantGenerateQuotation() {
+    const dialogRef = this.dialog.open(DialogDetailServiceContractOverview, {
+      width: '450px',
+      data: {
+        message: 'Voulez-vous générer un devis de renouvellement pour ce contrat ?',
+        displayNoButton:true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result=='yes') {
+        this._generateQuotationServiceContract();
+      }
+    });
+  }
+
+  private _generateQuotationServiceContract() {
+    const indexQuotationServiceContract = this.indexQuotationServiceContract + 1;
+    this.serviceContractForm.value.forQuotationId = indexQuotationServiceContract.toString();
+    this.serviceContractDoc = this.db.doc<ServiceContract>(this.serviceContractTypeParams.path+'/' + this.serviceContractId );
+    this.serviceContractDoc.update(this.serviceContractForm.value).then(() => {
+      this.serviceContractForm.value.quotationDate= Timestamp.now();
+      this.serviceContractForm.value.fromServiceContractId = this.serviceContractId;
+      if (this.serviceContractForm.value.rentDateTo instanceof Date) {
+        this.serviceContractForm.value.rentDateFrom = this.serviceContractForm.value.rentDateTo;// par défaut date de début = date de fin du précédent contrat
+      } else {
+        this.serviceContractForm.value.rentDateFrom = Timestamp.now(); // ou par défaut date du jour
+      }
+      if (this.serviceContractForm.value.rentDateTo instanceof Date) {
+        this.serviceContractForm.value.rentDateTo = Timestamp.fromMillis(this.serviceContractForm.value.rentDateTo.getTime() + 31536000000);// par défaut + 1 ans date de début du nouveau contrat
+      } else {
+        this.serviceContractForm.value.rentDateTo = Timestamp.fromMillis(  Timestamp.now().toMillis() + 31536000000);// par défaut + 1 ans date du jour
+      }
+      if ( this.serviceContractForm.value.immoDateTo instanceof Date) {
+        this.serviceContractForm.value.immoDateFrom = this.serviceContractForm.value.immoDateTo;// par défaut date de début = date de fin du précédent contrat
+      } else {
+        this.serviceContractForm.value.immoDateFrom = Timestamp.now(); //ou par défaut date du jour
+      }
+      if (this.serviceContractForm.value.immoDateTo instanceof Date) {
+        this.serviceContractForm.value.immoDateTo = Timestamp.fromMillis(this.serviceContractForm.value.immoDateTo.getTime() + 31536000000);// par défaut + 1 ans date de début du nouveau contrat
+      } else {
+        this.serviceContractForm.value.immoDateTo = Timestamp.fromMillis(Timestamp.now().toMillis() + 31536000000);// par défaut + 1 ans à la date du jour
+      }
+      this.db.collection('quotation-service-contracts').doc(indexQuotationServiceContract.toString()).set(this.serviceContractForm.value).then(() => {
+        this.db.collection('parameters').doc("numeroQuotationServiceContract").update({index: indexQuotationServiceContract}).then(() => {
+          this._dialogAfterQuotationGenerated("Le devis numéro " + indexQuotationServiceContract + " a été généré.", indexQuotationServiceContract)
+        }).catch((error) => {
+          this._dialogErrorQuotationGenerated(error);
+        });
+      })
+        .catch((error) => {
+          this._dialogErrorQuotationGenerated(error);
+        });
+      }).catch((error) => {
+      this._dialogErrorQuotationGenerated(error);
+    });
+  }
+
+  private _dialogAfterQuotationGenerated(message: string, id:number): void {
+    const dialogRef = this.dialog.open(DialogDetailServiceContractOverview, {
+      width: '450px',
+      data: {
+        message: message,
+        displayNoButton:false
+      }
+    });
+    dialogRef.afterClosed().subscribe(() => {
+      this.router.navigate(['quotation-service-contract/'+id, {archived: this.serviceContractTypeParams.isArchived}]).then();
+    });
+  }
+
+  private _dialogErrorQuotationGenerated(errorMessage: string): void {
+    console.error("Error adding document: ", errorMessage);
+    const dialogRef = this.dialog.open(DialogDetailServiceContractOverview, {
+      width: '450px',
+      data: {
+        message: "erreur lors de la création du devis : " + errorMessage,
+        displayNoButton:false
+      }
+    });
+    dialogRef.afterClosed().subscribe(() => {
+      this.router.navigate(['detail-service-contract/'+ this.serviceContractId, {archived: this.serviceContractTypeParams.isArchived}]).then();
+    });
+  }
+
 }
 
 

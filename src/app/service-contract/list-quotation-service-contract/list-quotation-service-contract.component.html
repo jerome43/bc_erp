@@ -9,14 +9,14 @@
 
     <!-- Id Column -->
     <ng-container matColumnDef="id">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Numéro commande </th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Numéro devis </th>
       <td mat-cell *matCellDef="let element"> {{element.id}} </td>
     </ng-container>
 
-    <!-- fromQuotationId Column -->
-    <ng-container matColumnDef="fromQuotationId">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Numéro devis </th>
-      <td mat-cell *matCellDef="let element"> {{element.fromQuotationId}} </td>
+    <!-- fromServiceContractId Column -->
+    <ng-container matColumnDef="fromServiceContractId">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Contrat de maintenance </th>
+      <td mat-cell *matCellDef="let element"> {{element.fromServiceContractId}} </td>
     </ng-container>
 
     <!-- Client Name Column -->
@@ -32,9 +32,9 @@
     </ng-container>
 
     <!-- Date Column -->
-    <ng-container matColumnDef="orderDate">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Date commande </th>
-      <td mat-cell *matCellDef="let element"> {{element.orderDate.toDate() | date:'dd/MM/yyyy'}} </td>
+    <ng-container matColumnDef="quotationDate">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Date devis </th>
+      <td mat-cell *matCellDef="let element"> {{element.quotationDate.toDate() | date:'dd/MM/yyyy'}} </td>
     </ng-container>
 
     <!-- Edit Column -->
@@ -42,7 +42,7 @@
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let element" >
         <button mat-button>
-          <mat-icon color="primary" (click)="editServiceContract($event.target.id)" [id]="element.id">edit</mat-icon>
+          <mat-icon color="primary" (click)="editElement($event.target.id)" [id]="element.id">edit</mat-icon>
         </button>
       </td>
     </ng-container>

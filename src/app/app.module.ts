@@ -64,6 +64,11 @@ import {
   DetailServiceContractComponent,
   DialogDetailServiceContractOverview
 } from "./service-contract/detail-service-contract/detail-service-contract.component";
+import {QuotationServiceContractComponent, DialogQuotationServiceContractOverview} from "./service-contract/quotation-service-contract/quotation-service-contract.component";
+import {
+  DialogListQuotationServiceContractOverview,
+  ListQuotationServiceContractComponent
+} from "./service-contract/list-quotation-service-contract/list-quotation-service-contract.component";
 
 @NgModule({
   declarations: [
@@ -107,7 +112,11 @@ import {
     MaintenanceComponent,
     CreateServiceContractComponent,
     DetailServiceContractComponent,
-    ListServiceContractComponent
+    ListServiceContractComponent,
+    QuotationServiceContractComponent,
+    DialogQuotationServiceContractOverview,
+    ListQuotationServiceContractComponent,
+    DialogListQuotationServiceContractOverview
   ],
   imports: [
     BrowserModule,
@@ -161,6 +170,9 @@ import {
     DialogStockOverview,
     DialogCreateEmployeOverview,
     DialogDetailEmployeOverview,
-    DialogListEmployeOverview,],
+    DialogListEmployeOverview,
+    DialogQuotationServiceContractOverview,
+    DialogListQuotationServiceContractOverview,
+  ],
 })
 export class AppModule { }

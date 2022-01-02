@@ -23,6 +23,7 @@ export class Order {
   immoDateFrom: Timestamp;
   immoDateTo: Timestamp;
   quotationComment: string;
+  privateQuotationComment: string;
   quotationDate: Timestamp;
   quotationId: String;
   clientOrderNumber: String;

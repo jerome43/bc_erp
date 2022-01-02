@@ -1,11 +1,5 @@
-<form [formGroup]="serviceContractForm" class="main-container">
-  <h2>Nouveau contrat de maintenance</h2>
-  <div class="margin-bottom-1">
-    <span class="margin-right" *ngIf="serviceContractForm.value.numerosInvoice.advance!=null">Référence facture acompte : {{serviceContractForm.value.numerosInvoice.advance}}</span>
-    <span class="margin-right" *ngIf="serviceContractForm.value.numerosInvoice.advance==null">Référence facture acompte : facture non générée</span>
-    <span class="" *ngIf="serviceContractForm.value.numerosInvoice.balance!=null">Référence facture solde : {{serviceContractForm.value.numerosInvoice.balance}}</span>
-    <span class="" *ngIf="serviceContractForm.value.numerosInvoice.balance==null">Référence facture solde : facture non générée</span>
-  </div>
+<form [formGroup]="quotationServiceContractForm" class="main-container">
+  <h2>{{quotationServiceContractTypeParams.templateTitle}} {{quotationServiceContractId}} - Renouvellement du contrat de maintenance : {{quotationServiceContractForm.value.fromServiceContractId}}</h2>
   <mat-form-field >
     <input type="text" placeholder="Client" aria-label="Client" matInput formControlName="client" [matAutocomplete]="autoCompleteClient" required>
     <mat-autocomplete #autoCompleteClient="matAutocomplete" [displayWith]="displayClientFn">
@@ -52,12 +46,12 @@
         </mat-form-field>
         <mat-form-field class="width15 margin-right">
           <label>
-            <input type="number" matInput placeholder="Quantité produit simple" #inputSingleProductAmount (click)="setSingleProductAmount(i, inputSingleProductAmount.value)" (keyup)="setSingleProductAmount(i, inputSingleProductAmount.value)" [value]="this.serviceContractForm.value.singleProductAmount[i]">
+            <input type="number" matInput placeholder="Quantité produit simple" #inputSingleProductAmount (click)="setSingleProductAmount(i, inputSingleProductAmount.value)" (keyup)="setSingleProductAmount(i, inputSingleProductAmount.value)" [value]="this.quotationServiceContractForm.value.singleProductAmount[i]">
           </label>
         </mat-form-field>
         <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmSingleProduct(i)" class="suppr-button margin-right">Supprimer</button>
       </div>
-      <button mat-raised-button color="accent" type="button" *ngIf="serviceContractForm.value.singleProduct[serviceContractForm.value.singleProduct.length-1]!=''" (click)="addSingleProduct()" class="margin-bottom-1">Ajouter produit simple</button>
+      <button mat-raised-button color="accent" type="button" *ngIf="quotationServiceContractForm.value.singleProduct[quotationServiceContractForm.value.singleProduct.length-1]!=''" (click)="addSingleProduct()" class="margin-bottom-1">Ajouter produit simple</button>
     </div>
     <div class="display-inline-block">
     </div>
@@ -87,7 +81,7 @@
             <button mat-raised-button color="accent" type="button" (click)="addCompositeProductElement(idxPdt)" class="margin-bottom-1">+ élt pdt composé</button>
             <mat-form-field class="width100">
               <label>
-                <input type="number" class="" matInput placeholder="Quantité produit composé {{idxPdt+1}}" #inputCompositeProductAmount (click)="setCompositeProductAmount(idxPdt, inputCompositeProductAmount.value)" (keyup)="setCompositeProductAmount(idxPdt, inputCompositeProductAmount.value)" [value]="this.serviceContractForm.value.compositeProductAmount[idxPdt]">
+                <input type="number" class="" matInput placeholder="Quantité produit composé {{idxPdt+1}}" #inputCompositeProductAmount (click)="setCompositeProductAmount(idxPdt, inputCompositeProductAmount.value)" (keyup)="setCompositeProductAmount(idxPdt, inputCompositeProductAmount.value)" [value]="this.quotationServiceContractForm.value.compositeProductAmount[idxPdt]">
               </label>
             </mat-form-field>
           </div>
@@ -96,6 +90,21 @@
       </ng-container>
       <button mat-raised-button color="accent" type="button" (click)="addCompositeProduct()" class="margin-bottom-1">+ produit composé</button>
     </div>
+  </div>
+
+  <h4 class="margin-bottom-0-5">Prestation particulière</h4>
+  <div formArrayName="specialProduct">
+    <div *ngFor="let product of specialProduct.controls; let i=index" class="form-array-container">
+      <!-- The repeated alias template -->
+      <mat-form-field class="width70 margin-right">
+        <input matInput type="text" placeholder="Produit spécial (frais kilométriques...)" aria-label="Produit spécial" [formControlName]="i">
+      </mat-form-field>
+      <mat-form-field class="width15 margin-right">
+        <input type="number" matInput placeholder="Prix produit spécial" #inputSpecialProductPrice (click)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" (keyup)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" [value]="quotationServiceContractForm.value.specialProductPrice[i]">
+      </mat-form-field>
+      <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmSpecialProduct(i)" class="suppr-button margin-right">Supprimer</button>
+    </div>
+    <button mat-raised-button color="accent" type="button" *ngIf="quotationServiceContractForm.value.specialProduct[quotationServiceContractForm.value.specialProduct.length-1]!=''" (click)="addSpecialProduct()" class="margin-bottom-1">Ajouter produit spécial</button>
   </div>
 
   <h4>Dates</h4>
@@ -142,7 +151,7 @@
     <div class="display-inline-block width25">
       <mat-form-field class="width80">
         <label>
-          <input type="text" matInput placeholder="Date devis" disabled [value]="serviceContractForm.value.quotationDate.seconds*1000 | date:'dd/MM/yyyy'">
+          <input type="text" matInput placeholder="Date devis" disabled [value]="quotationServiceContractForm.value.quotationDate.seconds*1000 | date:'dd/MM/yyyy'">
         </label>
       </mat-form-field>
     </div>
@@ -150,28 +159,10 @@
     <div class="display-inline-block width25">
       <mat-form-field class="width80 margin-auto">
         <label>
-          <input matInput [matDatepicker]="orderDate" formControlName="orderDate" placeholder="Date commande" required>
-        </label>
-        <mat-datepicker-toggle matSuffix [for]="orderDate"></mat-datepicker-toggle>
-        <mat-datepicker #orderDate></mat-datepicker>
-      </mat-form-field>
-    </div>
-    <div class="display-inline-block width25">
-      <mat-form-field class="width80 margin-auto">
-        <label>
           <input matInput [matDatepicker]="relaunchClientDate" formControlName="relaunchClientDate" placeholder="Date dernière relance client">
         </label>
         <mat-datepicker-toggle matSuffix [for]="relaunchClientDate"></mat-datepicker-toggle>
         <mat-datepicker #relaunchClientDate></mat-datepicker>
-      </mat-form-field>
-    </div>
-    <div class="display-inline-block width25">
-      <mat-form-field class="width80 margin-auto">
-        <label>
-          <input matInput [matDatepicker]="balanceInvoiceDate" formControlName="balanceInvoiceDate" placeholder="Date facture solde">
-        </label>
-        <mat-datepicker-toggle matSuffix [for]="balanceInvoiceDate"></mat-datepicker-toggle>
-        <mat-datepicker #balanceInvoiceDate></mat-datepicker>
       </mat-form-field>
     </div>
   </div>
@@ -230,35 +221,23 @@
 
   <h4>Commentaires</h4>
   <mat-form-field class="width100 margin-auto">
-    <label>
-      <input type="text" matInput formControlName="quotationComment" placeholder="Commentaires devis (apparaissent sur le devis)">
-    </label>
+    <input type="text" matInput formControlName="quotationComment" placeholder="Commentaires client (apparaissent sur devis)">
   </mat-form-field>
   <mat-form-field class="width100 margin-auto">
-    <label>
-      <input type="text" matInput formControlName="privateQuotationComment" placeholder="Commentaires privés (apparaissent sur le bon de préparation)">
-    </label>
+    <input type="text" matInput formControlName="privateQuotationComment" placeholder="Commentaires privés (n'apparaissent pas sur le devis)">
   </mat-form-field>
-  <mat-form-field class="width100 margin-auto">
-    <label>
-      <input type="text" matInput formControlName="orderComment" placeholder="Commentaires facture (apparaissent sur les factures)">
-    </label>
-  </mat-form-field>
-  <mat-form-field class="width100 margin-auto">
-    <label>
-      <input type="text" matInput formControlName="deliveryComment" placeholder="Commentaires bon de livraison (apparaissent sur le bon de livraison)">
-    </label>
-  </mat-form-field>
+
   <h4>Références clients</h4>
   <mat-form-field class="width25 margin-right">
     <label>
       <input type="text" matInput formControlName="clientOrderNumber" placeholder="Numéro de commande du client">
     </label>
   </mat-form-field>
+
 </form>
 
 <form [formGroup]="pricesForm" class="main-container">
-  <h4>Prix HT</h4>
+  <h4>Facturation</h4>
   <div>
     <mat-form-field class="width20 margin-right">
       <label>
@@ -284,6 +263,9 @@
 </form>
 
 <div class="button-container">
-  <button mat-raised-button color="primary" type="button" (click)="addServiceContract()" [disabled]="!serviceContractForm.valid">Enregistrer</button>
+  <button mat-raised-button color="primary" type="button" (click)="wantUpdateForm(false)" [disabled]="!quotationServiceContractForm.valid">Enregistrer</button>
   <a routerLink="/list-service-contract" mat-raised-button>Annuler</a>
- </div>
+  <button mat-raised-button color="accent" type="button" (click)="wantTransformQuotation()" title="Transformer le devis en contrat de maintenance.">Transformer</button>
+  <button mat-raised-button color="accent" type="button" (click)="wantArchiveQuotationServiceContract()"><mat-icon *ngIf="quotationServiceContractTypeParams.isArchived=='false'">archive</mat-icon><mat-icon *ngIf="quotationServiceContractTypeParams.isArchived=='true'">unarchive</mat-icon>{{quotationServiceContractTypeParams.templateButton}}</button>
+  <button mat-raised-button color="warn" type="button" (click)="openDialogWantDelete()">Supprimer</button>
+</div>

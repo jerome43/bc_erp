@@ -26,10 +26,6 @@
   </button>
 </mat-list-item>
 <mat-menu #orderMenu="matMenu">
-  <!--a mat-menu-item (click)="onSidenavClose()" routerLink="/create-order" routerLinkActive="active">
-    <mat-icon>add</mat-icon>
-    <span>Nouvelle commande</span>
-  </a-->
   <a mat-menu-item (click)="onSidenavClose()" routerLink="/list-orders" routerLinkActive="active">
     <mat-icon>sort</mat-icon>
     <span>Commandes en cours</span>
@@ -38,18 +34,29 @@
     <mat-icon>folder</mat-icon>
     <span>Commandes archivées</span>
   </a>
+  <mat-divider></mat-divider>
   <a mat-menu-item [routerLink]="['/create-service-contract', {archived: 'false'}]" routerLinkActive="active">
     <mat-icon>add</mat-icon><mat-icon>build</mat-icon>
-    <span>Nouveau contrat maintenance</span>
+    <span>Nouveau contrat de maintenance</span>
   </a>
   <a mat-menu-item [routerLink]="['/list-service-contract', {archived: 'false'}]" routerLinkActive="active">
     <mat-icon>sort</mat-icon><mat-icon>build</mat-icon>
     <span>Contrats de maintenance</span>
   </a>
   <a mat-menu-item [routerLink]="['/list-service-contract', {archived: 'true'}]" routerLinkActive="active">
-  <mat-icon>folder</mat-icon><mat-icon>build</mat-icon>
-  <span>Contrats de maintenance archivés</span>
+    <mat-icon>folder</mat-icon><mat-icon>build</mat-icon>
+    <span>Contrats de maintenance archivés</span>
   </a>
+  <mat-divider></mat-divider>
+  <a mat-menu-item [routerLink]="['/list-quotation-service-contract', {archived: 'false'}]" routerLinkActive="active">
+    <mat-icon>list</mat-icon><mat-icon>build</mat-icon>
+    <span>Devis de contrat maintenance</span>
+  </a>
+  <a mat-menu-item [routerLink]="['/list-quotation-service-contract', {archived: 'true'}]" routerLinkActive="active">
+    <mat-icon>folder</mat-icon><mat-icon>build</mat-icon>
+    <span>Devis de contrat maintenance archivés</span>
+  </a>
+  <mat-divider></mat-divider>
   <a mat-menu-item (click)="onSidenavClose()" routerLink="/list-invoices" routerLinkActive="active">
     <mat-icon>credit_card</mat-icon>
     <span>Factures</span>

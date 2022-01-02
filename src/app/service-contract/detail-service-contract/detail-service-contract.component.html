@@ -1,10 +1,19 @@
 <form [formGroup]="serviceContractForm" class="main-container">
-  <h2>{{serviceContractTypeParams.templateTitle}} {{serviceContractId}} - référence devis n° {{serviceContractForm.value.quotationId}}</h2>
+  <h2>{{serviceContractTypeParams.templateTitle}} {{serviceContractId}}</h2>
+
   <div class="margin-bottom-1">
-    <span class="margin-right" *ngIf="serviceContractForm.value.numerosInvoice.advance!=null">Référence facture acompte : {{serviceContractForm.value.numerosInvoice.advance}}</span>
-    <span class="margin-right" *ngIf="serviceContractForm.value.numerosInvoice.advance==null">Référence facture acompte : facture non générée</span>
-    <span class="" *ngIf="serviceContractForm.value.numerosInvoice.balance!=null">Référence facture solde : {{serviceContractForm.value.numerosInvoice.balance}}</span>
-    <span class="" *ngIf="serviceContractForm.value.numerosInvoice.balance==null">Référence facture solde : facture non générée</span>
+    <span class="margin-right" *ngIf="serviceContractForm.value.fromQuotationId!==''">Référence précédent devis de renouvellement: {{serviceContractForm.value.fromQuotationId}}</span>
+    <span *ngIf="serviceContractForm.value.forQuotationId!==''">Référence nouveau devis de renouvellement: {{serviceContractForm.value.forQuotationId}}</span>
+    <div>
+      <span  class="margin-right" *ngIf="serviceContractForm.value.fromServiceContractId!==''">Référence précédent contrat de maintenance: {{serviceContractForm.value.fromServiceContractId}}</span>
+      <span *ngIf="serviceContractForm.value.forServiceContractId!==''">Référence nouveau contrat de maintenance: {{serviceContractForm.value.forServiceContractId}}</span>
+    </div>
+    <div>
+      <span class="margin-right" *ngIf="serviceContractForm.value.numerosInvoice.advance!=null">Référence facture acompte: {{serviceContractForm.value.numerosInvoice.advance}}</span>
+      <span class="margin-right" *ngIf="serviceContractForm.value.numerosInvoice.advance==null">Référence facture acompte: facture non générée</span>
+    </div>
+    <span class="" *ngIf="serviceContractForm.value.numerosInvoice.balance!=null">Référence facture solde: {{serviceContractForm.value.numerosInvoice.balance}}</span>
+    <span class="" *ngIf="serviceContractForm.value.numerosInvoice.balance==null">Référence facture solde: facture non générée</span>
   </div>
   <mat-form-field >
     <input type="text" placeholder="Client" aria-label="Client" matInput formControlName="client" [matAutocomplete]="autoCompleteClient" required>
@@ -99,6 +108,19 @@
   </div>
 
   <h4 class="margin-bottom-0-5">Prestation particulière</h4>
+  <div formArrayName="specialProduct">
+    <div *ngFor="let product of specialProduct.controls; let i=index" class="form-array-container">
+      <!-- The repeated alias template -->
+      <mat-form-field class="width70 margin-right">
+        <input matInput type="text" placeholder="Produit spécial (frais kilométriques...)" aria-label="Produit spécial" [formControlName]="i">
+      </mat-form-field>
+      <mat-form-field class="width15 margin-right">
+        <input type="number" matInput placeholder="Prix produit spécial" #inputSpecialProductPrice (click)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" (keyup)="setSpecialProductPrice(i, inputSpecialProductPrice.value)" [value]="this.serviceContractForm.value.specialProductPrice[i]">
+      </mat-form-field>
+      <button mat-raised-button color="warn" type="button" *ngIf="i>0" (click)="rmSpecialProduct(i)" class="suppr-button margin-right">Supprimer</button>
+    </div>
+    <button mat-raised-button color="accent" type="button" *ngIf="serviceContractForm.value.specialProduct[serviceContractForm.value.specialProduct.length-1]!=''" (click)="addSpecialProduct()" class="margin-bottom-1">Ajouter produit spécial</button>
+  </div>
 
   <h4>Dates</h4>
   <div>
@@ -406,8 +428,7 @@
 <div class="button-container">
   <button mat-raised-button color="primary" type="button" (click)="wantUpdateServiceContract(false)" [disabled]="!serviceContractForm.valid">Enregistrer</button>
   <a routerLink="/list-service-contract" mat-raised-button>Annuler</a>
-  <button mat-raised-button color="accent" type="button" (click)="wantGeneratePreparationReceiptPdf()"><mat-icon>picture_as_pdf</mat-icon> Bon préparation</button>
-  <button mat-raised-button color="accent" type="button" (click)="wantGenerateDeliveryReceiptPdf()"><mat-icon>picture_as_pdf</mat-icon> Bon livraison</button>
+  <button mat-raised-button color="accent" type="button" (click)="wantDisplayOrGenerateQuotation()"><mat-icon>web_asset</mat-icon> {{serviceContractForm.value.forServiceContractId !== ''? 'Contrat de renouvellement': 'Devis de renouvellement'}}</button>
   <button mat-raised-button color="accent" type="button" (click)="wantGenerateAdvanceInvoicePdf()"><mat-icon>picture_as_pdf</mat-icon> Fa-acompte</button>
   <button mat-raised-button color="accent" type="button" (click)="wantGenerateBalanceInvoicePdf()"><mat-icon>picture_as_pdf</mat-icon> Fa-solde</button>
   <button mat-raised-button color="accent" type="button" (click)="wantArchiveServiceContract()"><mat-icon *ngIf="serviceContractTypeParams.isArchived=='false'">archive</mat-icon><mat-icon *ngIf="serviceContractTypeParams.isArchived=='true'">unarchive</mat-icon>{{serviceContractTypeParams.templateButton}}</button>

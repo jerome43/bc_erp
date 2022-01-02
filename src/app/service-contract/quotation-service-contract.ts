@@ -4,7 +4,7 @@ import {firestore} from 'firebase/app';
 import Timestamp = firestore.Timestamp;
 import {Employe} from "../employe/employe";
 
-export class ServiceContract {
+export class QuotationServiceContract {
   client: Client;
   contact: any;
   referenceClient : string; // optionnel, référence devis ou commande fournie par le client
@@ -23,11 +23,7 @@ export class ServiceContract {
   quotationComment: string;
   privateQuotationComment: string;
   quotationDate: Timestamp;
-  fromQuotationId: string;
-  forQuotationId: string;
-  fromServiceContractId: string;
-  forServiceContractId: string;
-  clientOrderNumber: string;
+  clientOrderNumber: String;
   relaunchClientDate:Timestamp;
   installationAddress: string;
   installationZipcode: number;
@@ -37,15 +33,5 @@ export class ServiceContract {
   installationHours: string;
   installationContactName: string;
   installationContactPhone: string;
-  orderDate: Timestamp;
-  scanOrder: string;
-  advanceInvoiceDate:Timestamp; // introduce in mars 2020
-  balanceInvoiceDate:Timestamp;
-  orderComment: string;
-  deliveryComment: string;
-  advanceRate:number;
-  numerosInvoice: {advance: number, balance: number};
-  paymentInvoice : {advance: {amount: number, date: Timestamp}, balance: { amount: number, date: Timestamp}}; // introduce in january 2020
-  credit:number; // avance donnée par le client sur devis
-  tickets : Array<{ticketElements: Array<{comment: String, date : Timestamp, author: String}>}>// introduce in februrary 2020
+  fromServiceContractId: string
 }

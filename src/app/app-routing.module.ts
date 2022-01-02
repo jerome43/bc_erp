@@ -21,6 +21,8 @@ import {ListInvoiceComponent} from "./order/list-invoice/list-invoice.component"
 import {DetailServiceContractComponent} from "./service-contract/detail-service-contract/detail-service-contract.component";
 import {ListServiceContractComponent} from "./service-contract/list-service-contract/list-service-contract.component";
 import {CreateServiceContractComponent} from "./service-contract/create-service-contract/create-service-contract.component";
+import {QuotationServiceContractComponent} from "./service-contract/quotation-service-contract/quotation-service-contract.component";
+import {ListQuotationServiceContractComponent} from "./service-contract/list-quotation-service-contract/list-quotation-service-contract.component";
 
 const routes: Routes = [
   { path: '', canActivate: [AuthGuard], redirectTo: 'home', pathMatch: 'full' },
@@ -37,6 +39,8 @@ const routes: Routes = [
   { path : 'detail-service-contract/:serviceContractId', canActivate : [AuthGuard], component : DetailServiceContractComponent},
   { path : 'create-service-contract', canActivate : [AuthGuard], component : CreateServiceContractComponent},
   { path : 'list-service-contract', canActivate : [AuthGuard], component : ListServiceContractComponent},
+  { path : 'quotation-service-contract/:quotationServiceContractId', canActivate : [AuthGuard], component : QuotationServiceContractComponent},
+  { path : 'list-quotation-service-contract', canActivate : [AuthGuard], component : ListQuotationServiceContractComponent},
   { path: 'create-quotation', canActivate: [AuthGuard], component: CreateQuotationComponent},
   { path: 'list-quotations', canActivate: [AuthGuard], component: ListQuotationComponent},
   { path: 'detail-quotation/:quotationId', canActivate: [AuthGuard], component: DetailQuotationComponent},

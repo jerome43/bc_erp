@@ -330,6 +330,13 @@ export class PdfService {
     tableOptionalProducts.push(['', '', '', '']); // optional products
 
     let optionalLongRentalStack = [];
+    let quotationId: string = '';
+    if (formValue.quotationId && formValue.quotationId !=='') {
+      quotationId = formValue.quotationId;
+    }
+    else if (formValue.fromQuotationId && formValue.quotationId !=='') {
+      quotationId = formValue.fromQuotationId;
+    }
 
     switch (pdfType) {
       case PdfType.advanceInvoice:
@@ -351,7 +358,7 @@ export class PdfService {
         orderQuotationStack = [
           {text: 'Facture n° ' + formValue.numerosInvoice.advance, bold: true, fontSize: 16},
           'Commande BC n° ' + id,
-          'Référence devis n° ' + formValue.quotationId,
+          'Référence devis n° ' + quotationId,
           clientOrderNumberString,
         ];
         conditionsStack = [
@@ -395,7 +402,7 @@ export class PdfService {
         orderQuotationStack = [
           {text: 'Facture n° ' + formValue.numerosInvoice.balance, bold: true},
           'Commande BC n° ' + id,
-          'Référence devis n° ' + formValue.quotationId,
+          'Référence devis n° ' + quotationId,
           clientOrderNumberString
         ];
         conditionsStack = [
