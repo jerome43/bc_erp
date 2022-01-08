@@ -45,7 +45,7 @@ export class PdfService {
           {
             table: {
               headerRows: 2,
-              widths: [100, 100, '*'],
+              widths: [100, 100, 300],
               heights: ['*', 70],
               body: [
                 ['Date', 'Signature client', 'Observations'],
@@ -271,7 +271,7 @@ export class PdfService {
           // headers are automatically repeated if the table spans over multiple pages
           // you can declare how many rows should be treated as headers
           headerRows: 1,
-          widths: ['50%','10%', 'auto', 'auto'],
+          widths: [250, 50, 100, 100],
           body: tableProducts
         },
           layout: 'noBorders',
@@ -453,14 +453,36 @@ export class PdfService {
           formValue.employe.email
         ];
         conditionsStack = [
-          formValue.quotationComment,
-          this.getRentDateAndPlace(formValue).livraison,
-          this.getRentDateAndPlace(formValue).dismounting,
-          'Pour confirmer votre commande, il vous suffit de nous faire parvenir par mail à ' + formValue.employe.email + ' ce devis daté et signé avec le cachet de votre société',
+          {
+            columns: [
+              {
+                text: formValue.quotationComment,
+                width: 500
+              },
+            ]
+          },
+          {
+            columns: [
+              {text:  this.getRentDateAndPlace(formValue).livraison,
+                width: 500},
+            ]
+          },
+          {
+            columns: [
+              {text:  this.getRentDateAndPlace(formValue).dismounting,
+                width: 500},
+            ]
+          },
+          {
+            columns: [
+              {text:  'Pour confirmer votre commande, il vous suffit de nous faire parvenir par mail à ' + formValue.employe.email + ' ce devis daté et signé avec le cachet de votre société',
+                width: 500},
+            ]
+          },
           {
               table: {
                 headerRows: 2,
-                widths: [120, 80, '*'],
+                widths: [120, 100, 300],
                 heights: ['*', 70],
                 body: [
                   ['Bon pour accord', 'date', 'Cachet de la société'],
@@ -471,11 +493,31 @@ export class PdfService {
           // 'La société Borne Concept met à présent tout en œuvre pour la réussite de votre manifestation en vous accompagnant en amont de votre événement dans la préparation, la configuration, la livraison, l\'installation, la hot line, l\'intervention sur site et la reprise en fin d\'événement.',
           'Assurance bris et vol à la charge du client',
           {
-            stack: [{text: 'Conditions générales de vente : ', decoration: 'underline', margin: [0, 12, 0, 0]},
-              'Acompte 40% à la commande, solde dès réception de la facture, validité de l’offre 30 jours.',
-              'En cas de retard de paiement, seront exigibles, conformément à l\'article L 441-6 du code du commerce, une indemnité calculée sur la base de trois fois le taux de l\'intérêt légal en vigueur ainsi qu\'une indemnité forfaitaire pour frais de recouvrement de 40 €'
+            stack: [
+              {
+                columns: [
+                  {text: 'Conditions générales de vente : ',
+                    decoration: 'underline',
+                    margin: [0, 12, 0, 0],
+                    width: 500},
+                ]
+              },
+              {
+                columns: [
+                  {text: 'Acompte 40% à la commande, solde dès réception de la facture, validité de l’offre 30 jours.',
+                    width: 500},
+                ]
+              },
+              {
+                columns: [
+                  {text: 'En cas de retard de paiement, seront exigibles, conformément à l\'article L 441-6 du code du commerce, une indemnité calculée sur la base de trois fois le taux de l\'intérêt légal en vigueur ainsi qu\'une indemnité forfaitaire pour frais de recouvrement de 40 €',
+                    width: 500},
+                ]
+              },
+
             ],
-            fontSize: 8
+            fontSize: 8,
+            width: 500
           },
         ];
 
@@ -493,19 +535,15 @@ export class PdfService {
           for (let idxPdt = 0; idxPdt < formValue.optionalProducts.length; idxPdt++) {
             if (formValue.optionalProducts[idxPdt] != '' && formValue.optionalProducts[idxPdt] != undefined) {
               let optionalProductRow = [];
-              let price, numberOfRentDays = 1, degressivity = 1;
+              let price = ComputePriceService.getCompositeProductElementPrice(formValue.optionalProducts[idxPdt].optionalProductElements);
+              let numberOfRentDays = 1, degressivity = 1;
               if (formValue.optionalProducts[idxPdt].optionalProductElements[0].type === "rental") {
-                price = formValue.optionalProducts[idxPdt].optionalProductElements[0].rent_price;
                 numberOfRentDays = formValue.numberOfRentDays;
                 formValue.optionalProducts[idxPdt].optionalProductElements[0].apply_degressivity === "true" ? degressivity = 1 + numberOfRentDays / 10 : degressivity = numberOfRentDays;
               }
               else if (formValue.optionalProducts[idxPdt].optionalProductElements[0].type === "longRental") {
-                price = formValue.optionalProducts[idxPdt].optionalProductElements[0].rent_price;
                 numberOfRentDays = formValue.numberOfRentDays;
                 if (numberOfRentDays > 0) {degressivity = Math.ceil(numberOfRentDays / 31)}
-              }
-              else {
-                price = formValue.optionalProducts[idxPdt].optionalProductElements[0].sell_price;
               }
 
               let productInfos = {stack: []};
@@ -836,7 +874,7 @@ export class PdfService {
           // headers are automatically repeated if the table spans over multiple pages
           // you can declare how many rows should be treated as headers
           headerRows: 1,
-          widths: ['50%','10%', '20%', '20%'],
+          widths: [250, 50, 100, 100],
           body: tableProducts
           },
           layout: 'noBorders',
@@ -857,7 +895,7 @@ export class PdfService {
           // headers are automatically repeated if the table spans over multiple pages
           // you can declare how many rows should be treated as headers
           headerRows: 1,
-          widths: ['50%','10%', '20%', '20%'],
+          widths: [250, 50, 100, 100],
           body: tableOptionalProducts
         },
           layout: 'noBorders',
