@@ -22,11 +22,7 @@ import {PricesFormManager} from "../../forms/pricesFormManager";
 import {FirebaseServices} from "../../common-services/firebaseServices";
 import {firestore} from 'firebase/app';
 import Timestamp = firestore.Timestamp;
-import {AuthService} from "../../auth/auth.service";
 import {AppComponent} from "../../app.component";
-import {DialogQuotationServiceContractOverview} from "../quotation-service-contract/quotation-service-contract.component";
-import {Quotation} from "../../quotation/quotation";
-import {DialogDetailQuotationOverview} from "../../quotation/detail-quotation/detail-quotation.component";
 
 export interface ClientId extends Client { id: string; }
 export interface ProductId extends Product { id: string; }

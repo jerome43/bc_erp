@@ -24,6 +24,7 @@ import {FirebaseServices} from "../../common-services/firebaseServices";
 import {AppComponent} from "../../app.component";
 import {QuotationServiceContract} from "../quotation-service-contract";
 import {DialogDetailQuotationOverview} from "../../quotation/detail-quotation/detail-quotation.component";
+import {ServiceContract} from "../service-contract";
 
 export interface ClientId extends Client { id: string; }
 export interface ProductId extends Product { id: string; }
@@ -550,8 +551,12 @@ export class QuotationServiceContractComponent implements OnInit {
   deleteQuotation() { // delete quotation in database
     this.quotationServiceContractDoc = this.db.doc<QuotationServiceContract>(this.quotationServiceContractTypeParams.path+'/' + this.quotationServiceContractId );
     this.quotationServiceContractDoc.delete().then(() => {
-      this._openDialogDeleted("Le devis "+this.quotationServiceContractId+" a été supprimé.")})
-      .catch(error => this._dialogError(error, "Erreur lors de la suppression du devis"));
+      this.db.doc<any>('service-contracts/' + this.quotationServiceContractForm.value.fromServiceContractId).update({forQuotationId: ''})
+        .then(() => {
+          this._openDialogDeleted("Le devis "+this.quotationServiceContractId+" a été supprimé.")}
+          ).catch(error => this._dialogError(error, "Erreur lors de la mise à jour du contrat de maintenance ayant servi à générer le devis."));
+        })
+        .catch(error => this._dialogError(error, "Erreur lors de la suppression du devis."));
   }
 
   private  _openDialogDeleted(message): void {
@@ -580,6 +585,10 @@ export class QuotationServiceContractComponent implements OnInit {
     dialogRef.afterClosed().subscribe(() => {
       this.router.navigate(['detail-service-contract/'+ this.quotationServiceContractId, {archived: this.quotationServiceContractTypeParams.isArchived}]).then();
     });
+  }
+
+  wantGenerateQuotationPdf() {
+    this.wantUpdateForm(true, PdfType.quotation);
   }
 
 }

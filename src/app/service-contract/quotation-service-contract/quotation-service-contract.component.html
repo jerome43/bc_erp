@@ -265,6 +265,7 @@
 <div class="button-container">
   <button mat-raised-button color="primary" type="button" (click)="wantUpdateForm(false)" [disabled]="!quotationServiceContractForm.valid">Enregistrer</button>
   <a routerLink="/list-service-contract" mat-raised-button>Annuler</a>
+  <button mat-raised-button color="accent" type="button" (click)="wantGenerateQuotationPdf()"><mat-icon>picture_as_pdf</mat-icon> Devis</button>
   <button mat-raised-button color="accent" type="button" (click)="wantTransformQuotation()" title="Transformer le devis en contrat de maintenance.">Transformer</button>
   <button mat-raised-button color="accent" type="button" (click)="wantArchiveQuotationServiceContract()"><mat-icon *ngIf="quotationServiceContractTypeParams.isArchived=='false'">archive</mat-icon><mat-icon *ngIf="quotationServiceContractTypeParams.isArchived=='true'">unarchive</mat-icon>{{quotationServiceContractTypeParams.templateButton}}</button>
   <button mat-raised-button color="warn" type="button" (click)="openDialogWantDelete()">Supprimer</button>
