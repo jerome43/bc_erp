@@ -141,6 +141,18 @@ export class ComputePriceService {
   }
 
   /**
+   * Récupération de la totalité des coûts externes d'une commande
+   * @param externalCosts
+   */
+  public static getExternalCost(externalCosts : Array<{ name : string, amount : number }>): number {
+    let sum: number = 0;
+    externalCosts.forEach((item)=>{
+      sum += item.amount;
+    });
+    return sum;
+  }
+
+  /**
    * Calcule et renvoie le prix total d'une commande, sans la remise
    * @param numberOfRentDays
    * @param numberOfRentMonths

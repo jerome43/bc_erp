@@ -25,7 +25,7 @@
   </form>
 
   <div *ngIf="formDates.value.dateFrom !== '' && formDates.value.dateTo !== ''">
-    Total TTC : {{stats.totalTTC}}€ - Total HT : {{stats.totalHT}}€ - Marge HT : {{stats.totalMarge}}€ - Avances TTC : {{stats.credit}} - A encaisser TTC : {{stats.totalDu}}€
+    Total TTC : {{stats.totalTTC}}€ - Total HT : {{stats.totalHT}}€ - Coûts externes HT: {{stats.externalCosts}} - Marge HT : {{stats.totalMarge}}€ - Avances TTC : {{stats.credit}} - A encaisser TTC : {{stats.totalDu}}€
   </div>
 
   <mat-form-field>
@@ -96,6 +96,12 @@
     <ng-container matColumnDef="credit">
       <th mat-header-cell *matHeaderCellDef mat-sort-header> Avance TTC </th>
       <td mat-cell *matCellDef="let element"> {{element.credit}} </td>
+    </ng-container>
+
+    <!-- Externals cost Column -->
+    <ng-container matColumnDef="externalCosts">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Coûts externes HT </th>
+      <td mat-cell *matCellDef="let element"> {{element.externalCosts}} </td>
     </ng-container>
 
     <!-- Marge Column -->

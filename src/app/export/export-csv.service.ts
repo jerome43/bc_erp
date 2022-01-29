@@ -78,6 +78,7 @@ export class ExportCsvService {
     rentalDiscountAmount:"Remise en € sur location",
     saleDiscountAmount:"Remise en € sur vente",
     discountPrice: "Prix total remisé",
+    externalCosts: 'Coûts externes',
     credit: "avance perçue"
   };
 
@@ -150,13 +151,14 @@ export class ExportCsvService {
       const specialProduct =  specialProductArray.join(' - ');
 
       const prices = this.computePriceService.computePrices(invoice);
-      let price = 0, rentalDiscountAmount = 0, saleDiscountAmount = 0, discountPrice = 0, invoiceDate, credit = 0;
+      let price = 0, rentalDiscountAmount = 0, saleDiscountAmount = 0, discountPrice = 0, invoiceDate, credit = 0, externalCosts = invoice.externalCosts ? ComputePriceService.getExternalCost(invoice.externalCosts) : 0;
       if (invoiceType === "advance" ) {
         price = prices.price*Number(invoice.advanceRate)/100; // prix facture d'acompte
         rentalDiscountAmount = prices.rentalDiscountAmount*Number(invoice.advanceRate)/100;
         saleDiscountAmount = prices.saleDiscountAmount*Number(invoice.advanceRate)/100;
         discountPrice = prices.discountPrice*Number(invoice.advanceRate)/100;
         invoiceDate = UtilServices.getDate(invoice.advanceInvoiceDate);
+        externalCosts = externalCosts*Number(invoice.advanceRate)/100;
       } else if (invoiceType === "balance") {
         price = prices.price*(100-Number(invoice.advanceRate))/100;
         rentalDiscountAmount = prices.rentalDiscountAmount*(100-Number(invoice.advanceRate))/100;
@@ -164,6 +166,7 @@ export class ExportCsvService {
         // discountPrice = (prices.discountPrice*(100-Number(invoice.advanceRate))/100)-(invoice.credit/1.2);
         discountPrice = (prices.discountPrice*(100-Number(invoice.advanceRate))/100);
         invoiceDate = UtilServices.getDate(invoice.balanceInvoiceDate);
+        externalCosts = externalCosts*(100-Number(invoice.advanceRate))/100;
         credit = invoice.credit;
       }
 
@@ -172,7 +175,7 @@ export class ExportCsvService {
         invoiceId: invoice.id,
         clientName: invoice.client.name.replace(/;/g, ' '),
         clientAddress: invoice.client.address.replace(/;/g, ' '),
-        clientZipcode: invoice.client.zipcode.toString().replace(/;/g, ' '),
+        clientZipcode: invoice.client.zipcode ? invoice.client.zipcode.toString().replace(/;/g, ' ') : ' ',
         clientTown: invoice.client.town.replace(/;/g, ' '),
         contactName: invoice.contact.contactName.replace(/;/g, ' '),
         contactPhone: invoice.contact.contactPhone.replace(/;/g, ' '),
@@ -181,7 +184,7 @@ export class ExportCsvService {
         singleProduct: singleProduct.replace(/;/g, ' '),
         compositeProducts: compositeProducts.replace(/;/g, ' '),
         compositeProductAmount: compositeProductAmount,
-        specialProduct: specialProduct.toString().replace(/;/g, ' '),
+        specialProduct: specialProduct.replace(/;/g, ' '),
         rentDateFrom: UtilServices.getDate(invoice.rentDateFrom),
         rentDateTo: UtilServices.getDate(invoice.rentDateTo),
         invoiceDate: invoiceDate,
@@ -189,6 +192,7 @@ export class ExportCsvService {
         rentalDiscountAmount: UtilServices.formatToTwoDecimal(rentalDiscountAmount).toString().replace('.',','),
         saleDiscountAmount : UtilServices.formatToTwoDecimal(saleDiscountAmount).toString().replace('.',','),
         discountPrice : UtilServices.formatToTwoDecimal(discountPrice).toString().replace('.',','),
+        externalCosts: UtilServices.formatToTwoDecimal(externalCosts).toString().replace('.',','),
         credit : UtilServices.formatToTwoDecimal(credit).toString().replace('.',',')
       });
     }

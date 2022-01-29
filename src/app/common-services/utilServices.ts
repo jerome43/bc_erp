@@ -9,7 +9,12 @@ import Timestamp = firestore.Timestamp;
 export class UtilServices {
 
   public static formatToTwoDecimal(x) {
-    return Number.parseFloat(x).toFixed(2);
+    let resp = Number.parseFloat(x).toFixed(2);
+    if (resp) {
+      return resp
+    } else {
+      return 0.00
+    }
   }
 
   public static getDateYearAndMonth(date):string {
