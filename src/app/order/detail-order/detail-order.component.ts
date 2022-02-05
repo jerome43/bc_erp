@@ -423,7 +423,8 @@ export class DetailOrderComponent implements OnInit {
   private _filterProducts(value: string): ProductId[] {
     //console.log("value", value);
     const filterValue = value.toLowerCase();
-    return this.productFormOptions.filter(productOption => productOption.name.toLowerCase().indexOf(filterValue) === 0);
+    //return this.productFormOptions.filter(productOption => productOption.name.toLowerCase().indexOf(filterValue) === 0);// recherche sur la première valeur qui débute par ...
+    return this.productFormOptions.filter(productOption => productOption.name.toLowerCase() === filterValue); // recherche sur la valeur exacte
   }
 
   // affecte le nom du produit dans les formulaires de recherche de produit simple en fonction du nom du produit enregistré dans le devis
