@@ -246,7 +246,7 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
     if (dateFrom === undefined || dateFrom === '' || dateFrom === null || dateTo === undefined || dateTo === '' || dateTo === null) {
     }
     else {
-      dateTo.setDate(dateTo.getDate() + 1);   // on rajoute 24h car la date de fin est les jour à 0h00 et non à 23h59h59
+      //dateTo.setDate(dateTo.getDate() + 1);   // on rajoute 24h car la date de fin est les jour à 0h00 et non à 23h59h59
       //console.log("dateFrom : ", dateFrom, ' / dateTo : ', dateTo);
 
       // first we fetch by advanceInvoiceDate

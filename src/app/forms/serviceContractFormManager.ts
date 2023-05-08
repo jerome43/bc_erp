@@ -97,7 +97,7 @@ export class ServiceContractFormManager {
 
   public setPaymentInvoice(prices) {
     this.form.value.paymentInvoice.advance.amount = UtilServices.formatToTwoDecimal(prices.discountPrice / 100 * this.form.value.advanceRate);
-    this.form.value.paymentInvoice.balance.amount = UtilServices.formatToTwoDecimal((prices.discountPrice / 100 * ( 100 - this.form.value.advanceRate )) - this.form.value.credit);
+    this.form.value.paymentInvoice.balance.amount = UtilServices.formatToTwoDecimal((prices.discountPrice / 100 * ( 100 - this.form.value.advanceRate )) - (this.form.value.credit/1.2));
   }
 
   public patchDates(serviceContract) {
