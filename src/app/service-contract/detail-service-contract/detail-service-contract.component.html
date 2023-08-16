@@ -338,12 +338,17 @@
     </mat-form-field>
   </div>
   <div>
-    <mat-form-field class="width20 margin-right">
+    <mat-form-field class="width15 margin-right">
       <label>
         <input type="number" matInput placeholder="Montant HT facture acompte" disabled  [value]="serviceContractForm.value.paymentInvoice.advance.amount">
       </label>
     </mat-form-field>
-    <mat-form-field class="width20 margin-right">
+    <mat-form-field class="width15 margin-right">
+      <label>
+        <input type="number" matInput placeholder="Montant TTC facture acompte" disabled  [value]="serviceContractForm.value.paymentInvoice.advance.amount * 1.2">
+      </label>
+    </mat-form-field>
+    <mat-form-field class="width15 margin-right">
       <label>
         <input matInput type="text" disabled placeholder="Référence facture acompte " [value]="serviceContractForm.value.numerosInvoice.advance !== null ? serviceContractForm.value.numerosInvoice.advance.toString() : 'non générée'">
       </label>
@@ -364,12 +369,17 @@
     </mat-form-field>
   </div>
   <div>
-    <mat-form-field class="width20 margin-right">
+    <mat-form-field class="width15 margin-right">
       <label>
         <input type="number" matInput placeholder="Montant HT facture solde" disabled [value]="serviceContractForm.value.paymentInvoice.balance.amount">
       </label>
     </mat-form-field>
-    <mat-form-field class="width20 margin-right">
+    <mat-form-field class="width15 margin-right">
+      <label>
+        <input type="number" matInput placeholder="Montant TTC facture solde" disabled [value]="serviceContractForm.value.paymentInvoice.balance.amount * 1.2">
+      </label>
+    </mat-form-field>
+    <mat-form-field class="width15 margin-right">
       <label>
         <input matInput type="text" disabled placeholder="Référence facture solde " [value]="serviceContractForm.value.numerosInvoice.balance !== null ? serviceContractForm.value.numerosInvoice.balance.toString() : 'non générée'">
       </label>
