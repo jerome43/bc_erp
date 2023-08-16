@@ -14,6 +14,9 @@ import Timestamp = firestore.Timestamp;
 @Injectable({
   providedIn: 'root'
 })
+/**
+ * ATTENTION - CETTE CLASSE N'EST PAS A JOUR (prix dégressifs...), NE PAS L'UTILISER
+ */
 export class PdfServiceWithPhoto {
 
   private id:string; // l'id du devis ou de la facture stockés dans firebase

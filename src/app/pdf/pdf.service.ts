@@ -536,14 +536,16 @@ export class PdfService {
             if (formValue.optionalProducts[idxPdt] != '' && formValue.optionalProducts[idxPdt] != undefined) {
               let optionalProductRow = [];
               let price = ComputePriceService.getCompositeProductElementPrice(formValue.optionalProducts[idxPdt].optionalProductElements);
-              let numberOfRentDays = 1, degressivity = 1;
+              let numberOfRentDays = formValue.numberOfRentDays, degressivity = 1;
+              numberOfRentDays < 1 ? numberOfRentDays = 1 : null;
               if (formValue.optionalProducts[idxPdt].optionalProductElements[0].type === "rental") {
-                numberOfRentDays = formValue.numberOfRentDays;
                 formValue.optionalProducts[idxPdt].optionalProductElements[0].apply_degressivity === "true" ? degressivity = 1 + numberOfRentDays / 10 : degressivity = numberOfRentDays;
               }
               else if (formValue.optionalProducts[idxPdt].optionalProductElements[0].type === "longRental") {
-                numberOfRentDays = formValue.numberOfRentDays;
-                if (numberOfRentDays > 0) {degressivity = Math.ceil(numberOfRentDays / 31)}
+                const numberOfRentMonths = ComputePriceService.getNumberOfMonths(formValue.rentDateFrom, formValue.rentDateTo);
+                if (numberOfRentMonths > 0) {
+                  formValue.optionalProducts[idxPdt].optionalProductElements[0].apply_degressivity === "true" ? degressivity = 1 + (numberOfRentMonths - 1) / 4 : degressivity = numberOfRentMonths;
+                }
               }
 
               let productInfos = {stack: []};

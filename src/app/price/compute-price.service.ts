@@ -169,7 +169,10 @@ export class ComputePriceService {
             //console.log("getSingleProductsPrice type == sale or service", Number(order.singleProduct[i].sell_price*order.singleProductAmount[i]));
             price += Number(order.singleProduct[i].sell_price * order.singleProductAmount[i]);
           } else if (order.singleProduct[i].type === ProductType.longRental) {
-            price += Number(order.singleProduct[i].rent_price * order.singleProductAmount[i] * numberOfRentMonths);
+            let degressivity;
+            order.singleProduct[i].apply_degressivity === "true" ? degressivity = 1 + (numberOfRentMonths -1 ) / 4 : degressivity = numberOfRentMonths;
+            degressivity < 1 ? degressivity = 1 : null;// par sécurité, au cas où
+            price += Number(order.singleProduct[i].rent_price) * order.singleProductAmount[i] * degressivity;
           } else {
             if (numberOfRentDays>=1) {
               let degressivity;
@@ -198,8 +201,11 @@ export class ComputePriceService {
             //console.log("getcompositeProductElementsPrice type === sale or service or serviceContract", Number(order.compositeProducts[idxPdt].compositeProductElements[i].sell_price*order.compositeProductAmount[idxPdt]));
             price += Number(order.compositeProducts[idxPdt].compositeProductElements[i].sell_price * order.compositeProductAmount[idxPdt]);
           } else if (order.compositeProducts[idxPdt].compositeProductElements[i].type === ProductType.longRental) {
+            let degressivity;
+            order.compositeProducts[idxPdt].compositeProductElements[i].apply_degressivity === "true" ? degressivity = 1 + (numberOfRentMonths -1 ) / 4 : degressivity = numberOfRentMonths;
+            degressivity < 1 ? degressivity = 1 : null;// par sécurité, au cas où
             //console.log("getcompositeProductElementsPrice type === LongRental", Number(order.compositeProducts[idxPdt].compositeProductElements[i].rent_price*order.compositeProductAmount[idxPdt] * numberOfRentMonths ));
-            price += Number(order.compositeProducts[idxPdt].compositeProductElements[i].rent_price * order.compositeProductAmount[idxPdt] * numberOfRentMonths);
+            price += Number(order.compositeProducts[idxPdt].compositeProductElements[i].rent_price * order.compositeProductAmount[idxPdt] * degressivity);
           }
           else {
             if (numberOfRentDays>=1) {
@@ -245,7 +251,10 @@ export class ComputePriceService {
         //console.log("getSingleProductsPrice type == rental", Number(order.singleProduct[i].rent_price) * order.singleProductAmount[i] * degressivity);
         numberOfRentDays > 1 ? price += Number(order.singleProduct[i].rent_price) * order.singleProductAmount[i] * degressivity : price += Number(order.singleProduct[i].rent_price) * order.singleProductAmount[i]
       } else if (order.singleProduct[i].type === ProductType.longRental) {
-        price += Number(order.singleProduct[i].rent_price * order.singleProductAmount[i] * numberOfRentMonths);
+        let degressivity;
+        order.singleProduct[i].apply_degressivity === "true" ? degressivity = 1 + (numberOfRentMonths - 1) / 4 : degressivity = numberOfRentMonths;
+        degressivity < 1 ? degressivity = 1 : null;
+        price += Number(order.singleProduct[i].rent_price * order.singleProductAmount[i] * degressivity);
       }
     }
 
@@ -258,7 +267,10 @@ export class ComputePriceService {
           //console.log("getCompositeProductsElementPrice type === rental", Number(order.compositeProducts[idxPdt].compositeProductElements[i].rent_price) * order.compositeProductAmount[idxPdt] * degressivity);
           numberOfRentDays > 1 ? price += Number(order.compositeProducts[idxPdt].compositeProductElements[i].rent_price) * order.compositeProductAmount[idxPdt] * degressivity : price += Number(order.compositeProducts[idxPdt].compositeProductElements[i].rent_price) * order.compositeProductAmount[idxPdt]
         } else if (order.compositeProducts[idxPdt].compositeProductElements[i].type === ProductType.longRental) {
-          price += Number(order.compositeProducts[idxPdt].compositeProductElements[i].rent_price * order.compositeProductAmount[idxPdt] * numberOfRentMonths);
+          let degressivity;
+          order.compositeProducts[idxPdt].compositeProductElements[i].apply_degressivity === "true" ? degressivity = 1 + (numberOfRentMonths - 1) / 4 : degressivity = numberOfRentMonths;
+          degressivity < 1 ? degressivity = 1 : null;
+          price += Number(order.compositeProducts[idxPdt].compositeProductElements[i].rent_price * order.compositeProductAmount[idxPdt] * degressivity);
         }
       }
     }

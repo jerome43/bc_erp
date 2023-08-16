@@ -32,7 +32,7 @@
       <mat-radio-button [value]="ProductType.serviceContract">contrat de maintenance</mat-radio-button>
     </mat-radio-group>
   </div>
-  <div class="margin-bottom-1" *ngIf="detailProductForm.value.type === ProductType.rental">
+  <div class="margin-bottom-1" *ngIf="detailProductForm.value.type === ProductType.rental || detailProductForm.value.type === ProductType.longRental">
     <label>Appliquer prix dégressifs : </label>
     <mat-radio-group formControlName="apply_degressivity">
       <mat-radio-button value="true">Oui</mat-radio-button>
