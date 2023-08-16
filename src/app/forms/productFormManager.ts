@@ -1,6 +1,7 @@
 import {FormBuilder, Validators} from "@angular/forms";
 import {Injectable} from "@angular/core";
 import {ProductType} from "../product/ProductType";
+import {ProductStatus} from "../product/ProductStatus";
 
 @Injectable({
   providedIn: 'root'
@@ -26,6 +27,7 @@ export class ProductFormManager {
       internal_number: ['', Validators.required],
       stock: ['1', Validators.required],
       type: [ProductType.rental, Validators.required],
+      status: [ProductStatus.Available, Validators.required],// ajouté le 08/05/2022
       sell_price : [0, Validators.required],
       rent_price : [0, Validators.required],
       apply_degressivity: ['true', Validators.required],

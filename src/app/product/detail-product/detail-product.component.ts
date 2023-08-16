@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
+import {Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef} from '@angular/core';
 import { Product } from '../product';
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/firestore';
 import { Observable } from 'rxjs'
@@ -10,6 +10,7 @@ import {Subscription} from "rxjs";
 import { AngularFireStorage } from '@angular/fire/storage';
 import {ProductFormManager} from "../../forms/productFormManager";
 import {ProductType} from "../ProductType";
+import {ProductStatus} from "../ProductStatus";
 
 export interface DialogDetailProductData {
   message: string;
@@ -23,10 +24,14 @@ export interface DialogDetailProductData {
 })
 
 export class DetailProductComponent implements OnInit, OnDestroy {
+
+  @ViewChild('inputProductStatus') inputProductStatus: ElementRef;
+
   private productId: String; // id du produit récupéré en paramètre de l'url
   private productSubscription : Subscription; // nécessaire pour pouvoir arrêter l'obervation du produit lorsqu'on quitte le composant (conf ngOnDestry())
   public detailProductForm; // le formulaire de mise à jour du produit utilisé par le template
   public ProductType = ProductType;
+  public ProductStatus = ProductStatus;
   private uploadPhotoPercent: Observable<number>; // pour mettre à jour dans le template le pourcentage de téléchargement de la photo
   public downloadPhotoURL: Observable<string>; // l'url de la photo sur firestorage (! ce n'est pas la référence)
   public photoFile:File; //le fichier de la photo du produit à uploader
@@ -60,6 +65,26 @@ export class DetailProductComponent implements OnInit, OnDestroy {
         this.openDialogMessage("Le produit "+this.productId+" a été mis à jour.");
       });
     }
+  }
+
+
+  public updateProductByScan() {
+      const productDoc: AngularFirestoreDocument<Product> = this.db.doc<Product>('products/' + this.productId );
+      productDoc.update(this.detailProductForm.value).then(() => {
+        this.openDialogMessage("Le produit "+this.productId+" a été mis à jour.");
+        this.dialog.open(DialogDetailProductOverview, {
+          width: '450px',
+          data: {
+            message: "Le produit " + this.productId + " a été mis à jour.",
+            displayNoButton:false
+          }
+        });
+        setTimeout(()=> {
+          this.dialog.closeAll();
+          this.router.navigate(["/list-products"]);
+        }, 2000)
+      });
+
   }
 
   private updateProductAfterUploadFile() {
@@ -236,6 +261,20 @@ export class DetailProductComponent implements OnInit, OnDestroy {
     //console.log("deletePhotoOnFirestorage"+this.photoPathToDeleteOnFirestorage);
     this.storage.ref(this.photoPathToDeleteOnFirestorage).delete();
     this.photoPathToDeleteOnFirestorage=undefined;
+  }
+
+  public setProductStatus(value: string) {
+    if (["AVAILABLE", "UNAVAILABLE", "MAINTENANCE"].includes(value)) {
+      this.detailProductForm.controls['status'].patchValue(value);
+      this.updateProductByScan();
+    } else {
+      this.resetInputProductStatus();
+    }
+  }
+
+  public resetInputProductStatus() {
+    this.inputProductStatus.nativeElement.value = "";
+    this.inputProductStatus.nativeElement.focus();
   }
 
   /**

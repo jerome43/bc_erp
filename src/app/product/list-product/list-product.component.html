@@ -2,7 +2,7 @@
   <h2>Liste des produits</h2>
 
   <mat-form-field>
-    <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Rechercher">
+    <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Rechercher" #inputSearch>
   </mat-form-field>
 
   <table mat-table [dataSource]="dataSource" matSort matSortActive="name" matSortDirection="asc" matSortDisableClear class="mat-elevation-z8">
@@ -17,6 +17,12 @@
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef mat-sort-header> Nom </th>
       <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+    </ng-container>
+
+    <!-- Internal number Column -->
+    <ng-container matColumnDef="internal_number">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Numéro interne</th>
+      <td mat-cell *matCellDef="let element"> {{element.internal_number}} </td>
     </ng-container>
 
     <!-- Date Column -->

@@ -70,6 +70,24 @@
     </label>
     <mat-error *ngIf="stock.invalid">Veuillez renseigner le stock</mat-error>
   </mat-form-field>
+
+<ng-container *ngIf="detailProductForm.value.type === ProductType.rental || detailProductForm.value.type === ProductType.longRental">
+  <input type="text" (change)="setProductStatus($event.target.value)" autofocus #inputProductStatus style="opacity: 0;">
+  <div class="margin-bottom-1" >
+    <label>Statut du produit : </label>
+    <mat-radio-group formControlName="status" (ngModelChange)="resetInputProductStatus()">
+      <mat-radio-button [value]="ProductStatus.Available">Disponible à la location</mat-radio-button>
+      <mat-radio-button [value]="ProductStatus.Unavailable">Indisponible / loué</mat-radio-button>
+      <mat-radio-button [value]="ProductStatus.Maintenance">En maintenance / réparation</mat-radio-button>
+    </mat-radio-group>
+  </div>
+  <div style="margin-left: 140px;">
+    <img [src]="'assets/img/available.png'" class="qrcodeImg" title="Disponible à la location">
+    <img [src]="'assets/img/unavailable.png'" class="qrcodeImg" title="Indisponible / loué">
+    <img [src]="'assets/img/maintenance.png'" class="qrcodeImg" title="En maintenance / réparation">
+  </div>
+</ng-container>
+
   <div>
     <h5>Photo</h5>
     <div *ngIf="downloadPhotoURL==undefined">

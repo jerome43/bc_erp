@@ -1,4 +1,5 @@
 import {ProductType} from "./ProductType";
+import {ProductStatus} from "./ProductStatus";
 
 export class Product {
   name: string;
@@ -12,4 +13,5 @@ export class Product {
   photo: string;
   comment: string;
   date: Date;
+  status: ProductStatus;
 }
