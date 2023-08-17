@@ -1,0 +1,20 @@
+<div mat-dialog-content>
+  <p>{{data.message}}</p>
+  <ng-container *ngIf="data.productItems.length > 0; else elseTemplate">
+    <ul>
+      <li *ngFor="let productItem of data.productItems">
+        Numéro qrcode: {{productItem.number}} - statut: {{getProductStatusMsg(productItem.status)}}
+      </li>
+    </ul>
+  </ng-container>
+  <ng-template #elseTemplate>
+    <p >
+      Aucuns stocks définis pour le produit.
+    </p>
+  </ng-template>
+
+</div>
+<div mat-dialog-actions>
+  <button mat-button (click)="onNoClick()" *ngIf="data.displayNoButton">Non</button>
+  <button mat-button [mat-dialog-close]="'yes'" cdkFocusInitial>Ok</button>
+</div>

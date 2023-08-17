@@ -7,7 +7,7 @@ import {MAT_DIALOG_DATA, MatDialog, MatDialogRef, MatPaginator, MatSort, MatTabl
 import {Product} from '../product';
 import {Router} from '@angular/router';
 import {ProductType} from "../ProductType";
-import {MatInput} from "@angular/material/input";
+import {ProductStatus} from "../ProductStatus";
 
 export interface DialogListProductData { message: string; displayNoButton:boolean }
 export interface ProductId extends Product { id: string; }
@@ -24,10 +24,17 @@ export class ListProductComponent implements OnInit, AfterViewInit, OnDestroy {
   public displayedColumns: string[] = ['type', 'name', 'internal_number', 'date', 'edit', 'delete', 'id']; // colones affichées par le tableau
   private productsData : Array<any>; // tableau qui va récupérer les données adéquates de fbProducts pour être ensuite affectées au tableau de sources de données
   public dataSource : MatTableDataSource<ProductId>; // source de données du tableau
+  public ProductStatus = ProductStatus;
 
   @ViewChild(MatPaginator) paginator: MatPaginator; // pagination du tableau
   @ViewChild(MatSort) sort: MatSort; // tri sur le tableau
   @ViewChild("inputSearch") inputSearch: ElementRef;
+  @ViewChild("inputSearchProductItemNumber") inputSearchProductItemNumber: ElementRef;
+  @ViewChild("inputProductStatus1") inputProductStatus1: ElementRef;
+  @ViewChild("inputProductStatus2") inputProductStatus2: ElementRef;
+  @ViewChild("inputProductStatus3") inputProductStatus3: ElementRef;
+  @ViewChild("inputProductStatus4") inputProductStatus4: ElementRef;
+  @ViewChild("inputProductStatus5") inputProductStatus5: ElementRef;
 
   constructor(private router: Router, private db: AngularFirestore, private dialog: MatDialog, private storage: AngularFireStorage) {}
 
@@ -37,7 +44,7 @@ export class ListProductComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     setTimeout(()=> {
-      this.inputSearch.nativeElement.focus();
+      this.inputSearchProductItemNumber.nativeElement.focus();
     }, 300)
   }
 
@@ -83,12 +90,132 @@ export class ListProductComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+
   public applyFilter(filterValue: string) {
     this.dataSource.filter = filterValue.trim().toLowerCase(); // filtre sur le tableau
     if (this.dataSource.filteredData.length === 1) {
       this.editProduct(this.dataSource.filteredData[0].id);
     }
   }
+
+  public searchByProductItemNumber(numberValue: string) {
+    if (numberValue.length > 0) {
+      this._searchByProductItemNumber(numberValue, ProductStatus.Available).catch(()=> {
+        this._searchByProductItemNumber(numberValue, ProductStatus.Unavailable).catch(()=> {
+          this._searchByProductItemNumber(numberValue, ProductStatus.Maintenance).catch(()=> {
+            this.dialog.open(DialogListProductOverview, {
+              width: '450px',
+              data: {
+                message: "Aucun stock produit trouvé portant le numéro " + numberValue + ".",
+                displayNoButton:false
+              }
+            });
+          })
+        })
+      })
+    }
+  }
+
+  private _searchByProductItemNumber(numberValue: string, status: ProductStatus) {
+    return new Promise((resolve, reject) => {
+      const qProduct = this.db.collection('products', ref => ref.where('productItems', 'array-contains', {number: numberValue, status})).snapshotChanges()
+        .pipe(
+          map(actions => actions.map(a => {
+            const data = a.payload.doc.data() as Product;
+            const id = a.payload.doc.id;
+            return {id, ...data };
+          })));
+
+      let qProductSubscription = qProduct.subscribe( products => {
+        qProductSubscription.unsubscribe();
+        //console.log("products ", products);
+        if (products.length === 0) {
+          reject();
+        } else {
+          resolve();
+          this.editProduct(products[0].id);
+        }
+      })
+    })
+
+  }
+
+  public setProductItemStatus(numberValue: string, oldStatus:ProductStatus, newStatus:ProductStatus) {
+    if (numberValue && numberValue.length > 0) {
+      let oldStatusMsg = "", newStatusMsg = "";
+      switch (oldStatus) {
+        case ProductStatus.Unavailable: oldStatusMsg = "sortie - indisponible"; break;
+        case ProductStatus.Available: oldStatusMsg = "Rentrée - disponible"; break;
+        case ProductStatus.Maintenance: oldStatusMsg = "sortie maintenance"; break;
+        case ProductStatus.Sold: oldStatusMsg = "sortie vente"; break;
+      }
+      switch (newStatus) {
+        case ProductStatus.Unavailable: newStatusMsg = "sortie - indisponible"; break;
+        case ProductStatus.Available: newStatusMsg = "Rentrée - disponible"; break;
+        case ProductStatus.Maintenance: newStatusMsg = "sortie maintenance"; break;
+        case ProductStatus.Sold: newStatusMsg = "sortie vente"; break;
+      }
+
+      const qProduct = this.db.collection('products', ref => ref.where('productItems', 'array-contains', {number: numberValue, status: oldStatus})).snapshotChanges()
+        .pipe(
+          map(actions => actions.map(a => {
+            const data = a.payload.doc.data() as Product;
+            const id = a.payload.doc.id;
+            return {id, ...data };
+          })));
+
+      let qProductSubscription = qProduct.subscribe( products => {
+        qProductSubscription.unsubscribe();
+        //console.log("products ", products);
+      if (products.length === 0 ) {
+          this.dialog.open(DialogListProductOverview, {
+            width: '450px',
+            data: {
+              message: "Le produit " + numberValue + " n'a pas été trouvé en statut " + oldStatusMsg,
+              displayNoButton:false
+            }
+          });
+        }
+        else if (products.length === 1 ) {
+          const productDoc: AngularFirestoreDocument<Product> = this.db.doc<Product>('products/' + products[0].id );
+          //console.log("productDoc ", productDoc);
+          for (let productItem of products[0].productItems) {
+            if (productItem.number === numberValue) {
+              productItem.status = newStatus;
+              break;
+            }
+          }
+          productDoc.update({productItems: products[0].productItems}).then(() => {
+            this.dialog.open(DialogListProductOverview, {
+              width: '450px',
+              data: {
+                message: "Le produit " + numberValue + " a été mis en statut " + newStatusMsg,
+                displayNoButton: false
+              }
+            });
+          })
+        } else {
+          this.dialog.open(DialogListProductOverview, {
+            width: '450px',
+            data: {
+              message: "Impossible de mettre à jour le produit " + numberValue + " car plusieurs références existent avec le même numéro de qrcode.",
+              displayNoButton:false
+            }
+          });
+        }
+      });
+      this.resetInputProductStatus();
+    }
+  }
+
+  public resetInputProductStatus() {
+    this.inputProductStatus1.nativeElement.value = "";
+    this.inputProductStatus2.nativeElement.value = "";
+    this.inputProductStatus3.nativeElement.value = "";
+    this.inputProductStatus4.nativeElement.value = "";
+    this.inputProductStatus5.nativeElement.value = "";
+  }
+
 
   public editProduct(eventTargetId) {
     //console.log(eventTargetId);

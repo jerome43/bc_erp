@@ -29,37 +29,46 @@
 
     <!-- Name Column-->
     <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Nom produit </th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-align-center"> Nom produit </th>
       <td mat-cell *matCellDef="let element"> {{element.name}} </td>
     </ng-container>
 
     <!-- Date Column -->
     <ng-container matColumnDef="dates">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Immobilisation en cours ou prochaine</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-align-center"> Immobilisation en cours ou prochaine</th>
       <td mat-cell *matCellDef="let element"> {{element.immosFromDateToDateDate}} </td>
     </ng-container>
 
     <!-- Stats Column -->
     <ng-container matColumnDef="stats">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Stocks immobilisés sur la période.</th>
-      <td mat-cell *matCellDef="let element"> {{element.stats}} </td>
-    </ng-container>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-align-center"> Stocks immobilisés sur la période.</th>
+      <td mat-cell *matCellDef="let element" class="text-align-center"> {{element.stats}} </td>
+    </ng-container>*
 
     <!-- View Column -->
     <ng-container matColumnDef="view">
-      <th mat-header-cell *matHeaderCellDef> Détail immobilisations </th>
-      <td mat-cell *matCellDef="let element" >
+      <th mat-header-cell *matHeaderCellDef class="text-align-center"> Détail immobilisations </th>
+      <td mat-cell *matCellDef="let element" class="text-align-center">
         <button mat-button>
           <mat-icon color="primary" (click)="viewDetailStock($event.target.id)" [id]="element.id">pageview</mat-icon>
         </button>
       </td>
     </ng-container>
 
+    <!-- Real stock Column -->
+    <ng-container matColumnDef="dayRealStock">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-align-center"> Stocks réels à ce jour.</th>
+      <td mat-cell *matCellDef="let element" class="text-align-center">
+        <button mat-button>
+          <mat-icon color="primary" (click)="viewDayRealStock(element.id)">pageview</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
     <!-- Edit Column -->
     <ng-container matColumnDef="id">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Editer produit </th>
-
-      <td mat-cell *matCellDef="let element">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-align-center"> Editer produit </th>
+      <td mat-cell *matCellDef="let element" class="text-align-center">
         <button mat-button [routerLink]="['/detail-product/'+element.id]">
           <mat-icon color="primary">edit</mat-icon>
         </button>

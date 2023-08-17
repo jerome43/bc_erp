@@ -3,12 +3,15 @@ import { Validators, FormBuilder } from '@angular/forms';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
 import { StockService } from './stock.service';
 import { StockProducts } from './StockProducts';
-import { AngularFirestore } from '@angular/fire/firestore';
+import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import {Subscription} from "rxjs";
 import {MatSort, MatPaginator, MatTableDataSource} from '@angular/material';
 import {ActivatedRoute, Route, Router} from "@angular/router";
 import {tap} from "rxjs/operators";
+import {Product} from "../product";
+import {ProductItem} from "../ProductItem";
+import {ProductStatus} from "../ProductStatus";
 
 export interface DialogStockData {
   message: string;
@@ -18,6 +21,12 @@ export interface DialogStockData {
   dateTo: Date;
   displayedDateFrom: Date;
   displayedDateTo: Date;
+}
+
+export interface DialogDayRealStockOverviewData {
+  message: string;
+  displayNoButton:boolean;
+  productItems: ProductItem[];
 }
 
 export interface StockId extends StockProducts { id: string; }
@@ -32,7 +41,7 @@ export class StockComponent implements OnInit {
   stockDatesForm;
   private fbStockProducts: Observable<any>; // stocks on Firebase
   private fbStockProductsSubscription : Subscription;
-  displayedColumns: string[] = ['name', 'dates', 'stats', 'view', 'id']; // colones affichées par le tableau
+  displayedColumns: string[] = ['name', 'dates', 'stats', 'dayRealStock', 'view', 'id']; // colones affichées par le tableau
   private stockProductsData : Array<any>; // tableau qui va récupérer les données adéquates de fbStockProducts pour être ensuite affectées au tableau de sources de données
   dataSource : MatTableDataSource<StockId>; // source de données du tableau
   public stockTypeParams={path : "stockProducts", isLongRental:false, templateTitle:"Stocks Location produits courte durée ", templateButton:" voir stock longue durée"}; // les paramètres liés au type de stock (produits en location courte durée ou longue durée)
@@ -76,6 +85,31 @@ export class StockComponent implements OnInit {
       });
       this.openDialogViewDetail(detailStockProduct);
     }
+  }
+
+  viewDayRealStock(id: string) {
+    const productDoc: AngularFirestoreDocument<Product> = this.db.doc<Product>('products/' + id );
+    productDoc.ref.get().then((product)=>{
+      if (product.data()) {
+        this.dialog.open(DialogDayRealStockOverview, {
+          width: '800px',
+          data: {
+            message: "Etat des stocks au " + new Date().toLocaleDateString() + " du produit " + product.data().name,
+            displayNoButton:false,
+            productItems: product.data().productItems ? product.data().productItems : []
+          }
+        });
+      } else {
+        this.dialog.open(DialogDayRealStockOverview, {
+          width: '800px',
+          data: {
+            message: "Désolé, ce produit n'existe plus",
+            displayNoButton:false,
+            productItems: []
+          }
+        });
+      }
+    })
   }
 
   initForm() {
@@ -213,5 +247,29 @@ export class DialogStockOverview {
         detailOrderSsubsription.unsubscribe();
         this.router.navigate(['detail-order/'+orderId, {archived: archived}]).then();
       })).subscribe(()=>{});
+  }
+}
+
+@Component({
+  selector: 'dialog-day-real-stock-overview',
+  templateUrl: 'dialog-day-real-stock-overview.html',
+})
+export class DialogDayRealStockOverview {
+  constructor(
+    public dialogRef: MatDialogRef<DialogDayRealStockOverview>,
+    @Inject(MAT_DIALOG_DATA) public data: DialogDayRealStockOverviewData) {}
+
+  onNoClick(): void {
+    this.dialogRef.close();
+  }
+
+  getProductStatusMsg(productStatus) {
+    switch (productStatus) {
+      case ProductStatus.Unavailable: return "indisponible";
+      case ProductStatus.Available: return "disponible";
+      case ProductStatus.Maintenance: return "en maintenance";
+      case ProductStatus.Sold: return "Vendu";
+      default: return "statut inconnu";
+    }
   }
 }

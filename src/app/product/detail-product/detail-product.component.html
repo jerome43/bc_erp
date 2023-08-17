@@ -71,22 +71,56 @@
     <mat-error *ngIf="stock.invalid">Veuillez renseigner le stock</mat-error>
   </mat-form-field>
 
-<ng-container *ngIf="detailProductForm.value.type === ProductType.rental || detailProductForm.value.type === ProductType.longRental">
-  <input type="text" (change)="setProductStatus($event.target.value)" autofocus #inputProductStatus style="opacity: 0;">
-  <div class="margin-bottom-1" >
-    <label>Statut du produit : </label>
-    <mat-radio-group formControlName="status" (ngModelChange)="resetInputProductStatus()">
-      <mat-radio-button [value]="ProductStatus.Available">Disponible à la location</mat-radio-button>
-      <mat-radio-button [value]="ProductStatus.Unavailable">Indisponible / loué</mat-radio-button>
-      <mat-radio-button [value]="ProductStatus.Maintenance">En maintenance / réparation</mat-radio-button>
-    </mat-radio-group>
-  </div>
-  <div style="margin-left: 140px;">
-    <img [src]="'assets/img/available.png'" class="qrcodeImg" title="Disponible à la location">
-    <img [src]="'assets/img/unavailable.png'" class="qrcodeImg" title="Indisponible / loué">
-    <img [src]="'assets/img/maintenance.png'" class="qrcodeImg" title="En maintenance / réparation">
-  </div>
-</ng-container>
+  <ng-container *ngIf="detailProductForm.value.type === ProductType.rental || detailProductForm.value.type === ProductType.longRental">
+    <div formArrayName="productItems">
+      <h5>Stocks du produit</h5>
+      <ng-container *ngFor="let productItem of productItems.controls; index as idxProductItem" class="form-array-container">
+        <div [formGroupName]="idxProductItem">
+          <mat-form-field class="width30 margin-right">
+            <input type="text" placeholder="Numéro / qrcode" aria-label="Numéro qrcode" [formControl]="productItems.controls[idxProductItem].get('number')" matInput>
+          </mat-form-field>
+          <label>Statut du produit : </label>
+          <mat-radio-group  [formControl]="productItems.controls[idxProductItem].get('status')" (ngModelChange)="resetInputProductStatus()">
+            <mat-radio-button [value]="ProductStatus.Available">Disponible à la location</mat-radio-button>
+            <mat-radio-button [value]="ProductStatus.Unavailable">Indisponible / loué</mat-radio-button>
+            <mat-radio-button [value]="ProductStatus.Maintenance">En maintenance / réparation</mat-radio-button>
+          </mat-radio-group>
+
+          <!--input type="text" (change)="setProductStatus($event.target.value, idxProductItem)" autofocus #inputProductStatus style="opacity: 0;">
+          <div style="margin-left: 140px;">
+            <img [src]="'assets/img/available.png'" class="qrcodeImg" title="Disponible à la location">
+            <img [src]="'assets/img/unavailable.png'" class="qrcodeImg" title="Indisponible / loué">
+            <img [src]="'assets/img/maintenance.png'" class="qrcodeImg" title="En maintenance / réparation">
+          </div-->
+
+          <button mat-raised-button color="warn" type="button" *ngIf="idxProductItem > 0" (click)="rmProductItem(idxProductItem)" class="suppr-button margin-right">Supprimer</button>
+        </div>
+      </ng-container>
+
+      <button mat-raised-button color="accent" type="button" (click)="addProductItem(false)" class="margin-bottom-1">Ajouter stock</button>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="detailProductForm.value.type === ProductType.sale">
+    <div formArrayName="productItems">
+      <h5>Stocks du produit</h5>
+      <ng-container *ngFor="let productItem of productItems.controls; index as idxProductItem" class="form-array-container">
+        <div [formGroupName]="idxProductItem">
+          <mat-form-field class="width30 margin-right">
+            <input type="text" placeholder="Numéro / qrcode" aria-label="Numéro qrcode" [formControl]="productItems.controls[idxProductItem].get('number')" matInput>
+          </mat-form-field>
+          <label>Statut du produit : </label>
+          <mat-radio-group  [formControl]="productItems.controls[idxProductItem].get('status')">
+            <mat-radio-button [value]="ProductStatus.Available">Disponible à la vente</mat-radio-button>
+            <mat-radio-button [value]="ProductStatus.Sold">Vendu</mat-radio-button>
+          </mat-radio-group>
+          <button mat-raised-button color="warn" type="button" *ngIf="idxProductItem > 0" (click)="rmProductItem(idxProductItem)" class="suppr-button margin-right">Supprimer</button>
+        </div>
+      </ng-container>
+
+      <button mat-raised-button color="accent" type="button" (click)="addProductItem(true)" class="margin-bottom-1">Ajouter stock</button>
+    </div>
+  </ng-container>
 
   <div>
     <h5>Photo</h5>

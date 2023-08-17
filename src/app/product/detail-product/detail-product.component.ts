@@ -11,6 +11,8 @@ import { AngularFireStorage } from '@angular/fire/storage';
 import {ProductFormManager} from "../../forms/productFormManager";
 import {ProductType} from "../ProductType";
 import {ProductStatus} from "../ProductStatus";
+import {FormArray, FormBuilder} from "@angular/forms";
+import { v4 as uuidv4 } from 'uuid';
 
 export interface DialogDetailProductData {
   message: string;
@@ -25,7 +27,7 @@ export interface DialogDetailProductData {
 
 export class DetailProductComponent implements OnInit, OnDestroy {
 
-  @ViewChild('inputProductStatus') inputProductStatus: ElementRef;
+  //@ViewChild('inputProductStatus') inputProductStatus: ElementRef;
 
   private productId: String; // id du produit récupéré en paramètre de l'url
   private productSubscription : Subscription; // nécessaire pour pouvoir arrêter l'obervation du produit lorsqu'on quitte le composant (conf ngOnDestry())
@@ -39,7 +41,7 @@ export class DetailProductComponent implements OnInit, OnDestroy {
   private bug:boolean = false;
   private productFormManager: ProductFormManager ;
 
-  constructor(private router: Router, private route: ActivatedRoute, private db: AngularFirestore, private dialog: MatDialog, private storage: AngularFireStorage) {
+  constructor(private router: Router, private route: ActivatedRoute, private db: AngularFirestore, private dialog: MatDialog, private storage: AngularFireStorage, private fb: FormBuilder) {
     this.productFormManager = new ProductFormManager();
   }
 
@@ -125,7 +127,12 @@ export class DetailProductComponent implements OnInit, OnDestroy {
     const product: Observable<Product> = this.db.doc<Product>('products/'+productId).valueChanges().pipe(
       tap(product => {
         if (product != undefined) {
+          this.setProductItems(product);
           this.detailProductForm.patchValue(product);
+          // pour mise à jour de l'uuid de qrcode généré dans setProductItems pourles produits à la vente antérieurs à la mise en place des stocks de type "productItem"
+          if (!product.productItems && product.type === ProductType.sale) {
+            this.db.doc<Product>('products/' + productId ).update({productItems: [this.detailProductForm.controls.productItems.controls[0].value]});
+          }
           if (product.photo!='') {
             //console.log("observeProduct : photo exist");
             this.downloadPhotoURL = this.storage.ref(product.photo).getDownloadURL();
@@ -144,6 +151,45 @@ export class DetailProductComponent implements OnInit, OnDestroy {
   get internal_number() { return this.detailProductForm.get('internal_number'); }
   get stock() { return this.detailProductForm.get('stock'); }
 
+  /* used for add or remove productItems*/
+  get productItems() {
+    return this.detailProductForm.get('productItems') as FormArray;
+  }
+
+
+  private setProductItems(product) {
+    while (this.productItems.length !== 0) {
+      this.productItems.removeAt(0)
+    }
+    if (product.productItems) {
+      for (let i=0; i<product.productItems.length; i++) {
+        this.addProductItem(product.type === ProductType.sale);
+      }
+    }
+    // si les productItems n'ont pas été définis, on se base sur la propriété stock
+    else {
+      for (let i=0; i<product.stock; i++) {
+        this.addProductItem(product.type === ProductType.sale);
+      }
+    }
+  }
+
+  addProductItem(generateUuid: boolean) {
+    let uuid: string = '';
+    generateUuid ? uuid = uuidv4() : null;
+    this.productItems.push(this.fb.group({number: [uuid], status: [ProductStatus.Available]}));
+  }
+
+  rmProductItem(i) {
+    if (i > 0) {
+      this.productItems.removeAt(Number(i));
+
+    }
+    else if (i === 0) {
+      this.detailProductForm.controls.productItems.controls[0].patchValue({number: "", status: ProductStatus.Available});
+    }
+  }
+
   private initForm() {
     this.detailProductForm = this.productFormManager.getForm();
     this.detailProductForm.valueChanges.subscribe(data => {
@@ -152,7 +198,6 @@ export class DetailProductComponent implements OnInit, OnDestroy {
       if (this.bug==true) {this.detailProductForm.value.photo='';}
       if (data.type === ProductType.sale || data.type === ProductType.service) {
         if (data.apply_degressivity === "true") {this.detailProductForm.controls['apply_degressivity'].patchValue('false');}
-        //this.detailProductForm.value.apply_degressivity="false";
       }
     });
   }
@@ -263,9 +308,9 @@ export class DetailProductComponent implements OnInit, OnDestroy {
     this.photoPathToDeleteOnFirestorage=undefined;
   }
 
-  public setProductStatus(value: string) {
-    if (["AVAILABLE", "UNAVAILABLE", "MAINTENANCE"].includes(value)) {
-      this.detailProductForm.controls['status'].patchValue(value);
+  public setProductStatus(value: string, idxProductItem) {
+    if (["AVAILABLE", "UNAVAILABLE", "MAINTENANCE", "SOLD"].includes(value)) {
+      this.productItems.controls[idxProductItem].get('status').patchValue(value);
       this.updateProductByScan();
     } else {
       this.resetInputProductStatus();
@@ -273,8 +318,8 @@ export class DetailProductComponent implements OnInit, OnDestroy {
   }
 
   public resetInputProductStatus() {
-    this.inputProductStatus.nativeElement.value = "";
-    this.inputProductStatus.nativeElement.focus();
+    //this.inputProductStatus.nativeElement.value = "";
+    //this.inputProductStatus.nativeElement.focus();
   }
 
   /**

@@ -45,7 +45,7 @@ import {DialogDetailQuotationOverview} from "./quotation/detail-quotation/detail
 import {DialogDetailOrderOverview} from "./order/detail-order/detail-order.component";
 import {DialogListOrderOverview} from "./order/list-order/list-order.component";
 import {DialogListInvoiceOverview} from "./order/list-invoice/list-invoice.component";
-import { StockComponent } from './product/stock/stock.component';
+import {DialogDayRealStockOverview, StockComponent} from './product/stock/stock.component';
 import {DialogStockOverview} from "./product/stock/stock.component";
 import {CreateEmployeComponent} from "./employe/create-employe/createEmploye.component";
 import {DetailEmployeComponent} from "./employe/detail-employe/detail-employe.component";
@@ -116,7 +116,8 @@ import {
     QuotationServiceContractComponent,
     DialogQuotationServiceContractOverview,
     ListQuotationServiceContractComponent,
-    DialogListQuotationServiceContractOverview
+    DialogListQuotationServiceContractOverview,
+    DialogDayRealStockOverview,
   ],
   imports: [
     BrowserModule,
@@ -173,6 +174,7 @@ import {
     DialogListEmployeOverview,
     DialogQuotationServiceContractOverview,
     DialogListQuotationServiceContractOverview,
+    DialogDayRealStockOverview,
   ],
 })
 export class AppModule { }

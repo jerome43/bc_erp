@@ -6,6 +6,8 @@ import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
 import { AngularFireStorage } from '@angular/fire/storage';
 import {ProductFormManager} from "../../forms/productFormManager";
 import {ProductType} from "../ProductType";
+import {ProductStatus} from "../ProductStatus";
+import { v4 as uuidv4 } from 'uuid';
 
 export interface DialogCreateProductData {
   message: string;
@@ -75,8 +77,11 @@ export class CreateProductComponent implements OnInit {
 
   private addProduct() {
     if (this.photoFile!=undefined) {this.createProductForm.value.photo='products/'+this.photoFile.name;}
+    if (this.createProductForm.controls.type.value === ProductType.sale) {
+      this.createProductForm.controls.productItems.controls[0].patchValue({number: uuidv4(), status: ProductStatus.Available});
+    }
     this.productsCollection.add(this.createProductForm.value).then(data => {
-      console.log("Document written with ID: ", data.id);
+      //console.log("Document written with ID: ", data.id);
       this.openDialogProductAdded('Le produit a bien été enregistré sous le numéro ' + data.id, data.id)});
   }
 
@@ -110,7 +115,7 @@ export class CreateProductComponent implements OnInit {
     this.inputPhoto.nativeElement.value = '';
     this.createProductForm = this.productFormManager.getForm();
     this.createProductForm.valueChanges.subscribe(data => {
-      console.log('Form changes', data);
+      //console.log('Form changes', data);
       if (data.type === ProductType.sale || data.type === ProductType.service) {
         if (data.apply_degressivity === "true") {this.createProductForm.controls['apply_degressivity'].patchValue('false');}
       }

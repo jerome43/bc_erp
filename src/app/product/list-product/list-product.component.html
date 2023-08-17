@@ -1,9 +1,15 @@
 <div class="main-container">
   <h2>Liste des produits</h2>
 
-  <mat-form-field>
-    <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Rechercher" #inputSearch>
-  </mat-form-field>
+  <div>
+    <mat-form-field class="width50 margin-right">
+      <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Rechercher" #inputSearch>
+    </mat-form-field>
+
+    <mat-form-field class="width45">
+      <input matInput (change)="searchByProductItemNumber($event.target.value)" placeholder="Rechercher par qrcode stock produit" #inputSearchProductItemNumber>
+    </mat-form-field>
+  </div>
 
   <table mat-table [dataSource]="dataSource" matSort matSortActive="name" matSortDirection="asc" matSortDisableClear class="mat-elevation-z8">
 
@@ -62,4 +68,26 @@
   </table>
 
   <mat-paginator [pageSizeOptions]="[10, 20, 30]" showFirstLastButtons></mat-paginator>
+
+  <div>
+    <mat-form-field class="width30 margin-right">
+      <input matInput (change)="setProductItemStatus($event.target.value, ProductStatus.Available, ProductStatus.Unavailable)" placeholder="Sortie stock produit" #inputProductStatus1>
+    </mat-form-field>
+    <mat-form-field class="width30 margin-right">
+      <input matInput (change)="setProductItemStatus($event.target.value, ProductStatus.Unavailable, ProductStatus.Available)" placeholder="Retour stock produit" #inputProductStatus2>
+    </mat-form-field>
+    <mat-form-field class="width30 margin-right">
+      <input matInput (change)="setProductItemStatus($event.target.value, ProductStatus.Available, ProductStatus.Sold)" placeholder="Vente stock produit" #inputProductStatus3>
+    </mat-form-field>
+  </div>
+
+  <div>
+    <mat-form-field class="width30 margin-right">
+      <input matInput (change)="setProductItemStatus($event.target.value, ProductStatus.Available, ProductStatus.Maintenance)" placeholder="Mise en maintenance stock produit" #inputProductStatus4>
+    </mat-form-field>
+    <mat-form-field class="width30">
+      <input matInput (change)="setProductItemStatus($event.target.value, ProductStatus.Maintenance, ProductStatus.Available)" placeholder="Retour de maintenance stock produit" #inputProductStatus5>
+    </mat-form-field>
+  </div>
+
 </div>
