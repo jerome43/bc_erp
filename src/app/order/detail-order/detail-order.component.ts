@@ -22,6 +22,8 @@ import {ProductType} from "../../product/ProductType";
 import {FirebaseServices} from "../../common-services/firebaseServices";
 import {OrderFormManager} from "../../forms/orderFormManager";
 import {PricesFormManager} from "../../forms/pricesFormManager";
+import {firestore} from 'firebase/app';
+import Timestamp = firestore.Timestamp;
 
 export interface ClientId extends Client { id: string; }
 export interface ProductId extends Product { id: string; }
@@ -191,7 +193,7 @@ export class DetailOrderComponent implements OnInit {
           //console.log("quantityProductImmo : ", quantityProductImmo);
         }
         if (quantityProductImmo > product.stock) {
-          this.openDialogMessage("Attention les stocks du produit " + product.name + " sont insuffisants. Commandes en conflit : " + productImmo.map(e => ["commande "+ e.orderId + ' du '+ e.immoDateFrom.toDate().toLocaleDateString()+ ' au '+ e.immoDateTo.toDate().toLocaleDateString()+ ', quantité '+ e.quantity]).join("  /  "));
+          this.openDialogMessage("Attention les stocks du produit " + product.name + " sont insuffisants. Commandes en conflit : " + productImmo.map(e => ["commande "+ e.orderId + ' du '+ (e.immoDateFrom instanceof Timestamp ? e.immoDateFrom.toDate().toLocaleDateString() : e.immoDateFrom) + ' au '+ (e.immoDateTo instanceof Timestamp ? e.immoDateTo.toDate().toLocaleDateString() : e.immoDateTo) + ', quantité '+ e.quantity]).join("  /  "));
         }
       }
     });

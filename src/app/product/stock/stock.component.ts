@@ -12,6 +12,8 @@ import {tap} from "rxjs/operators";
 import {Product} from "../product";
 import {ProductItem} from "../ProductItem";
 import {ProductStatus} from "../ProductStatus";
+import {firestore} from 'firebase/app';
+import Timestamp = firestore.Timestamp;
 
 export interface DialogStockData {
   message: string;
@@ -154,7 +156,9 @@ export class StockComponent implements OnInit {
     for (let i=0; i< stockProduct.immoDates.length; i++) {
       if ( stockProduct.immoDates[i].immoDateFrom.seconds>=this.stockDatesForm.value.dateFrom.getTime() / 1000
       || stockProduct.immoDates[i].immoDateTo.seconds>=this.stockDatesForm.value.dateFrom.getTime() / 1000) {
-        immosFromDateToDate.date = 'du ' +  stockProduct.immoDates[i].immoDateFrom.toDate().toLocaleDateString() + ' au ' +  stockProduct.immoDates[i].immoDateTo.toDate().toLocaleDateString();
+        // todo corriger bug en prod immoDates[i].immoDateFrom.toDate() is not a function
+        //immosFromDateToDate.date = 'du ' +  stockProduct.immoDates[i].immoDateFrom.toDate().toLocaleDateString() + ' au ' +  stockProduct.immoDates[i].immoDateTo.toDate().toLocaleDateString();
+        immosFromDateToDate.date = 'du ' +  (stockProduct.immoDates[i].immoDateFrom  instanceof Timestamp ? stockProduct.immoDates[i].immoDateFrom.toDate().toLocaleDateString() : stockProduct.immoDates[i].immoDateFrom) + ' au ' +  (stockProduct.immoDates[i].immoDateTo instanceof Timestamp ? stockProduct.immoDates[i].immoDateTo.toDate().toLocaleDateString() : stockProduct.immoDates[i].immoDateTo);
         immosFromDateToDate.quantity = stockProduct.immoDates[i].quantity;
         break;
       }
