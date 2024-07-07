@@ -614,7 +614,7 @@ export class PdfService {
             optionnalLongRentalTotal = ', soit un total de ' + formValue.optionalLongRentalAmount * formValue.optionalLongRentalPrice + '€ HT par mois pour ' + formValue.optionalLongRentalAmount + ' éléments.'
           }
           optionalLongRentalContent = 'Option location longue durée sur ' + formValue.optionalLongRentalMonth
-            + ' mois avec des mensualités unitaites de ' + formValue.optionalLongRentalPrice + '€ HT' + optionnalLongRentalTotal;
+            + ' mois avec des mensualités unitaires de ' + formValue.optionalLongRentalPrice + '€ HT' + optionnalLongRentalTotal;
         }
 
         optionalLongRentalStack = [

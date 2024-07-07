@@ -13,6 +13,7 @@ import Timestamp = firestore.Timestamp;
 import {ExportCsvService} from "../../export/export-csv.service";
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material/dialog";
 import {DialogListInvoiceData} from "../list-invoice/list-invoice.component";
+import {AppComponent, UserRights} from "../../app.component";
 
 export interface OrderId extends Order { id: string; }
 
@@ -28,6 +29,8 @@ export interface DialogListInvoiceData {
 })
 
 export class ListInvoiceComponent implements OnInit, OnDestroy {
+  public userRights = UserRights;
+  public rights;
   private fbOrders: Observable<any>; // orders in Firebase
   private fbOrdersSubscription : Subscription;
   public formDates;
@@ -44,7 +47,9 @@ export class ListInvoiceComponent implements OnInit, OnDestroy {
   constructor(private router: Router, private fb: FormBuilder, private route: ActivatedRoute,
               private db: AngularFirestore, private computePriceService : ComputePriceService,
               private exportCsvService: ExportCsvService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private appComponent : AppComponent) {
+    this.rights = this.appComponent.rights
   }
 
   ngOnInit() {

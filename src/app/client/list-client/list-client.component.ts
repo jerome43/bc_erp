@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
 import {Subscription} from "rxjs";
 import {ExportCsvService} from "../../export/export-csv.service";
+import {AppComponent, UserRights} from "../../app.component";
 
 export interface DialogListClientData { message: string; displayNoButton:boolean }
 export interface ClientId extends Client { id: string; }
@@ -19,6 +20,8 @@ export interface ClientId extends Client { id: string; }
 })
 
 export class ListClientComponent implements OnInit, OnDestroy {
+  public userRights = UserRights;
+  public rights;
   private fbClients: Observable<ClientId[]>; // clients on Firebase
   private fbClientsSubscription: Subscription;
   displayedColumns: string[] = ['name', 'date', 'edit', 'delete', 'id']; // colones affichées par le tableau
@@ -31,7 +34,10 @@ export class ListClientComponent implements OnInit, OnDestroy {
   constructor(private router: Router,
               private db: AngularFirestore,
               private dialog: MatDialog,
-              private exportCsvService: ExportCsvService) {
+              private exportCsvService: ExportCsvService,
+              private appComponent : AppComponent
+              ) {
+    this.rights = this.appComponent.rights
   }
 
   ngOnInit() {

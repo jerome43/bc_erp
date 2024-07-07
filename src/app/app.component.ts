@@ -1,6 +1,12 @@
 import {Component, Injectable} from '@angular/core';
 import { AuthService } from './auth/auth.service';
 
+export enum UserRights {
+  admin = 'admin',
+  editor = 'editor',
+  consult = 'consult'
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -10,11 +16,13 @@ import { AuthService } from './auth/auth.service';
 @Injectable({
   providedIn: 'root'
 })
+
 export class AppComponent {
 
   message: string;
   user;
   authorized:boolean;
+  rights: "admin" | "editor" | "consult" = UserRights.editor;
 
   constructor(public authService: AuthService) {
     this.authorized=false;
@@ -29,6 +37,10 @@ export class AppComponent {
       if (authorizedUser.includes(data.user.email)) {
         this.authService.loginConfirm().subscribe(()=> {
           this.authorized=true;
+          const adminUsers = this.authService.adminUsers;
+          if (adminUsers.includes(data.user.email)) {
+            this.rights = UserRights.admin;
+          }
         })
       }
       else {

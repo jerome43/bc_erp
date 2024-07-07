@@ -63,7 +63,7 @@ export class ComputePriceService {
         }
       }
     }
-    //console.log("getCompositeProductElementPrice : ", price);
+    console.log("getCompositeProductElementPrice : ", price);
     return price
   }
 

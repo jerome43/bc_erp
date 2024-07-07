@@ -19,7 +19,7 @@
         </mat-form-field>
       </div>
       <div class="display-inline-block width25">
-        <button mat-raised-button color="primary" type="button" (click)="wantExportOrderCsv()"><mat-icon>save_alt</mat-icon> export csv</button>
+        <button mat-raised-button color="primary" type="button" *ngIf="rights === userRights.admin" (click)="wantExportOrderCsv()"><mat-icon>save_alt</mat-icon> export csv</button>
       </div>
     </div>
   </form>
