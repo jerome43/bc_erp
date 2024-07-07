@@ -189,8 +189,8 @@ export class PdfServiceWithPhoto {
         {
           stack: [
             'Borne Concept',
-            '11 rue des Perdrix',
-            '94520 Mandres Les Roses',
+            '1 Chemin de la Rigaude',
+            '94520 Perigny-sur-Yerres',
             'tel 01 45 95 07 53'
           ],
           fontSize: 12,
@@ -451,8 +451,8 @@ export class PdfServiceWithPhoto {
         {
           stack: [
             'Borne Concept',
-            '11 rue des Perdrix',
-            '94520 Mandres Les Roses',
+            '1 Chemin de la Rigaude',
+            '94520 Perigny-sur-Yerres',
             'tel 01 45 95 07 53'
           ],
           fontSize: 12,
